@@ -1,0 +1,7 @@
+description = "Audit the codebase for logical redundancy and inefficient state management."
+prompt = """
+Audit the codebase for logical redundancy and inefficient state management.
+Identify instances where derived data is being stored in state instead of being calculated on-the-fly.
+Detect overlapping side effects (useEffect) and logic that executes identical validations or transformations.
+Focus on identifying 'stale' logic whose result is unused or already provided by Zustand/Prisma.
+"""

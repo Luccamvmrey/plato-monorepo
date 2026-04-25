@@ -1,0 +1,6 @@
+description = "Audit and optimize Zustand state consumption."
+prompt = """
+Audit Zustand state consumption. Identify instances where components are subscribing to the
+entire store or broad slices unnecessarily. Refactor to use granular selectors to prevent
+redundant re-renders. Ensure components only trigger updates when their specific required data changes.
+"""

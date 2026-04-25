@@ -1,0 +1,37 @@
+import type { 
+    ExerciseModel as PrismaExercise, 
+    WorkoutModel as PrismaWorkout, 
+    WorkoutExerciseModel as PrismaWorkoutExercise, 
+    WorkoutSessionModel as PrismaWorkoutSession, 
+    SessionSetModel as PrismaSessionSet 
+} from "@plato/database/generated/prisma/models";
+
+export type Exercise = PrismaExercise;
+
+export interface WorkoutExercise extends PrismaWorkoutExercise {
+    exercise?: Exercise;
+}
+
+export interface Workout extends PrismaWorkout {
+    workoutExercise: WorkoutExercise[];
+}
+
+export type SessionSet = PrismaSessionSet;
+
+export interface WorkoutSession extends PrismaWorkoutSession {
+    sessionSet: SessionSet[];
+}
+
+export interface WorkoutSessionWithWorkout extends WorkoutSession {
+    workout: PrismaWorkout;
+}
+
+export type ExerciseStatus = "COMPLETED" | "ACTIVE" | "PENDING";
+
+export interface EnrichedExerciseRecord extends WorkoutExercise {
+    exercise: Exercise;
+    logs: SessionSet[];
+    status: ExerciseStatus;
+}
+
+export interface GetUserWorkoutsResponse extends Array<Workout> {}

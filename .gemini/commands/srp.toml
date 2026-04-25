@@ -1,0 +1,6 @@
+description = "Apply Single Responsibility Principle (SRP) to subdivide views."
+prompt = """
+Apply the Single Responsibility Principle (SRP) to subdivide views into atomic, specialized components.
+Each component must have a single reason to change. Define strict TypeScript interfaces and
+reorganize the directory structure. Verify that no abstraction leakage occurs between parent and children.
+"""

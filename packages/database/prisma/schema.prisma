@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MuscleGroup {
+  // Upper Body - Push
+  CHEST
+  SHOULDERS
+  TRICEPS
+
+  // Upper Body - Pull
+  BACK
+  BICEPS
+  FOREARMS
+  TRAPS
+
+  // Lower Body
+  QUADRICEPS
+  HAMSTRINGS
+  GLUTES
+  CALVES
+
+  // Trunk
+  CORE
+  LOWER_BACK
+  NECK
+}
+
+model User {
+  id             Int              @id @default(autoincrement())
+  email          String           @unique
+  name           String?
+  password       String
+  createdAt      DateTime         @default(now())
+  workouts       Workout[]
+  workoutSession WorkoutSession[]
+  personalRecord PersonalRecord[]
+}
+
+model Exercise {
+  id               Int               @id @default(autoincrement())
+  name             String            @unique
+  targetMuscle     MuscleGroup
+  secondaryMuscles MuscleGroup[]
+  workoutExercise  WorkoutExercise[]
+  sessionSet       SessionSet[]
+  personalRecord   PersonalRecord[]
+}
+
+model Workout {
+  id              Int               @id @default(autoincrement())
+  name            String
+  description     String?
+  isActive        Boolean           @default(true)
+  userId          Int
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  workoutExercise WorkoutExercise[]
+  workoutSession  WorkoutSession[]
+}
+
+model WorkoutExercise {
+  id          Int      @id @default(autoincrement())
+  workoutId   Int
+  exerciseId  Int
+  orderIndex  Int
+  targetSets  Int
+  targetReps  Int
+  observation String?
+  workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model WorkoutSession {
+  id          Int          @id @default(autoincrement())
+  userId      Int
+  workoutId   Int
+  startedAt   DateTime     @default(now())
+  completedAt DateTime?
+  workout     Workout      @relation(fields: [workoutId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sessionSet  SessionSet[]
+}
+
+model SessionSet {
+  id               Int            @id @default(autoincrement())
+  workoutSessionId Int
+  exerciseId       Int
+  setNumber        Int
+  actualReps       Int
+  actualWeight     Float
+  equipmentWeight  Float?
+  rpe              Int
+  userObservation  String?
+  exercise         Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+enum RecordType {
+  WEIGHT
+  VOLUME
+}
+
+model PersonalRecord {
+  id         Int        @id @default(autoincrement())
+  userId     Int
+  exerciseId Int
+  type       RecordType
+  value      Float
+  date       DateTime   @default(now())
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  exercise   Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, exerciseId, type])
+}

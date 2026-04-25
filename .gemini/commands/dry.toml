@@ -1,0 +1,7 @@
+description = "Analyze the codebase for duplicated logic and repetitive patterns."
+prompt = """
+Analyze the codebase for duplicated logic and repetitive patterns.
+Identify code segments that appear across multiple components or modules.
+Suggest abstractions into shared utility functions, constants, or generic components.
+Focus on reducing code surface area and identifying identical event handlers or data formatting logic.
+"""

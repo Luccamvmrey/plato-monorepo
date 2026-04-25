@@ -1,0 +1,7 @@
+description = "Audit the codebase for oversized components."
+prompt = """
+Audit the codebase for oversized components. Identify components with excessive JSX depth or
+a high number of local state definitions. Point out UI sections with distinct identities
+that should exist independently. Use nesting levels and the volume of scope-specific variables
+as primary metrics.
+"""

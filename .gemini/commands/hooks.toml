@@ -1,0 +1,6 @@
+description = "Extract business logic and state management into dedicated Custom Hooks."
+prompt = """
+Extract business logic and state management from components into dedicated Custom Hooks.
+Ensure that Zustand store interactions, side effects, and API integration (Node/Prisma)
+are isolated within the hooks layer, leaving the React components focused strictly on the interface.
+"""
