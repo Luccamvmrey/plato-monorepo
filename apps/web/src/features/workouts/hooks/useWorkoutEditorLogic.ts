@@ -1,7 +1,7 @@
 import { useLocation, useParams } from "wouter";
 import { useWorkouts } from "./useWorkouts";
 import { useWorkoutEditorStore } from "@/features/workouts/stores/workout-editor.store";
-import { useSensor, useSensors, PointerSensor, type DragEndEvent, closestCenter, TouchSensor, MouseSensor } from "@dnd-kit/core";
+import { useSensor, useSensors, type DragEndEvent, closestCenter, TouchSensor, MouseSensor } from "@dnd-kit/core";
 import { type FormEvent, useEffect } from "react";
 import { toast } from "sonner";
 import { path } from "@/core/constants/path";

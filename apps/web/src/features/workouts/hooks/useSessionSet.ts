@@ -36,7 +36,7 @@ export const useSessionSet = () => {
 
             return { previousSession };
         },
-        onError: (err, newSet, context) => {
+        onError: (_err, _newSet, context) => {
             if (context?.previousSession) {
                 queryClient.setQueryData(["activeSession"], context.previousSession);
             }

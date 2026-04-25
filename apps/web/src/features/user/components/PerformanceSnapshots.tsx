@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award, TrendingUp, BarChart3 } from "lucide-react";
+import { Award, BarChart3 } from "lucide-react";
 import { muscleGroupTranslation } from "@/core/utils/translations";
 import { Badge } from "@/components/ui/badge";
 

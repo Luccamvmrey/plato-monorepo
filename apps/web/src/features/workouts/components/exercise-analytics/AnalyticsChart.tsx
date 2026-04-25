@@ -39,7 +39,6 @@ export const AnalyticsChart = ({
     data,
     tooltipSuffix = "kg",
     strokeColor = "#10b981", // emerald-500
-    fillColor = "rgba(16, 185, 129, 0.1)"
 }: AnalyticsChartProps) => {
     if (data.length === 0) {
         return (
