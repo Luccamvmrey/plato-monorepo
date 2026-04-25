@@ -1,8 +1,14 @@
 import axios from "axios";
 import { useAuthStore } from "@/features/auth/auth.store.ts";
 
+const baseURL = import.meta.env.VITE_API_URL;
+
+if (!baseURL) {
+    console.error("No baseURL env variable");
+}
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || '/api',
+    baseURL: baseURL + "/api" || '/api',
     headers: {
         'Content-Type': 'application/json',
     },
