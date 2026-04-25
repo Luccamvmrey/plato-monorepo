@@ -1,14 +1,20 @@
 import axios from "axios";
 import { useAuthStore } from "@/features/auth/auth.store.ts";
 
-const baseURL = import.meta.env.VITE_API_URL;
+const rawBaseURL = import.meta.env.VITE_API_URL;
 
-if (!baseURL) {
-    console.error("No baseURL env variable");
+// 2. Define a baseURL de forma limpa
+// Se existir rawBaseURL, usa ela + /api. Se não, usa apenas /api (fallback para dev/proxy)
+const finalBaseURL = rawBaseURL
+    ? `${rawBaseURL.replace(/\/$/, '')}/api`
+    : '/api';
+
+if (!rawBaseURL && import.meta.env.PROD) {
+    console.warn("VITE_API_URL não encontrada. As requisições podem falhar em produção.");
 }
 
 const api = axios.create({
-    baseURL: baseURL + "/api" || '/api',
+    baseURL: finalBaseURL,
     headers: {
         'Content-Type': 'application/json',
     },
