@@ -11,6 +11,12 @@ export default defineConfig({
             "@": path.resolve(__dirname, "./src"),
         },
     },
+    preview: {
+        allowedHosts: [
+            'plato-workout.up.railway.app',
+            '.railway.app'
+        ],
+    },
     server: {
         host: "0.0.0.0",
         proxy: {
