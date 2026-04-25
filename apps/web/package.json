@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --port ${PORT:-4173} --host"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
