@@ -4,9 +4,10 @@ import type { SessionSet } from "@/features/workouts/workout.types.ts";
 
 type CompletedSetRowProps = {
     log: SessionSet;
+    showEquipmentWeight?: boolean;
 };
 
-export const CompletedSetRow = ({ log }: CompletedSetRowProps) => (
+export const CompletedSetRow = ({ log, showEquipmentWeight: _showEquipmentWeight }: CompletedSetRowProps) => (
     <motion.div
         layout
         initial={{ opacity: 0, height: 0 }}
