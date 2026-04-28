@@ -25,12 +25,6 @@ export const useWorkoutSession = (workoutId?: string) => {
         enabled: !!workoutId,
     });
 
-    const sessionByIdQuery = (sessionId: number) => useQuery({
-        queryKey: ["workoutSession", sessionId],
-        queryFn: () => WorkoutSessionService.getById(sessionId),
-        enabled: !!sessionId,
-    });
-
     const findActiveSessionQuery = useQuery({
         queryKey: ["activeSession"],
         queryFn: () => WorkoutSessionService.findActiveSession(),
@@ -83,7 +77,6 @@ export const useWorkoutSession = (workoutId?: string) => {
     return {
         sessionByUserQuery,
         sessionByWorkoutIdQuery,
-        sessionByIdQuery,
         findActiveSessionQuery,
         createSessionMutation,
         finishSessionMutation,

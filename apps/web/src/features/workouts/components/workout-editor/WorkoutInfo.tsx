@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import DeletionAlertDialog from "@/core/components/DeletionAlertDialog.tsx";
 import { useWorkoutInfoLogic } from "@/features/workouts/hooks/useWorkoutInfoLogic.ts";
 
@@ -18,46 +18,51 @@ const WorkoutInfo = () => {
     } = useWorkoutInfoLogic();
 
     return (
-        <div className="bg-card flex flex-col justify-between gap-6 p-4 rounded-xl border">
-            <div className="flex w-full items-center justify-between">
-                <span className="font-semibold text-2xl">{title} Treino</span>
+        <div className="flex flex-col gap-6">
+            <div className="flex w-full items-center justify-between px-1">
+                <h1 className="text-xl font-medium tracking-tight">{title} Treino</h1>
 
                 {id === "new" ? (
-                    <Button variant="outline" type="button"  onClick={handleBack}>
-                        <ArrowLeft/>
-                        Cancelar
+                    <Button variant="ghost" size="icon" className="rounded-full" type="button" onClick={handleBack}>
+                        <X className="size-5" />
                     </Button>
                 ) : (
                     <DeletionAlertDialog onConfirm={handleDelete}>
-                        <Button variant="destructive" type="button">
-                            <Trash2/>
-                            Apagar
+                        <Button variant="ghost" size="icon" className="rounded-full text-destructive" type="button">
+                            <Trash2 className="size-5" />
                         </Button>
                     </DeletionAlertDialog>
                 )}
             </div>
 
-            <div className="w-full flex flex-col gap-2">
-                <Label htmlFor="name">Nome do Treino</Label>
-                <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="Ex.: Treino A - Foco Peito"
-                    className="h-12"
-                    value={name}
-                    onChange={(e) => setWorkoutInfo("name", e.target.value)}
-                />
-            </div>
-            <div className="w-full flex flex-col gap-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                    id="description"
-                    name="description"
-                    placeholder="Foco em cadência..."
-                    value={description}
-                    onChange={(e) => setWorkoutInfo("description", e.target.value)}
-                />
+            <div className="flex flex-col gap-4">
+                <div className="w-full flex flex-col gap-2">
+                    <Label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">
+                        Nome do Treino
+                    </Label>
+                    <Input
+                        id="name"
+                        name="name"
+                        type="text"
+                        placeholder="Ex.: Treino A - Foco Peito"
+                        className="h-12 text-lg font-medium tracking-tight"
+                        value={name}
+                        onChange={(e) => setWorkoutInfo("name", e.target.value)}
+                    />
+                </div>
+                <div className="w-full flex flex-col gap-2">
+                    <Label htmlFor="description" className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">
+                        Descrição
+                    </Label>
+                    <Textarea
+                        id="description"
+                        name="description"
+                        placeholder="Foco em cadência..."
+                        className="min-h-[100px] resize-none"
+                        value={description}
+                        onChange={(e) => setWorkoutInfo("description", e.target.value)}
+                    />
+                </div>
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-import type { Exercise } from "@/features/workouts/workout.types.ts";
+import type { Exercise, Workout, WorkoutExercise } from "@/features/workouts/workout.types.ts";
 import { create } from "zustand";
 import { arrayMove } from "@dnd-kit/sortable";
 
@@ -35,7 +35,7 @@ interface WorkoutEditorActions {
     removeExercise: (instanceId: string) => void;
     updateExerciseField: (instanceId: string, field: "targetSets" | "targetReps", value: number) => void;
 
-    loadWorkout: (workout: any) => void;
+    loadWorkout: (workout: Workout) => void;
 
     // Sorting
     reorderExercises: (activeId: string | number, overId: string | number) => void;
@@ -78,7 +78,7 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
     loadWorkout: (workout) => set({
         name: workout.name,
         description: workout.description,
-        exercises: workout.workoutExercise.map((we: any) => ({
+        exercises: workout.workoutExercise.map((we: WorkoutExercise) => ({
             instanceId: generateSafeId(),
             exercise: we.exercise,
             targetSets: we.targetSets,

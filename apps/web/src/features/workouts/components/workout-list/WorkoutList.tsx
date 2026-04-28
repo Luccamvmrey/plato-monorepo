@@ -11,7 +11,7 @@ type WorkoutListProps = {
 };
 
 const WorkoutList = ({ workouts, isArchivedView, lastCompletedWorkoutId }: WorkoutListProps) => {
-    const [_, navigate] = useLocation();
+    const [, navigate] = useLocation();
 
     const handleCreateWorkout = () => {
         navigate(path.WORKOUT_EDITOR + "/new");

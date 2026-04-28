@@ -1,5 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Calendar, Weight, Activity, Award } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -12,60 +10,51 @@ interface IdentityCardProps {
     totalPRs: number;
 }
 
-export const IdentityCard = ({ name, email, createdAt, totalSessions, lifetimeVolume, totalPRs }: IdentityCardProps) => {
+export const IdentityCard = ({
+    name,
+    email,
+    createdAt,
+    totalSessions,
+    lifetimeVolume,
+    totalPRs,
+}: IdentityCardProps) => {
     return (
-        <Card className="border-l-4 border-l-primary">
-            <CardHeader className="pb-2">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 bg-primary/10 rounded-full text-primary">
-                        <User className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <CardTitle className="text-xl font-bold">{name || "Atleta"}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{email}</p>
-                    </div>
+        <div className="mx-4 mb-4 bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
+                    <span className="text-[15px] font-medium text-muted-foreground">
+                        {(name || "A").charAt(0).toUpperCase()}
+                    </span>
                 </div>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
-                            <Calendar className="w-3.5 h-3.5" />
-                            Membro desde
-                        </div>
-                        <p className="text-sm font-medium">
-                            {format(new Date(createdAt), "MMMM 'de' yyyy", { locale: ptBR })}
-                        </p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
-                            <Activity className="w-3.5 h-3.5" />
-                            Total de Sessões
-                        </div>
-                        <p className="text-sm font-bold">{totalSessions}</p>
-                    </div>
-
-                    <div className="flex flex-col gap-1 pt-2 border-t">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
-                            <Award className="w-3.5 h-3.5" />
-                            Recordes (PRs)
-                        </div>
-                        <p className="text-2xl font-black text-primary">
-                            {totalPRs}
-                        </p>
-                    </div>
-
-                    <div className="flex flex-col gap-1 pt-2 border-t">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
-                            <Weight className="w-3.5 h-3.5" />
-                            Volume Total
-                        </div>
-                        <p className="text-2xl font-black text-primary">
-                            {lifetimeVolume.toLocaleString()} <span className="text-[10px] font-normal text-muted-foreground">kg</span>
-                        </p>
-                    </div>
+                <div className="min-w-0">
+                    <p className="text-[15px] font-medium tracking-[-0.02em] text-foreground truncate">
+                        {name || "Atleta"}
+                    </p>
+                    <p className="text-[12px] text-muted-foreground truncate">{email}</p>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                {[
+                    {
+                        label: "Membro desde",
+                        value: format(new Date(createdAt), "MMM 'de' yyyy", { locale: ptBR }),
+                    },
+                    { label: "Total de sessões", value: String(totalSessions) },
+                    { label: "Recordes (PRs)", value: String(totalPRs) },
+                    { label: "Volume total", value: `${lifetimeVolume.toLocaleString()} kg` },
+                ].map(({ label, value }) => (
+                    <div key={label}>
+                        <p className="text-[10px] font-medium tracking-[0.05em] uppercase
+                                      text-muted-foreground mb-0.5">
+                            {label}
+                        </p>
+                        <p className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
+                            {value}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 };

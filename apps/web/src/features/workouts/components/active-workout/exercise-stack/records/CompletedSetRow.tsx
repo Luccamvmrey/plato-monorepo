@@ -1,32 +1,26 @@
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils.ts";
+import { CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
 import type { SessionSet } from "@/features/workouts/workout.types.ts";
-import { getSetRowGridClass, COMMON_GRID_CLASSES } from "./SetRowLayout.ts";
 
 type CompletedSetRowProps = {
     log: SessionSet;
-    showEquipmentWeight: boolean;
 };
 
-export const CompletedSetRow = ({ log, showEquipmentWeight }: CompletedSetRowProps) => (
-    <div className={cn(
-        COMMON_GRID_CLASSES,
-        "bg-muted/10 opacity-70",
-        getSetRowGridClass(showEquipmentWeight)
-    )}>
-        <div className="flex items-center justify-center size-6 rounded-md bg-secondary text-secondary-foreground text-xs font-medium tabular-nums">
-            {log.setNumber}
-        </div>
-        <div className="h-9 flex items-center justify-center tabular-nums text-sm font-medium">{log.actualWeight} kg</div>
-        {showEquipmentWeight && (
-            <div className="h-9 flex items-center justify-center tabular-nums text-sm font-medium text-amber-600">
-                {log.equipmentWeight ? `+${log.equipmentWeight}kg` : "-"}
-            </div>
-        )}
-        <div className="h-9 flex items-center justify-center tabular-nums text-sm font-medium">{log.actualReps}</div>
-        <div className="h-9 flex items-center justify-center tabular-nums text-sm font-medium">{log.rpe}</div>
-        <div className="size-9 flex items-center justify-center text-emerald-500">
-            <Check className="size-5" />
-        </div>
-    </div>
+export const CompletedSetRow = ({ log }: CompletedSetRowProps) => (
+    <motion.div
+        layout
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 0.7, height: 48 }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="flex items-center gap-3 px-4 rounded-xl bg-success-subtle overflow-hidden"
+    >
+        <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
+        <span className="text-[13px] font-medium text-success-subtle-fg">
+            Set {log.setNumber} completo
+        </span>
+        <span className="ml-auto text-[12px] text-success-subtle-fg/70 tabular-nums whitespace-nowrap">
+            {log.actualWeight}kg · {log.actualReps}rep · RPE {log.rpe}
+        </span>
+    </motion.div>
 );

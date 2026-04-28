@@ -31,6 +31,7 @@ export const useActiveSetInput = ({
     const [wasSubmitted, setWasSubmitted] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setWasSubmitted(false);
         if (previousWeight) {
             setWeight(previousWeight.toString());

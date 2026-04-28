@@ -21,7 +21,7 @@ export const WorkoutFilterSelect = ({ value, onValueChange, workouts }: WorkoutF
 
     return (
         <Select value={value} onValueChange={onValueChange}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[130px] h-9 rounded-lg text-[13px]">
                 <SelectValue placeholder="Filtrar por treino" />
             </SelectTrigger>
             <SelectContent>

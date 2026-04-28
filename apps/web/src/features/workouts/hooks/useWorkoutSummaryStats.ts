@@ -5,15 +5,25 @@ import { calculateSetVolume, calculateTotalVolume } from "@/features/workouts/ut
 
 export type SummaryStats = {
     totalVolume: number;
-    muscleDistribution: {
-        muscle: MuscleGroup;
-        percentage: number;
-        absoluteVolume: number;
+    duration: number;
+    totalSets: number;
+    completedExercises: {
+        id: number;
+        name: string;
+        muscleGroup: MuscleGroup;
+        sets: number;
+        reps: number;
     }[];
-    prs: {
+    volumeByGroup: {
+        group: MuscleGroup;
+        volume: number;
+        percentage: number;
+    }[];
+    newPRs: {
+        exerciseId: number;
         exerciseName: string;
-        weight: number;
-        improvement: number;
+        previousMax: number | null;
+        newMax: number;
     }[];
 };
 
@@ -26,70 +36,83 @@ export const useWorkoutSummaryStats = (
         if (!workoutSession || !workout) return null;
 
         const sets = workoutSession.sessionSet || [];
-        
-        // 1. Volume Total
+
+        const duration =
+            workoutSession.completedAt && workoutSession.startedAt
+                ? Math.round(
+                    (new Date(workoutSession.completedAt).getTime() -
+                        new Date(workoutSession.startedAt).getTime()) /
+                    1000
+                )
+                : 0;
+
+        const totalSets = sets.length;
         const totalVolume = calculateTotalVolume(sets);
 
-        if (totalVolume === 0) {
-            return {
-                totalVolume: 0,
-                muscleDistribution: [],
-                prs: []
-            };
-        }
-
-        // 2. Distribuição por Músculo
-        const volumeByMuscle: Partial<Record<MuscleGroup, number>> = {};
+        const rawVolumeByMuscle: Partial<Record<MuscleGroup, number>> = {};
         sets.forEach(set => {
             const we = workout.workoutExercise.find(we => we.exerciseId === set.exerciseId);
             const exercise = we?.exercise;
             if (exercise) {
-                const muscle = exercise.targetMuscle;
                 const setVolume = calculateSetVolume(set.actualWeight, set.actualReps, set.equipmentWeight || 0);
-                volumeByMuscle[muscle] = (volumeByMuscle[muscle] || 0) + setVolume;
+                rawVolumeByMuscle[exercise.targetMuscle] = (rawVolumeByMuscle[exercise.targetMuscle] || 0) + setVolume;
             }
         });
 
-        const muscleDistribution = Object.entries(volumeByMuscle).map(([muscle, volume]) => ({
-            muscle: muscle as MuscleGroup,
-            percentage: (volume! / totalVolume) * 100,
-            absoluteVolume: volume!
-        })).sort((a, b) => b.percentage - a.percentage);
+        const volumeByGroup = Object.entries(rawVolumeByMuscle)
+            .map(([group, volume]) => ({
+                group: group as MuscleGroup,
+                volume: volume!,
+                percentage: totalVolume > 0 ? (volume! / totalVolume) * 100 : 0,
+            }))
+            .sort((a, b) => b.percentage - a.percentage);
 
-        // 3. Detecção de PRs
-        const prs: { exerciseName: string; weight: number; improvement: number }[] = [];
-        
+        const setsByExercise: Record<number, typeof sets> = {};
+        sets.forEach(set => {
+            if (!setsByExercise[set.exerciseId]) setsByExercise[set.exerciseId] = [];
+            setsByExercise[set.exerciseId].push(set);
+        });
+
+        const completedExercises = workout.workoutExercise
+            .filter(we => setsByExercise[we.exerciseId])
+            .map(we => {
+                const exSets = setsByExercise[we.exerciseId];
+                const lastSet = exSets[exSets.length - 1];
+                return {
+                    id: we.exerciseId,
+                    name: we.exercise?.name || "Exercício",
+                    muscleGroup: we.exercise!.targetMuscle,
+                    sets: exSets.length,
+                    reps: lastSet.actualReps,
+                };
+            });
+
+        const newPRs: SummaryStats["newPRs"] = [];
+
         if (lastSession) {
-            const currentExMaxWeights: Record<number, number> = {};
+            const currentMaxByExercise: Record<number, number> = {};
             sets.forEach(set => {
-                const totalWeight = set.actualWeight + (set.equipmentWeight || 0);
-                currentExMaxWeights[set.exerciseId] = Math.max(currentExMaxWeights[set.exerciseId] || 0, totalWeight);
+                const total = set.actualWeight + (set.equipmentWeight || 0);
+                currentMaxByExercise[set.exerciseId] = Math.max(currentMaxByExercise[set.exerciseId] || 0, total);
             });
 
-            const lastExMaxWeights: Record<number, number> = {};
+            const lastMaxByExercise: Record<number, number> = {};
             lastSession.sessionSet.forEach(set => {
-                const totalWeight = set.actualWeight + (set.equipmentWeight || 0);
-                lastExMaxWeights[set.exerciseId] = Math.max(lastExMaxWeights[set.exerciseId] || 0, totalWeight);
+                const total = set.actualWeight + (set.equipmentWeight || 0);
+                lastMaxByExercise[set.exerciseId] = Math.max(lastMaxByExercise[set.exerciseId] || 0, total);
             });
 
-            Object.entries(currentExMaxWeights).forEach(([exId, weight]) => {
+            Object.entries(currentMaxByExercise).forEach(([exId, newMax]) => {
                 const exerciseId = parseInt(exId);
-                const lastWeight = lastExMaxWeights[exerciseId];
-                if (lastWeight && weight > lastWeight) {
-                    const exerciseName = workout.workoutExercise.find(we => we.exerciseId === exerciseId)?.exercise?.name || "Exercício";
-                    prs.push({
-                        exerciseName,
-                        weight,
-                        improvement: weight - lastWeight
-                    });
+                const previousMax = lastMaxByExercise[exerciseId];
+                if (previousMax !== undefined && newMax > previousMax) {
+                    const exerciseName =
+                        workout.workoutExercise.find(we => we.exerciseId === exerciseId)?.exercise?.name || "Exercício";
+                    newPRs.push({ exerciseId, exerciseName, previousMax, newMax });
                 }
             });
         }
 
-        return {
-            totalVolume,
-            muscleDistribution,
-            prs
-        };
+        return { totalVolume, duration, totalSets, completedExercises, volumeByGroup, newPRs };
     }, [workoutSession, workout, lastSession]);
 };

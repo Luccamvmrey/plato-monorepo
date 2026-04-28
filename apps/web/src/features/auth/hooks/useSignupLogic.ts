@@ -5,7 +5,7 @@ import type { RegisterRequest } from "@/features/auth/auth.types.ts";
 
 export const useSignupLogic = () => {
     const { registerMutation } = useAuth();
-    const [_, navigate] = useLocation();
+    const [, navigate] = useLocation();
 
     const FORM_ID = "signup-form";
 

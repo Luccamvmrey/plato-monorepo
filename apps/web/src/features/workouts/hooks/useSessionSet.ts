@@ -2,6 +2,7 @@ import { SessionSetService } from "@/features/workouts/services/workout-session/
 import { useAppMutation } from "@/core/hooks/useAppMutation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FindActiveSessionResponse } from "../services/workout-session/workout-session.service";
+import type { SessionSet } from "@/features/workouts/workout.types";
 
 export const useSessionSet = () => {
     const queryClient = useQueryClient();
@@ -29,7 +30,7 @@ export const useSessionSet = () => {
                                 setNumber: newSet.setNumber,
                                 userObservation: null
                             }
-                        ] as any
+                        ] as SessionSet[]
                     }
                 });
             }

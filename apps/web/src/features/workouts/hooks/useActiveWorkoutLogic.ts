@@ -74,5 +74,6 @@ export const useActiveWorkoutLogic = () => {
         handleCancelConfirm,
         isFinishPending: finishSessionMutation.isPending,
         isCancelPending: deleteSessionMutation.isPending,
+        isAllCompleted,
     };
 };

@@ -1,13 +1,23 @@
+import { motion, type Variants } from "framer-motion";
 import { useActiveWorkoutLogic } from "@/features/workouts/hooks/useActiveWorkoutLogic.ts";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { path } from "@/core/constants/path.ts";
 import ActiveWorkoutHeader from "@/features/workouts/components/active-workout/ActiveWorkoutHeader.tsx";
-import DynamicExerciseStack
-    from "@/features/workouts/components/active-workout/exercise-stack/DynamicExerciseStack.tsx";
+import DynamicExerciseStack from "@/features/workouts/components/active-workout/exercise-stack/DynamicExerciseStack.tsx";
 import { ActiveWorkoutActions } from "@/features/workouts/components/active-workout/components/ActiveWorkoutActions.tsx";
 import { FinishWorkoutDialog } from "@/features/workouts/components/active-workout/components/dialogs/FinishWorkoutDialog";
 import { CancelWorkoutDialog } from "@/features/workouts/components/active-workout/components/dialogs/CancelWorkoutDialog";
+import { SessionProgress } from "@/features/workouts/components/active-workout/SessionProgress.tsx";
+
+const enterAnimation: Variants = {
+    hidden: { opacity: 0, y: 10 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { type: "spring", stiffness: 380, damping: 28, delay: 0.04 },
+    },
+};
 
 const ActiveWorkoutPage = () => {
     const {
@@ -25,7 +35,8 @@ const ActiveWorkoutPage = () => {
         handleCancelConfirm,
         isFinishPending,
         isCancelPending,
-        navigate
+        isAllCompleted,
+        navigate,
     } = useActiveWorkoutLogic();
 
     if (isLoading) {
@@ -42,15 +53,23 @@ const ActiveWorkoutPage = () => {
     }
 
     return (
-        <div className="h-full flex flex-col gap-3 mb-[100px]">
-            <ActiveWorkoutHeader 
-                workout={workout} 
-                session={activeSession} 
+        <motion.div
+            variants={enterAnimation}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col gap-3 pb-[320px]"
+        >
+            <ActiveWorkoutHeader
+                workout={workout}
+                session={activeSession}
+                onBackClick={() => setIsCancelOpen(true)}
             />
 
-            <DynamicExerciseStack 
+            <SessionProgress exerciseStack={exerciseStack} />
+
+            <DynamicExerciseStack
                 exerciseStack={exerciseStack}
-                session={activeSession} 
+                session={activeSession}
                 lastSession={lastSession}
             />
 
@@ -59,20 +78,21 @@ const ActiveWorkoutPage = () => {
                 onCancelClick={() => setIsCancelOpen(true)}
                 isFinishPending={isFinishPending}
                 isCancelPending={isCancelPending}
+                isAllCompleted={isAllCompleted}
             />
 
-            <FinishWorkoutDialog 
-                isOpen={isConfirmOpen} 
-                setOpen={setIsConfirmOpen} 
-                onConfirm={handleFinishConfirm} 
+            <FinishWorkoutDialog
+                isOpen={isConfirmOpen}
+                setOpen={setIsConfirmOpen}
+                onConfirm={handleFinishConfirm}
             />
 
-            <CancelWorkoutDialog 
-                isOpen={isCancelOpen} 
-                setOpen={setIsCancelOpen} 
-                onConfirm={handleCancelConfirm} 
+            <CancelWorkoutDialog
+                isOpen={isCancelOpen}
+                setOpen={setIsCancelOpen}
+                onConfirm={handleCancelConfirm}
             />
-        </div>
+        </motion.div>
     );
 };
 

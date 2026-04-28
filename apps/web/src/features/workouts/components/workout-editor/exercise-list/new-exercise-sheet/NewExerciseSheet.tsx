@@ -2,7 +2,6 @@ import {
     Sheet,
     SheetClose,
     SheetContent,
-    SheetDescription,
     SheetFooter,
     SheetHeader,
     SheetTitle,
@@ -46,33 +45,37 @@ const NewExerciseSheet = () => {
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger className="py-6" asChild>
-                <Button className="rounded-xl" variant="outline">
-                    <Plus/>
+            <SheetTrigger asChild>
+                <Button variant="outline" className="w-full h-14 border-dashed rounded-xl gap-2 font-medium">
+                    <Plus data-icon="inline-start" />
                     Novo Exercício
                 </Button>
             </SheetTrigger>
-            <SheetContent side="bottom">
-                <SheetHeader>
-                    <SheetTitle>
-                        Novo Exercício
-                    </SheetTitle>
-                    <SheetDescription>
-                        Adicione um novo exercício ao seu treino.
-                    </SheetDescription>
+            <SheetContent 
+                side="bottom" 
+                className="h-[90dvh] max-h-[90dvh] p-0 flex flex-col outline-none border-t border-border rounded-t-3xl overflow-hidden"
+            >
+                <SheetHeader className="px-6 pt-6 pb-4 space-y-4 border-b border-border/50 shrink-0 bg-background z-10">
+                    <div className="flex flex-col gap-1">
+                        <SheetTitle className="text-xl font-medium tracking-tight text-left">
+                            Adicionar Exercícios
+                        </SheetTitle>
+                    </div>
+                    
+                    <div className="flex flex-col gap-4">
+                        <ExerciseSearchBar
+                            onChange={handleSearchChange}
+                            value={searchValue}
+                        />
+
+                        <MuscleGroupFilter
+                            selectedMuscleGroup={selectedMuscleGroup}
+                            onSelectMuscleGroup={handleMuscleGroupSelect}
+                        />
+                    </div>
                 </SheetHeader>
 
-                <div className="px-4 flex flex-col gap-4">
-                    <ExerciseSearchBar
-                        onChange={handleSearchChange}
-                        value={searchValue}
-                    />
-
-                    <MuscleGroupFilter
-                        selectedMuscleGroup={selectedMuscleGroup}
-                        onSelectMuscleGroup={handleMuscleGroupSelect}
-                    />
-
+                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-6 py-4 flex flex-col gap-4">
                     <SelectedExercisesList
                         selectedExercises={selectedExercises}
                         onExerciseClick={handleExerciseClick}
@@ -85,18 +88,19 @@ const NewExerciseSheet = () => {
                     />
                 </div>
 
-                <SheetFooter>
+                <SheetFooter className="p-6 border-t border-border/50 bg-background shrink-0 flex-row items-center justify-between gap-4 mt-auto">
+                    <SheetClose asChild>
+                        <Button variant="ghost" className="h-12 flex-1">Cancelar</Button>
+                    </SheetClose>
                     <Button
                         type="button"
-                        className="p-5"
+                        className="h-12 flex-[2] font-medium"
                         onClick={handleAddSelected}
                         disabled={selectedExercises.length === 0}
                     >
-                        Adicionar {selectedExercises.length} exercícios
+                        Adicionar {selectedExercises.length > 0 ? selectedExercises.length : ""} 
+                        {selectedExercises.length === 1 ? " exercício" : " exercícios"}
                     </Button>
-                    <SheetClose asChild>
-                        <Button variant="outline" className="p-5">Cancelar</Button>
-                    </SheetClose>
                 </SheetFooter>
             </SheetContent>
 

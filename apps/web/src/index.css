@@ -5,115 +5,326 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─────────────────────────────────────────────
+   PLATO — Design Tokens
+   Filosofia:
+   · Azul  → ação primária (CTAs, links, foco)
+   · Verde → conclusão/sucesso (sets completos, PRs confirmados)
+   · Âmbar → conquista (badges de PR, recordes pessoais)
+   · Zinc  → superfícies neutras (cards, inputs, background)
+   ───────────────────────────────────────────── */
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.13 0.028 261.692);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.13 0.028 261.692);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.13 0.028 261.692);
-  --primary: oklch(0.60 0.13 163);
-  --primary-foreground: oklch(0.98 0.02 166);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.003 264.542);
-  --muted-foreground: oklch(0.551 0.027 264.364);
-  --accent: oklch(0.967 0.003 264.542);
-  --accent-foreground: oklch(0.21 0.034 264.665);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.928 0.006 264.531);
-  --input: oklch(0.928 0.006 264.531);
-  --ring: oklch(0.707 0.022 261.325);
-  --chart-1: oklch(0.85 0.13 165);
-  --chart-2: oklch(0.77 0.15 163);
-  --chart-3: oklch(0.70 0.15 162);
-  --chart-4: oklch(0.60 0.13 163);
-  --chart-5: oklch(0.51 0.10 166);
-  --radius: 0.45rem;
-  --sidebar: oklch(0.985 0.002 247.839);
-  --sidebar-foreground: oklch(0.13 0.028 261.692);
-  --sidebar-primary: oklch(0.60 0.13 163);
-  --sidebar-primary-foreground: oklch(0.98 0.02 166);
-  --sidebar-accent: oklch(0.967 0.003 264.542);
-  --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
-  --sidebar-border: oklch(0.928 0.006 264.531);
-  --sidebar-ring: oklch(0.707 0.022 261.325);
+  /* Superfícies — light mode */
+  --background:          oklch(1 0 0);
+  --foreground:          oklch(0.13 0.01 265);
+  --card:                oklch(1 0 0);
+  --card-foreground:     oklch(0.13 0.01 265);
+  --popover:             oklch(1 0 0);
+  --popover-foreground:  oklch(0.13 0.01 265);
+
+  /* Primary → Azul (ação, CTA, foco) */
+  --primary:             oklch(0.60 0.19 245);   /* sky-600 ~#0284c7 */
+  --primary-foreground:  oklch(0.98 0.005 245);
+
+  /* Secondary — superfície leve */
+  --secondary:           oklch(0.967 0.001 265);
+  --secondary-foreground:oklch(0.21 0.008 265);
+
+  /* Muted — texto e superfície discreta */
+  --muted:               oklch(0.967 0.003 265);
+  --muted-foreground:    oklch(0.52 0.018 265);
+
+  /* Accent — igual muted no light, usado para hover states */
+  --accent:              oklch(0.967 0.003 265);
+  --accent-foreground:   oklch(0.21 0.034 265);
+
+  /* Destructive */
+  --destructive:         oklch(0.577 0.245 27.325);
+
+  /* Bordas e inputs */
+  --border:              oklch(0.918 0.005 265);
+  --input:               oklch(0.918 0.005 265);
+  --ring:                oklch(0.60 0.19 245);    /* segue primary */
+
+  /* ── Tokens semânticos extras (Plato-specific) ── */
+  /* Verde → exclusivo para sucesso/conclusão */
+  --success:             oklch(0.60 0.15 162);    /* green-600 */
+  --success-foreground:  oklch(0.97 0.02 162);
+  --success-subtle:      oklch(0.95 0.05 162);    /* bg de badges "done" */
+  --success-subtle-fg:   oklch(0.35 0.12 162);
+
+  /* Âmbar → PRs e recordes pessoais */
+  --pr:                  oklch(0.72 0.15 75);     /* amber-500 */
+  --pr-foreground:       oklch(0.25 0.06 75);
+  --pr-subtle:           oklch(0.97 0.05 85);
+  --pr-subtle-fg:        oklch(0.40 0.12 75);
+
+  /* ── Badges de grupo muscular — 14 grupos, 8 cores ──────────────────
+     Lógica de agrupamento:
+     · Push superior  → Azul  (chest, shoulders, triceps)
+     · Pull superior  → Verde (back, lower_back, traps)
+     · Braços pull    → Teal  (biceps, forearms) — distinção de back
+     · Inferior       → Vermelho (quadriceps, hamstrings, glutes, calves)
+     · Trunk          → Âmbar (core)
+     · Neck           → Violeta (isolado, raramente treinado junto)
+     ──────────────────────────────────────────────────────────────── */
+
+  /* Push superior — Azul */
+  --muscle-chest:            oklch(0.60 0.19 245);
+  --muscle-chest-bg:         oklch(0.95 0.05 245);
+  --muscle-shoulders:        oklch(0.60 0.19 245);
+  --muscle-shoulders-bg:     oklch(0.95 0.05 245);
+  --muscle-triceps:          oklch(0.60 0.19 245);
+  --muscle-triceps-bg:       oklch(0.95 0.05 245);
+
+  /* Pull superior — Verde */
+  --muscle-back:             oklch(0.50 0.14 162);
+  --muscle-back-bg:          oklch(0.95 0.06 162);
+  --muscle-lower-back:       oklch(0.50 0.14 162);
+  --muscle-lower-back-bg:    oklch(0.95 0.06 162);
+  --muscle-traps:            oklch(0.50 0.14 162);
+  --muscle-traps-bg:         oklch(0.95 0.06 162);
+
+  /* Braços pull — Teal (diferencia de back) */
+  --muscle-biceps:           oklch(0.55 0.13 195);
+  --muscle-biceps-bg:        oklch(0.95 0.05 195);
+  --muscle-forearms:         oklch(0.55 0.13 195);
+  --muscle-forearms-bg:      oklch(0.95 0.05 195);
+
+  /* Inferior — Vermelho */
+  --muscle-quadriceps:       oklch(0.52 0.17 22);
+  --muscle-quadriceps-bg:    oklch(0.96 0.04 22);
+  --muscle-hamstrings:       oklch(0.52 0.17 22);
+  --muscle-hamstrings-bg:    oklch(0.96 0.04 22);
+  --muscle-glutes:           oklch(0.52 0.17 22);
+  --muscle-glutes-bg:        oklch(0.96 0.04 22);
+  --muscle-calves:           oklch(0.52 0.17 22);
+  --muscle-calves-bg:        oklch(0.96 0.04 22);
+
+  /* Core / Trunk — Âmbar */
+  --muscle-core:             oklch(0.58 0.14 75);
+  --muscle-core-bg:          oklch(0.97 0.05 85);
+
+  /* Pescoço — Violeta (grupo isolado) */
+  --muscle-neck:             oklch(0.55 0.18 295);
+  --muscle-neck-bg:          oklch(0.95 0.05 295);
+
+  /* Radius — 0.75rem resolve o efeito "template shadcn" */
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar:                oklch(0.985 0.002 248);
+  --sidebar-foreground:     oklch(0.13 0.01 265);
+  --sidebar-primary:        oklch(0.60 0.19 245);
+  --sidebar-primary-foreground: oklch(0.98 0.005 245);
+  --sidebar-accent:         oklch(0.967 0.003 265);
+  --sidebar-accent-foreground: oklch(0.21 0.034 265);
+  --sidebar-border:         oklch(0.918 0.005 265);
+  --sidebar-ring:           oklch(0.60 0.19 245);
+
+  /* Charts — ramp de azul para manter coerência com primary */
+  --chart-1: oklch(0.60 0.19 245);
+  --chart-2: oklch(0.70 0.16 245);
+  --chart-3: oklch(0.78 0.13 245);
+  --chart-4: oklch(0.60 0.15 162);   /* verde como 4º, variação */
+  --chart-5: oklch(0.72 0.15 75);    /* âmbar como 5º */
 }
 
 .dark {
-  --background: oklch(0.13 0.028 261.692);
-  --foreground: oklch(0.985 0.002 247.839);
-  --card: oklch(0.21 0.034 264.665);
-  --card-foreground: oklch(0.985 0.002 247.839);
-  --popover: oklch(0.21 0.034 264.665);
-  --popover-foreground: oklch(0.985 0.002 247.839);
-  --primary: oklch(0.70 0.15 162);
-  --primary-foreground: oklch(0.26 0.05 173);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.278 0.033 256.848);
-  --muted-foreground: oklch(0.707 0.022 261.325);
-  --accent: oklch(0.278 0.033 256.848);
-  --accent-foreground: oklch(0.985 0.002 247.839);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.85 0.13 165);
-  --chart-2: oklch(0.77 0.15 163);
-  --chart-3: oklch(0.70 0.15 162);
-  --chart-4: oklch(0.60 0.13 163);
-  --chart-5: oklch(0.51 0.10 166);
-  --sidebar: oklch(0.21 0.034 264.665);
-  --sidebar-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-primary: oklch(0.77 0.15 163);
-  --sidebar-primary-foreground: oklch(0.26 0.05 173);
-  --sidebar-accent: oklch(0.278 0.033 256.848);
-  --sidebar-accent-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Superfícies — zinc puro, sem matiz azulado nos backgrounds */
+  --background:          oklch(0.11 0.006 265);   /* zinc-950 equivalente */
+  --foreground:          oklch(0.97 0.003 265);
+
+  /* Card ligeiramente mais claro que background — contraste de superfície */
+  --card:                oklch(0.16 0.008 265);   /* zinc-900 equivalente */
+  --card-foreground:     oklch(0.97 0.003 265);
+  --popover:             oklch(0.16 0.008 265);
+  --popover-foreground:  oklch(0.97 0.003 265);
+
+  /* Primary → Azul mais luminoso no dark para manter contraste */
+  --primary:             oklch(0.67 0.20 245);    /* sky-500 ~#0ea5e9 */
+  --primary-foreground:  oklch(0.10 0.01 265);
+
+  /* Secondary */
+  --secondary:           oklch(0.22 0.008 265);
+  --secondary-foreground:oklch(0.97 0 0);
+
+  /* Muted */
+  --muted:               oklch(0.22 0.012 265);
+  --muted-foreground:    oklch(0.65 0.016 265);
+
+  /* Accent */
+  --accent:              oklch(0.22 0.012 265);
+  --accent-foreground:   oklch(0.97 0.003 265);
+
+  /* Destructive */
+  --destructive:         oklch(0.704 0.191 22.216);
+
+  /* Bordas — branco com opacidade, sem cor */
+  --border:              oklch(1 0 0 / 8%);
+  --input:               oklch(1 0 0 / 12%);
+  --ring:                oklch(0.67 0.20 245);
+
+  /* ── Tokens semânticos — dark mode ── */
+  --success:             oklch(0.68 0.17 162);    /* verde mais luminoso */
+  --success-foreground:  oklch(0.10 0.02 162);
+  --success-subtle:      oklch(0.18 0.06 162);    /* bg escuro p/ badges */
+  --success-subtle-fg:   oklch(0.72 0.15 162);
+
+  --pr:                  oklch(0.78 0.15 75);
+  --pr-foreground:       oklch(0.15 0.04 75);
+  --pr-subtle:           oklch(0.20 0.06 75);
+  --pr-subtle-fg:        oklch(0.78 0.15 75);
+
+  /* Badges de grupo muscular — dark mode (mesma lógica, mais luminosos) */
+
+  /* Push superior — Azul */
+  --muscle-chest:            oklch(0.67 0.20 245);
+  --muscle-chest-bg:         oklch(0.17 0.07 245);
+  --muscle-shoulders:        oklch(0.67 0.20 245);
+  --muscle-shoulders-bg:     oklch(0.17 0.07 245);
+  --muscle-triceps:          oklch(0.67 0.20 245);
+  --muscle-triceps-bg:       oklch(0.17 0.07 245);
+
+  /* Pull superior — Verde */
+  --muscle-back:             oklch(0.68 0.17 162);
+  --muscle-back-bg:          oklch(0.17 0.07 162);
+  --muscle-lower-back:       oklch(0.68 0.17 162);
+  --muscle-lower-back-bg:    oklch(0.17 0.07 162);
+  --muscle-traps:            oklch(0.68 0.17 162);
+  --muscle-traps-bg:         oklch(0.17 0.07 162);
+
+  /* Braços pull — Teal */
+  --muscle-biceps:           oklch(0.68 0.14 195);
+  --muscle-biceps-bg:        oklch(0.17 0.06 195);
+  --muscle-forearms:         oklch(0.68 0.14 195);
+  --muscle-forearms-bg:      oklch(0.17 0.06 195);
+
+  /* Inferior — Vermelho */
+  --muscle-quadriceps:       oklch(0.68 0.18 22);
+  --muscle-quadriceps-bg:    oklch(0.17 0.06 22);
+  --muscle-hamstrings:       oklch(0.68 0.18 22);
+  --muscle-hamstrings-bg:    oklch(0.17 0.06 22);
+  --muscle-glutes:           oklch(0.68 0.18 22);
+  --muscle-glutes-bg:        oklch(0.17 0.06 22);
+  --muscle-calves:           oklch(0.68 0.18 22);
+  --muscle-calves-bg:        oklch(0.17 0.06 22);
+
+  /* Core — Âmbar */
+  --muscle-core:             oklch(0.78 0.15 75);
+  --muscle-core-bg:          oklch(0.20 0.07 75);
+
+  /* Pescoço — Violeta */
+  --muscle-neck:             oklch(0.72 0.18 295);
+  --muscle-neck-bg:          oklch(0.18 0.07 295);
+
+  /* Sidebar */
+  --sidebar:                oklch(0.16 0.008 265);
+  --sidebar-foreground:     oklch(0.97 0.003 265);
+  --sidebar-primary:        oklch(0.67 0.20 245);
+  --sidebar-primary-foreground: oklch(0.10 0.01 265);
+  --sidebar-accent:         oklch(0.22 0.012 265);
+  --sidebar-accent-foreground: oklch(0.97 0.003 265);
+  --sidebar-border:         oklch(1 0 0 / 8%);
+  --sidebar-ring:           oklch(0.67 0.20 245);
+
+  /* Charts — mesma lógica, adaptada ao dark */
+  --chart-1: oklch(0.67 0.20 245);
+  --chart-2: oklch(0.75 0.16 245);
+  --chart-3: oklch(0.82 0.12 245);
+  --chart-4: oklch(0.68 0.17 162);
+  --chart-5: oklch(0.78 0.15 75);
 }
 
 @theme inline {
   --font-sans: 'Geist Variable', sans-serif;
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
+
+  /* Sidebar */
+  --color-sidebar-ring:                var(--sidebar-ring);
+  --color-sidebar-border:              var(--sidebar-border);
+  --color-sidebar-accent-foreground:   var(--sidebar-accent-foreground);
+  --color-sidebar-accent:              var(--sidebar-accent);
+  --color-sidebar-primary-foreground:  var(--sidebar-primary-foreground);
+  --color-sidebar-primary:             var(--sidebar-primary);
+  --color-sidebar-foreground:          var(--sidebar-foreground);
+  --color-sidebar:                     var(--sidebar);
+
+  /* Charts */
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Base shadcn */
+  --color-ring:                var(--ring);
+  --color-input:               var(--input);
+  --color-border:              var(--border);
+  --color-destructive:         var(--destructive);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-accent:              var(--accent);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-muted:               var(--muted);
+  --color-secondary-foreground:var(--secondary-foreground);
+  --color-secondary:           var(--secondary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-primary:             var(--primary);
+  --color-popover-foreground:  var(--popover-foreground);
+  --color-popover:             var(--popover);
+  --color-card-foreground:     var(--card-foreground);
+  --color-card:                var(--card);
+  --color-foreground:          var(--foreground);
+  --color-background:          var(--background);
+
+  /* Tokens semânticos Plato — acessíveis via bg-success, text-pr, etc. */
+  --color-success:             var(--success);
+  --color-success-foreground:  var(--success-foreground);
+  --color-success-subtle:      var(--success-subtle);
+  --color-success-subtle-fg:   var(--success-subtle-fg);
+  --color-pr:                  var(--pr);
+  --color-pr-foreground:       var(--pr-foreground);
+  --color-pr-subtle:           var(--pr-subtle);
+  --color-pr-subtle-fg:        var(--pr-subtle-fg);
+
+  /* Badges musculares — todos os 14 grupos */
+  --color-muscle-chest:           var(--muscle-chest);
+  --color-muscle-chest-bg:        var(--muscle-chest-bg);
+  --color-muscle-shoulders:       var(--muscle-shoulders);
+  --color-muscle-shoulders-bg:    var(--muscle-shoulders-bg);
+  --color-muscle-triceps:         var(--muscle-triceps);
+  --color-muscle-triceps-bg:      var(--muscle-triceps-bg);
+  --color-muscle-back:            var(--muscle-back);
+  --color-muscle-back-bg:         var(--muscle-back-bg);
+  --color-muscle-lower-back:      var(--muscle-lower-back);
+  --color-muscle-lower-back-bg:   var(--muscle-lower-back-bg);
+  --color-muscle-traps:           var(--muscle-traps);
+  --color-muscle-traps-bg:        var(--muscle-traps-bg);
+  --color-muscle-biceps:          var(--muscle-biceps);
+  --color-muscle-biceps-bg:       var(--muscle-biceps-bg);
+  --color-muscle-forearms:        var(--muscle-forearms);
+  --color-muscle-forearms-bg:     var(--muscle-forearms-bg);
+  --color-muscle-quadriceps:      var(--muscle-quadriceps);
+  --color-muscle-quadriceps-bg:   var(--muscle-quadriceps-bg);
+  --color-muscle-hamstrings:      var(--muscle-hamstrings);
+  --color-muscle-hamstrings-bg:   var(--muscle-hamstrings-bg);
+  --color-muscle-glutes:          var(--muscle-glutes);
+  --color-muscle-glutes-bg:       var(--muscle-glutes-bg);
+  --color-muscle-calves:          var(--muscle-calves);
+  --color-muscle-calves-bg:       var(--muscle-calves-bg);
+  --color-muscle-core:            var(--muscle-core);
+  --color-muscle-core-bg:         var(--muscle-core-bg);
+  --color-muscle-neck:            var(--muscle-neck);
+  --color-muscle-neck-bg:         var(--muscle-neck-bg);
+
+  /* Radius — base 0.75rem, escala proporcional */
+  --radius-sm:  calc(var(--radius) - 4px);   /* 8px  — chips, badges */
+  --radius-md:  calc(var(--radius) - 2px);   /* 10px — inputs, botões */
+  --radius-lg:  var(--radius);               /* 12px — cards padrão  */
+  --radius-xl:  calc(var(--radius) + 4px);   /* 16px — cards grandes */
+  --radius-2xl: calc(var(--radius) + 8px);   /* 20px — modais        */
+  --radius-3xl: calc(var(--radius) + 12px);  /* 24px — sheets        */
+  --radius-4xl: calc(var(--radius) + 16px);  /* 28px — full-bleed    */
 }
 
 @layer base {
@@ -123,17 +334,156 @@
 
   body {
     @apply font-sans bg-background text-foreground;
+    /* Tracking negativo em toda a UI — feel moderno sem esforço */
+    letter-spacing: -0.01em;
   }
 
   html {
     @apply font-sans;
   }
+
+  /* Headings com tracking mais apertado */
+  h1, h2, h3 {
+    letter-spacing: -0.025em;
+    font-weight: 500;
+  }
 }
 
+/* ─────────────────────────────────────────────
+   Utilitários Plato — use diretamente no JSX
+   ───────────────────────────────────────────── */
+
+/* Badge de grupo muscular — aplique a classe do grupo */
+.badge-muscle {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Push superior — Azul */
+.badge-chest       { background: var(--muscle-chest-bg);       color: var(--muscle-chest); }
+.badge-shoulders   { background: var(--muscle-shoulders-bg);   color: var(--muscle-shoulders); }
+.badge-triceps     { background: var(--muscle-triceps-bg);     color: var(--muscle-triceps); }
+
+/* Pull superior — Verde */
+.badge-back        { background: var(--muscle-back-bg);        color: var(--muscle-back); }
+.badge-lower-back  { background: var(--muscle-lower-back-bg);  color: var(--muscle-lower-back); }
+.badge-traps       { background: var(--muscle-traps-bg);       color: var(--muscle-traps); }
+
+/* Braços pull — Teal */
+.badge-biceps      { background: var(--muscle-biceps-bg);      color: var(--muscle-biceps); }
+.badge-forearms    { background: var(--muscle-forearms-bg);    color: var(--muscle-forearms); }
+
+/* Inferior — Vermelho */
+.badge-quadriceps  { background: var(--muscle-quadriceps-bg);  color: var(--muscle-quadriceps); }
+.badge-hamstrings  { background: var(--muscle-hamstrings-bg);  color: var(--muscle-hamstrings); }
+.badge-glutes      { background: var(--muscle-glutes-bg);      color: var(--muscle-glutes); }
+.badge-calves      { background: var(--muscle-calves-bg);      color: var(--muscle-calves); }
+
+/* Trunk — Âmbar / Violeta */
+.badge-core        { background: var(--muscle-core-bg);        color: var(--muscle-core); }
+.badge-neck        { background: var(--muscle-neck-bg);        color: var(--muscle-neck); }
+
+/* Badge de PR */
+.badge-pr {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--pr-subtle);
+  color: var(--pr-subtle-fg);
+}
+
+/* Set completo — row compacto */
+.set-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--success-subtle);
+  color: var(--success-subtle-fg);
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* Input de treino — versão grande para sessão ativa */
+.input-workout {
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 12px;
+  font-size: 22px;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: -0.02em;
+  width: 100%;
+  color: var(--foreground);
+  transition: border-color 0.15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input-workout:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 15%);
+}
+
+/* Botão primário de sessão */
+.btn-session-confirm {
+  width: 100%;
+  height: 52px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-session-confirm:active {
+  opacity: 0.85;
+}
+
+/* Botão de finalizar — só ativo quando todos os sets estão completos */
+.btn-finish {
+  flex: 1;
+  height: 48px;
+  background: var(--success);
+  color: var(--success-foreground);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.btn-finish[data-ready="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ─────────────────────────────────────────────
+   Background utilitário — dot grid (mantido)
+   ───────────────────────────────────────────── */
 .bg-dot-grid {
   --dot-size: 1px;
   --dot-spacing: 24px;
-
   --dot-color: var(--border);
 
   background-image: radial-gradient(

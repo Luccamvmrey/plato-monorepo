@@ -5,108 +5,112 @@ import {
     Area,
     XAxis,
     YAxis,
-    CartesianGrid,
     Tooltip,
 } from "recharts";
+import { cn } from "@/lib/utils";
+import type { FC } from "react";
 
-interface AnalyticsChartProps {
-    data: {
-        date: Date;
-        value: number;
-    }[];
-    tooltipSuffix?: string;
-    strokeColor?: string;
-    fillColor?: string;
+export interface AnalyticsChartProps {
+    data: { date: Date; value: number }[];
+    color: string;
+    gradientId: string;
 }
 
-const CustomTooltip = ({ active, payload, label, suffix }: any) => {
-    if (active && payload && payload.length) {
-        return (
-            <div className="bg-popover border rounded-lg shadow-xl p-3 flex flex-col gap-1">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">
-                    {format(new Date(label), "dd MMM yyyy")}
+interface TooltipEntry {
+    name: string;
+    value: number;
+    color: string;
+}
+
+interface ChartTooltipProps {
+    active?: boolean;
+    payload?: TooltipEntry[];
+    label?: number;
+}
+
+const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="bg-card border border-border rounded-lg px-3 py-2">
+            <p className="text-[11px] text-muted-foreground mb-1">
+                {format(new Date(label ?? 0), "dd/MM/yyyy")}
+            </p>
+            {payload.map((p) => (
+                <p key={p.name} className="text-[13px] font-medium" style={{ color: p.color }}>
+                    {p.value.toFixed(1)} kg
                 </p>
-                <p className="text-sm font-black text-foreground">
-                    {payload[0].value.toLocaleString()} {suffix}
-                </p>
-            </div>
-        );
-    }
-    return null;
+            ))}
+        </div>
+    );
 };
 
-export const AnalyticsChart = ({
-    data,
-    tooltipSuffix = "kg",
-    strokeColor = "#10b981", // emerald-500
-}: AnalyticsChartProps) => {
-    if (data.length === 0) {
-        return (
-            <div className="h-[200px] w-full flex items-center justify-center text-muted-foreground text-sm italic border-2 border-dashed rounded-xl">
-                Sem dados históricos suficientes
+const ChartEmpty = ({ current }: { current: number }) => {
+    const total = 3;
+    const remaining = total - current;
+    return (
+        <div className="h-[160px] flex flex-col items-center justify-center gap-2">
+            <p className="text-[13px] text-muted-foreground text-center">
+                Complete mais {remaining} {remaining === 1 ? "sessão" : "sessões"} para ver a evolução
+            </p>
+            <div className="flex gap-1.5">
+                {Array.from({ length: total }).map((_, i) => (
+                    <div
+                        key={i}
+                        className={cn("w-2 h-2 rounded-full", i < current ? "bg-primary" : "bg-muted")}
+                    />
+                ))}
             </div>
-        );
+        </div>
+    );
+};
+
+const axisStyle = {
+    tick: { fontSize: 11, fill: "var(--color-muted-foreground)" },
+    axisLine: false as const,
+    tickLine: false as const,
+};
+
+const chartMargin = { top: 8, right: 8, left: -16, bottom: 0 };
+
+export const AnalyticsChart: FC<AnalyticsChartProps> = ({ data, color, gradientId }) => {
+    if (data.length < 3) {
+        return <ChartEmpty current={data.length} />;
     }
 
-    // Format data for Recharts (convert Date to ISO or timestamp for consistent axis handling)
     const formattedData = data.map(d => ({
         ...d,
         timestamp: d.date.getTime(),
     }));
 
     return (
-        <div className="h-[200px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                    data={formattedData}
-                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                    <defs>
-                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={strokeColor} stopOpacity={0.3} />
-                            <stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
-                        </linearGradient>
-                    </defs>
-                    <CartesianGrid 
-                        strokeDasharray="3 3" 
-                        vertical={false} 
-                        stroke="currentColor" 
-                        className="text-muted-foreground/10"
-                    />
-                    <XAxis 
-                        dataKey="timestamp" 
-                        type="number"
-                        domain={['dataMin', 'dataMax']}
-                        tickFormatter={(time) => format(new Date(time), "dd/MM")}
-                        stroke="currentColor"
-                        className="text-[10px] text-muted-foreground"
-                        axisLine={false}
-                        tickLine={false}
-                        minTickGap={30}
-                    />
-                    <YAxis 
-                        stroke="currentColor"
-                        className="text-[10px] text-muted-foreground"
-                        axisLine={false}
-                        tickLine={false}
-                    />
-                    <Tooltip 
-                        content={<CustomTooltip suffix={tooltipSuffix} />} 
-                        cursor={{ stroke: strokeColor, strokeWidth: 1, strokeDasharray: '4 4' }}
-                    />
-                    <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke={strokeColor}
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorValue)"
-                        animationDuration={1500}
-                        dot={{ r: 4, fill: strokeColor, strokeWidth: 2, stroke: "#fff" }}
-                        activeDot={{ r: 6, strokeWidth: 0 }}
-                    />
-                </AreaChart>
-            </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer width="100%" height={160}>
+            <AreaChart data={formattedData} margin={chartMargin}>
+                <defs>
+                    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={color} stopOpacity={0.15} />
+                        <stop offset="100%" stopColor={color} stopOpacity={0} />
+                    </linearGradient>
+                </defs>
+                <XAxis
+                    dataKey="timestamp"
+                    type="number"
+                    domain={["dataMin", "dataMax"]}
+                    tickFormatter={(t) => format(new Date(t), "dd/MM")}
+                    {...axisStyle}
+                    minTickGap={30}
+                />
+                <YAxis {...axisStyle} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={color}
+                    strokeWidth={2}
+                    fill={`url(#${gradientId})`}
+                    dot={{ fill: color, strokeWidth: 0, r: 3 }}
+                    activeDot={{ r: 5, strokeWidth: 0 }}
+                />
+            </AreaChart>
+        </ResponsiveContainer>
     );
 };

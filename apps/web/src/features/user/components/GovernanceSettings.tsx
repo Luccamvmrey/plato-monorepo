@@ -1,6 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Moon, Sun, Download, LogOut, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Settings, Sun, Moon, Download, LogOut, Trash2 } from "lucide-react";
 import { useUserSettings } from "../hooks/useUserSettings";
 import {
     AlertDialog,
@@ -11,86 +10,122 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 
 export const GovernanceSettings = () => {
-    const {
-        theme,
-        toggleTheme,
-        handleExportData,
-        handleDeleteAccount,
-        handleLogout,
-        isExporting,
-        isDeleting
-    } = useUserSettings();
+    const { theme, toggleTheme, handleExportData, handleDeleteAccount, handleLogout, isExporting, isDeleting } =
+        useUserSettings();
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [confirmText, setConfirmText] = useState("");
+
+    const onDeleteConfirm = async () => {
+        await handleDeleteAccount();
+        setDeleteDialogOpen(false);
+        setConfirmText("");
+    };
 
     return (
-        <Card className="border-destructive/20">
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-muted-foreground" />
-                    Configurações e Governança
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                {/* Theme Toggle */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-bold">Aparência</span>
-                        <span className="text-xs text-muted-foreground">Alternar entre modo claro e escuro</span>
-                    </div>
-                    <Button variant="outline" size="icon" onClick={toggleTheme}>
-                        {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                    </Button>
+        <>
+            <div className="mx-4 mb-4 bg-card border border-border rounded-xl overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+                    <Settings className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <p className="text-[13px] font-medium text-foreground">Configurações</p>
                 </div>
 
-                {/* Data Export */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-bold">Portabilidade de Dados</span>
-                        <span className="text-xs text-muted-foreground">Exportar todo seu histórico em JSON</span>
+                {/* Aparência */}
+                <button
+                    onClick={toggleTheme}
+                    className="flex items-center gap-3 w-full px-4 py-3 border-b border-border
+                               hover:bg-muted/40 transition-colors text-left"
+                >
+                    <div className="flex-1">
+                        <p className="text-[13px] font-medium text-foreground">Aparência</p>
+                        <p className="text-[12px] text-muted-foreground">
+                            Alternar entre modo claro e escuro
+                        </p>
                     </div>
-                    <Button variant="outline" size="icon" onClick={handleExportData} disabled={isExporting}>
-                        <Download className="w-4 h-4" />
-                    </Button>
-                </div>
+                    {theme === "dark" ? (
+                        <Sun className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    ) : (
+                        <Moon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    )}
+                </button>
 
-                {/* Logout */}
-                <Button variant="outline" className="w-full justify-start" onClick={handleLogout}>
-                    <LogOut data-icon="inline-start" />
-                    Encerrar Sessão
-                </Button>
+                {/* Portabilidade de dados */}
+                <button
+                    onClick={handleExportData}
+                    disabled={isExporting}
+                    className="flex items-center gap-3 w-full px-4 py-3 border-b border-border
+                               hover:bg-muted/40 transition-colors text-left disabled:opacity-50"
+                >
+                    <div className="flex-1">
+                        <p className="text-[13px] font-medium text-foreground">Portabilidade de dados</p>
+                        <p className="text-[12px] text-muted-foreground">
+                            Exportar todo seu histórico em JSON
+                        </p>
+                    </div>
+                    <Download className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </button>
 
-                {/* Delete Account */}
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="w-full justify-start">
-                            <Trash2 data-icon="inline-start" />
-                            Excluir Conta Permanentemente
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta
-                                e removerá todos os seus treinos, sessões e recordes de nossos servidores.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                                variant="destructive"
-                                onClick={handleDeleteAccount} 
-                                disabled={isDeleting}
-                            >
-                                {isDeleting ? "Excluindo..." : "Sim, excluir minha conta"}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </CardContent>
-        </Card>
+                {/* Encerrar sessão */}
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full px-4 py-3 border-b border-border
+                               hover:bg-muted/40 transition-colors text-left"
+                >
+                    <LogOut className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <p className="text-[13px] font-medium text-foreground">Encerrar sessão</p>
+                </button>
+
+                {/* Excluir conta */}
+                <button
+                    onClick={() => setDeleteDialogOpen(true)}
+                    className="flex items-center gap-3 w-full px-4 py-3
+                               hover:bg-destructive/5 transition-colors text-left"
+                >
+                    <Trash2 className="w-4 h-4 text-destructive flex-shrink-0" />
+                    <p className="text-[13px] font-medium text-destructive">
+                        Excluir conta permanentemente
+                    </p>
+                </button>
+            </div>
+
+            <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+                setDeleteDialogOpen(open);
+                if (!open) setConfirmText("");
+            }}>
+                <AlertDialogContent className="rounded-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-[17px] font-medium tracking-[-0.02em]">
+                            Excluir conta permanentemente?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-[13px] text-muted-foreground">
+                            Todos os seus treinos, histórico e recordes serão apagados e não poderão
+                            ser recuperados. Para confirmar, digite <strong>EXCLUIR</strong> abaixo.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <Input
+                        value={confirmText}
+                        onChange={e => setConfirmText(e.target.value)}
+                        placeholder="EXCLUIR"
+                        className="h-11 rounded-md font-mono text-[13px]"
+                    />
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-lg">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            disabled={confirmText !== "EXCLUIR" || isDeleting}
+                            onClick={onDeleteConfirm}
+                            className="rounded-lg bg-destructive text-destructive-foreground
+                                       disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            {isDeleting ? "Excluindo..." : "Excluir conta"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 };

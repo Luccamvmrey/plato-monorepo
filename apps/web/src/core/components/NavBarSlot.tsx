@@ -11,7 +11,7 @@ type NavBarSlotProps = {
 };
 
 export const NavBarSlot = ({ link, slotIcon, label, showBadge }: NavBarSlotProps) => {
-    const [_, navigate] = useLocation();
+    const [, navigate] = useLocation();
     const Icon = slotIcon;
     const [isActive] = useRoute(`${link}/:id?`)
 

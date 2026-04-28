@@ -6,8 +6,8 @@ const ExerciseList = () => {
     const { exercises } = useExerciseListLogic();
 
     return (
-        <div className="bg-card flex flex-col gap-4 p-4 rounded-xl border">
-            <span className="font-semibold text-2xl">Exercícios</span>
+        <div className="flex flex-col gap-3 mt-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">Exercícios</span>
             <div className="flex flex-col gap-2">
                 <SortableContext
                     items={exercises.map(e => e.instanceId)}
@@ -19,7 +19,9 @@ const ExerciseList = () => {
                             exercise={exercise}
                         />
                     )) : (
-                        <span className="text-muted-foreground text-center">Nenhum exercício adicionado</span>
+                        <div className="py-12 border-2 border-dashed border-border rounded-xl flex items-center justify-center">
+                            <span className="text-muted-foreground text-sm">Nenhum exercício adicionado</span>
+                        </div>
                     )}
                 </SortableContext>
             </div>

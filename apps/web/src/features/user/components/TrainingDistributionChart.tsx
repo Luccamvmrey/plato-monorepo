@@ -1,41 +1,49 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import { PieChart } from "lucide-react";
-import { muscleGroupTranslation } from "@/core/utils/translations";
-import { Progress } from "@/components/ui/progress";
+import { MuscleBadge } from "@/core/components/MuscleBadge";
+import type { MuscleGroup } from "@plato/database/generated/prisma/enums";
 
 interface TrainingDistributionChartProps {
-    distribution: Array<{ muscle: string, percentage: number }>;
+    distribution: Array<{ muscle: string; percentage: number }>;
 }
 
 export const TrainingDistributionChart = ({ distribution }: TrainingDistributionChartProps) => {
+    const sorted = distribution.slice().sort((a, b) => b.percentage - a.percentage);
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                    <PieChart className="w-5 h-5 text-primary" />
-                    Distribuição de Treino
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col gap-4">
-                    {distribution.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                            Sem dados de distribuição disponíveis.
-                        </p>
-                    )}
-                    {distribution
-                        .sort((a, b) => b.percentage - a.percentage)
-                        .map((item) => (
-                            <div key={item.muscle} className="flex flex-col gap-1.5">
-                                <div className="flex justify-between text-xs font-medium uppercase tracking-tighter">
-                                    <span>{muscleGroupTranslation[item.muscle as keyof typeof muscleGroupTranslation] || item.muscle}</span>
-                                    <span className="text-muted-foreground">{item.percentage.toFixed(1)}%</span>
-                                </div>
-                                <Progress value={item.percentage} className="h-2" />
-                            </div>
-                        ))}
-                </div>
-            </CardContent>
-        </Card>
+        <div className="mx-4 mb-4 bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+                <PieChart className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <p className="text-[13px] font-medium text-foreground">Distribuição de treino</p>
+            </div>
+
+            {sorted.length === 0 ? (
+                <p className="text-[13px] text-muted-foreground text-center py-4">
+                    Sem dados de distribuição disponíveis.
+                </p>
+            ) : (
+                sorted.map(({ muscle, percentage }) => (
+                    <div key={muscle} className="mb-3 last:mb-0">
+                        <div className="flex items-center justify-between mb-1.5">
+                            <MuscleBadge muscle={muscle as MuscleGroup} />
+                            <span className="text-[12px] text-muted-foreground">
+                                {Math.round(percentage)}%
+                            </span>
+                        </div>
+                        <div className="h-[3px] bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                                className="h-full rounded-full"
+                                style={{
+                                    background: `var(--muscle-${muscle.toLowerCase().replace(/_/g, "-")})`,
+                                }}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${percentage}%` }}
+                                transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+                            />
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
     );
 };
