@@ -77,14 +77,16 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
 
     loadWorkout: (workout) => set({
         name: workout.name,
-        description: workout.description,
-        exercises: workout.workoutExercise.map((we: WorkoutExercise) => ({
-            instanceId: generateSafeId(),
-            exercise: we.exercise,
-            targetSets: we.targetSets,
-            targetReps: we.targetReps,
-            orderIndex: we.orderIndex
-        })),
+        description: workout.description ?? "",
+        exercises: workout.workoutExercise
+            .filter(we => we.exercise)
+            .map((we: WorkoutExercise) => ({
+                instanceId: generateSafeId(),
+                exercise: we.exercise!,
+                targetSets: we.targetSets,
+                targetReps: we.targetReps,
+                orderIndex: we.orderIndex
+            })),
         isSubmitting: false,
     }),
 

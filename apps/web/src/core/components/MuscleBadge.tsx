@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils.ts";
 
 interface MuscleBadgeProps {
     muscle: MuscleGroup;
+    variant?: "default" | "secondary" | "outline" | "destructive";
     className?: string;
 }
 
@@ -27,9 +28,14 @@ const muscleClassMap: Record<MuscleGroup, string> = {
 /**
  * A standard badge for displaying translated muscle groups with Plato-specific styling.
  */
-export const MuscleBadge = ({ muscle, className }: MuscleBadgeProps) => {
+export const MuscleBadge = ({ muscle, variant = "default", className }: MuscleBadgeProps) => {
     return (
-        <span className={cn("badge-muscle", muscleClassMap[muscle], className)}>
+        <span className={cn(
+            "badge-muscle", 
+            muscleClassMap[muscle], 
+            variant === "secondary" && "opacity-80", // Simple implementation for now
+            className
+        )}>
             {muscleGroupTranslation[muscle] || muscle}
         </span>
     );
