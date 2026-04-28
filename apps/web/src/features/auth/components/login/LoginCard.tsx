@@ -20,9 +20,9 @@ const LoginCard = () => {
 
     return (
         <div className="flex flex-col w-[75%] gap-4">
-            <Card>
+            <Card className="border border-border">
                 <CardHeader>
-                    <CardTitle>Bem-vindo de volta ao Plato!</CardTitle>
+                    <CardTitle className="text-[20px] tracking-[-0.02em]">Bem-vindo de volta ao Plato!</CardTitle>
                     <CardDescription>
                         Faça login em sua conta.
                     </CardDescription>
@@ -37,7 +37,7 @@ const LoginCard = () => {
                     <Button
                         type="submit"
                         form={FORM_ID}
-                        className="w-full"
+                        className="w-full h-12 font-medium tracking-[-0.01em]"
                         disabled={isLoading}
                     >
                         Entrar

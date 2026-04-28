@@ -27,6 +27,7 @@ out/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.tsbuildinfo
 
 # IDE / Editor folders
 .idea/
@@ -38,3 +39,6 @@ yarn-error.log*
 # Misc
 apps/api/repomix-output.xml
 GEMINI.md
+
+# OpenWolf (AI Internals)
+.wolf/
