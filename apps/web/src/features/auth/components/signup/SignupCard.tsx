@@ -21,9 +21,9 @@ const SignupCard = () => {
 
     return (
         <div className="flex flex-col w-[75%] gap-4">
-            <Card>
+            <Card className="border border-border">
                 <CardHeader>
-                    <CardTitle>Bem-vindo ao Plato!</CardTitle>
+                    <CardTitle className="text-[20px] tracking-[-0.02em]">Bem-vindo ao Plato!</CardTitle>
                     <CardDescription>
                         Crie uma conta para treinar conosco.
                     </CardDescription>
@@ -45,7 +45,7 @@ const SignupCard = () => {
                     <Button
                         type="submit"
                         form={FORM_ID}
-                        className="flex-1"
+                        className="flex-1 h-12 font-medium tracking-[-0.01em]"
                         disabled={isLoading}
                     >
                         Criar conta
