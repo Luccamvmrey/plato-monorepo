@@ -10,11 +10,11 @@ interface GroupedData {
     date: Date;
     maxE1RM: number;
     totalVolume: number;
-    sets: any[];
+    sets: { date: Date; weight: number; reps: number; rpe: number; e1rm: number; volume: number }[];
 }
 
 export const useExerciseAnalytics = (exerciseId: number) => {
-    const [_, navigate] = useLocation();
+    const [, navigate] = useLocation();
 
     const { data: sessions, isLoading: sessionsLoading } = useQuery({
         queryKey: ["sessions"],
@@ -29,10 +29,10 @@ export const useExerciseAnalytics = (exerciseId: number) => {
     const isLoading = sessionsLoading || recordsLoading;
 
     // Extract stats for this specific exercise
-    const exerciseData = sessions?.flatMap(session => 
-        (session as any).sessionSet
-            .filter((set: any) => set.exerciseId === exerciseId)
-            .map((set: any) => ({
+    const exerciseData = sessions?.flatMap(session =>
+        session.sessionSet
+            .filter((set) => set.exerciseId === exerciseId)
+            .map((set) => ({
                 date: session.completedAt ? new Date(session.completedAt) : new Date(session.startedAt),
                 weight: set.actualWeight,
                 reps: set.actualReps,
@@ -56,7 +56,7 @@ export const useExerciseAnalytics = (exerciseId: number) => {
 
     const chartData: GroupedData[] = Object.values(sessionsGrouped);
 
-    const exerciseInfo = sessions?.flatMap(s => (s as any).sessionSet).find(s => s.exerciseId === exerciseId)?.exercise;
+    const exerciseInfo = sessions?.flatMap(s => s.sessionSet).find(s => s.exerciseId === exerciseId)?.exercise;
 
     const maxE1RM = Math.max(...chartData.map(d => d.maxE1RM), 0);
     const maxVolume = Math.max(...chartData.map(d => d.totalVolume), 0);

@@ -16,10 +16,13 @@ export interface Workout extends PrismaWorkout {
     workoutExercise: WorkoutExercise[];
 }
 
-export type SessionSet = PrismaSessionSet;
+export interface SessionSet extends PrismaSessionSet {
+    exercise?: Exercise;
+}
 
 export interface WorkoutSession extends PrismaWorkoutSession {
     sessionSet: SessionSet[];
+    workout?: Pick<PrismaWorkout, 'name' | 'isActive'>;
 }
 
 export interface WorkoutSessionWithWorkout extends WorkoutSession {
@@ -34,4 +37,4 @@ export interface EnrichedExerciseRecord extends WorkoutExercise {
     status: ExerciseStatus;
 }
 
-export interface GetUserWorkoutsResponse extends Array<Workout> {}
+export type GetUserWorkoutsResponse = Array<Workout>;

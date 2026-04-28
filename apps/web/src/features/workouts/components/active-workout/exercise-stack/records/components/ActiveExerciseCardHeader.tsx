@@ -1,13 +1,14 @@
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
+import type { MuscleGroup } from "@plato/database/generated/prisma/enums";
 
 interface ActiveExerciseCardHeaderProps {
     name: string;
-    targetMuscle: any; // Using any as per existing pattern for this component to avoid prisma enum import overhead in this layer
+    targetMuscle: MuscleGroup;
     isReadOnly: boolean;
     showEquipmentWeight: boolean;
-    onToggleEquipmentWeight?: (e: React.MouseEvent) => void;
+    onToggleEquipmentWeight?: () => void;
     onHeaderClick?: () => void;
 }
 
@@ -41,7 +42,7 @@ export const ActiveExerciseCardHeader = ({
                 <Button
                     variant="ghost"
                     size="sm"
-                    onClick={onToggleEquipmentWeight}
+                    onClick={() => onToggleEquipmentWeight()}
                     className={cn(
                         "text-[10px] h-7 px-2 font-bold uppercase tracking-wider transition-colors",
                         showEquipmentWeight ? "text-amber-600 bg-amber-50" : "text-muted-foreground"

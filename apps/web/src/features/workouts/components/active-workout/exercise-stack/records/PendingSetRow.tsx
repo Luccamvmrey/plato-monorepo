@@ -1,25 +1,16 @@
-import { cn } from "@/lib/utils.ts";
-import { getSetRowGridClass, COMMON_GRID_CLASSES } from "./SetRowLayout.ts";
-
 type PendingSetRowProps = {
     setNum: number;
     reps: number;
-    showEquipmentWeight: boolean;
+    weight?: number;
 };
 
-export const PendingSetRow = ({ setNum, reps, showEquipmentWeight }: PendingSetRowProps) => (
-    <div className={cn(
-        COMMON_GRID_CLASSES,
-        "last:border-b-0 opacity-40 grayscale pointer-events-none",
-        getSetRowGridClass(showEquipmentWeight)
-    )}>
-        <div className="flex items-center justify-center size-6 rounded-md border border-dashed border-muted-foreground text-muted-foreground text-xs font-medium tabular-nums">
+export const PendingSetRow = ({ setNum, reps, weight }: PendingSetRowProps) => (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/30 opacity-40">
+        <span className="w-6 h-6 rounded-md bg-muted flex items-center justify-center text-[11px] font-medium text-muted-foreground flex-shrink-0">
             {setNum}
-        </div>
-        <div className="h-9 flex items-center justify-center text-xs">-</div>
-        {showEquipmentWeight && <div className="h-9 flex items-center justify-center text-xs">-</div>}
-        <div className="h-9 flex items-center justify-center text-xs">{reps} reps</div>
-        <div className="h-9 flex items-center justify-center text-xs">-</div>
-        <div className="size-9" />
+        </span>
+        <span className="text-[12px] text-muted-foreground">
+            {weight && weight > 0 ? `${weight} kg` : '—'} · {reps} reps
+        </span>
     </div>
 );

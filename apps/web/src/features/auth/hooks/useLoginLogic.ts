@@ -5,7 +5,7 @@ import type { LoginRequest } from "@/features/auth/auth.types.ts";
 
 export const useLoginLogic = () => {
     const { loginMutation } = useAuth();
-    const [_, navigate] = useLocation();
+    const [, navigate] = useLocation();
 
     const FORM_ID = "login-form";
 

@@ -10,11 +10,12 @@ export const WorkoutEditorActions = ({ formId, isSaving }: WorkoutEditorActionsP
     return (
         <Button 
             form={formId} 
-            className="py-6 rounded-xl" 
+            variant="default"
+            className="h-14 rounded-xl font-medium tracking-tight gap-2" 
             type="submit"
             disabled={isSaving}
         >
-            <Save />
+            <Save data-icon="inline-start" />
             {isSaving ? "Salvando..." : "Salvar Treino"}
         </Button>
     );

@@ -1,94 +1,121 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, Weight, Zap, ChevronRight, Award } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { WorkoutSession } from "@/features/workouts/workout.types";
+import { MuscleBadge } from "@/core/components/MuscleBadge";
+import { cn } from "@/lib/utils";
 import { useSessionHistoryCardLogic } from "@/features/workouts/hooks/useSessionHistoryCardLogic";
 
 interface SessionHistoryCardProps {
     session: WorkoutSession;
-    allRecords?: any[];
+    allRecords?: { exerciseId: number; date: string | Date }[];
     navigate: (path: string) => void;
+}
+
+function formatDate(date: Date): string {
+    return date.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function formatMinutes(seconds: number): string {
+    if (seconds >= 3600) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        return `${h}h ${m.toString().padStart(2, "0")}m`;
+    }
+    return `${Math.floor(seconds / 60)} min`;
 }
 
 export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHistoryCardProps) => {
     const {
+        workoutName,
+        isArchived,
         totalVolume,
         avgRpe,
         completedAt,
+        duration,
+        totalSets,
+        exerciseCount,
         exercises,
-        handleExerciseClick
+        handleExerciseClick,
     } = useSessionHistoryCardLogic(session, allRecords, navigate);
 
     return (
-        <Card className="overflow-hidden border-l-4 border-l-primary">
-            <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle className="text-lg">
-                            {(session as any).workout?.name || "Treino Avulso"}
-                            {((session as any).workout && !(session as any).workout.isActive) && (
-                                <span className="text-[10px] ml-2 text-muted-foreground uppercase">(Arquivado)</span>
-                            )}
-                        </CardTitle>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                            <CalendarIcon className="w-3 h-3" />
-                            {completedAt ? format(completedAt, "PPP", { locale: ptBR }) : "Em progresso"}
-                        </div>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-primary/10 rounded-full">
-                            <Weight className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase">Volume Total</p>
-                            <p className="font-bold">{totalVolume.toLocaleString()} kg</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-secondary/20 rounded-full">
-                            <Zap className="w-4 h-4 text-secondary-foreground" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase">RPE Médio</p>
-                            <p className="font-bold">{avgRpe.toFixed(1)}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="mt-4 flex flex-wrap gap-2">
-                    <Badge variant="outline">
-                        {session.sessionSet.length} sets
-                    </Badge>
-                    <Badge variant="outline">
-                        {new Set(session.sessionSet.map(s => s.exerciseId)).size} exercícios
-                    </Badge>
-                </div>
+        <div className="bg-card border border-border rounded-xl p-4 mb-3">
 
-                <div className="mt-4 pt-4 border-t">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Exercícios Realizados</p>
-                    <div className="flex flex-col gap-1">
-                        {exercises.map(ex => (
-                            <button 
-                                key={ex.id}
-                                onClick={() => handleExerciseClick(ex.id)}
-                                className="flex items-center justify-between p-2 hover:bg-muted rounded-md transition-colors text-sm text-left group"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">{ex.name}</span>
-                                    {ex.hasPr && <Award className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
-                                </div>
-                                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                            </button>
-                        ))}
-                    </div>
+            {/* Header */}
+            <div className="flex items-start justify-between mb-3">
+                <div>
+                    <h3 className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
+                        {workoutName}
+                        {isArchived && (
+                            <span className="text-[10px] ml-2 text-muted-foreground uppercase tracking-[0.04em]">
+                                Arquivado
+                            </span>
+                        )}
+                    </h3>
+                    <p className="text-[12px] text-muted-foreground mt-0.5">
+                        {completedAt ? formatDate(completedAt) : "Em progresso"}
+                    </p>
                 </div>
-            </CardContent>
-        </Card>
+                {duration !== null && (
+                    <span className="text-[12px] text-muted-foreground">
+                        {formatMinutes(duration)}
+                    </span>
+                )}
+            </div>
+
+            {/* Métricas */}
+            <div className="flex gap-6 mb-3">
+                <div>
+                    <p className="text-[10px] font-medium tracking-[0.05em] uppercase text-muted-foreground mb-0.5">
+                        Volume total
+                    </p>
+                    <p className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
+                        {totalVolume.toLocaleString()} kg
+                    </p>
+                </div>
+                <div>
+                    <p className="text-[10px] font-medium tracking-[0.05em] uppercase text-muted-foreground mb-0.5">
+                        RPE médio
+                    </p>
+                    <p className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
+                        {avgRpe.toFixed(1)}
+                    </p>
+                </div>
+            </div>
+
+            {/* Pills de contagem */}
+            <div className="flex gap-2 mb-3">
+                <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
+                    {totalSets} {totalSets === 1 ? "set" : "sets"}
+                </span>
+                <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
+                    {exerciseCount} {exerciseCount === 1 ? "exercício" : "exercícios"}
+                </span>
+            </div>
+
+            {/* Divisor */}
+            <div className="border-t border-border mb-3" />
+
+            {/* Lista de exercícios */}
+            <p className="text-[10px] font-medium tracking-[0.05em] uppercase text-muted-foreground mb-2">
+                Exercícios realizados
+            </p>
+            {exercises.map((ex, i) => (
+                <button
+                    key={ex.id}
+                    onClick={() => handleExerciseClick(ex.id)}
+                    className={cn(
+                        "flex items-center gap-2 w-full py-2 text-left hover:opacity-80 transition-opacity",
+                        i < exercises.length - 1 && "border-b border-border"
+                    )}
+                >
+                    <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
+                        {ex.name}
+                    </span>
+                    {ex.muscleGroup && <MuscleBadge muscle={ex.muscleGroup} />}
+                    {ex.hasPr && <span className="badge-pr">PR</span>}
+                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-1" />
+                </button>
+            ))}
+        </div>
     );
 };

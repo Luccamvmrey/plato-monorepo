@@ -12,10 +12,13 @@ const MuscleGroupFilter = ({ selectedMuscleGroup, onSelectMuscleGroup }: MuscleG
     const groups = Object.values(MuscleGroup);
 
     return (
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
             <Badge
-                variant={selectedMuscleGroup === "ALL" ? "default" : "outline"}
-                className="cursor-pointer whitespace-nowrap p-3.5"
+                variant={selectedMuscleGroup === "ALL" ? "default" : "secondary"}
+                className={cn(
+                    "cursor-pointer whitespace-nowrap px-4 py-2 rounded-full font-medium transition-colors border border-transparent shadow-none",
+                    selectedMuscleGroup !== "ALL" && "bg-muted/50 text-muted-foreground hover:bg-muted"
+                )}
                 onClick={() => onSelectMuscleGroup("ALL")}
             >
                 Todos
@@ -24,10 +27,10 @@ const MuscleGroupFilter = ({ selectedMuscleGroup, onSelectMuscleGroup }: MuscleG
             {groups.map((group) => (
                 <Badge
                     key={group}
-                    variant={selectedMuscleGroup === group ? "default" : "outline"}
+                    variant={selectedMuscleGroup === group ? "default" : "secondary"}
                     className={cn(
-                        "cursor-pointer whitespace-nowrap transition-all p-3.5",
-                        selectedMuscleGroup === group && "scale-105"
+                        "cursor-pointer whitespace-nowrap px-4 py-2 rounded-full font-medium transition-colors border border-transparent shadow-none",
+                        selectedMuscleGroup !== group && "bg-muted/50 text-muted-foreground hover:bg-muted"
                     )}
                     onClick={() => onSelectMuscleGroup(group)}
                 >

@@ -1,3 +1,4 @@
+import { motion, type Variants } from "framer-motion";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useUserStats } from "../hooks/useUserStats";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
@@ -5,8 +6,20 @@ import { IdentityCard } from "../components/IdentityCard";
 import { PerformanceSnapshots } from "../components/PerformanceSnapshots";
 import { TrainingDistributionChart } from "../components/TrainingDistributionChart";
 import { GovernanceSettings } from "../components/GovernanceSettings";
-import { HeaderSlot } from "@/core/components/NavBarSlot";
-import { User as UserIcon } from "lucide-react";
+
+const stagger: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+};
+
+const staggerItem: Variants = {
+    hidden: { opacity: 0, y: 14 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { type: "spring", stiffness: 380, damping: 28 },
+    },
+};
 
 const UserProfilePage = () => {
     const { data: profile, isLoading: profileLoading } = useUserProfile();
@@ -17,41 +30,49 @@ const UserProfilePage = () => {
     if (isLoading) return <LoadingOverlay isLoading={true} />;
 
     return (
-        <div className="h-full flex flex-col gap-4 mb-[100px]">
-            <HeaderSlot>
-                <div className="bg-card flex flex-row items-center gap-2 p-4 rounded-xl border w-full">
-                    <UserIcon className="w-5 h-5 text-primary" />
-                    <span className="font-bold text-lg text-foreground">Perfil</span>
-                </div>
-            </HeaderSlot>
+        <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col mb-[100px] -mx-4 -mt-4"
+        >
+            {/* Header inline */}
+            <motion.div variants={staggerItem} className="px-4 pt-6 pb-2">
+                <h1 className="text-[22px] font-medium tracking-[-0.03em]">Perfil</h1>
+            </motion.div>
 
             {profile && (
-                <IdentityCard 
-                    name={profile.name}
-                    email={profile.email}
-                    createdAt={profile.createdAt}
-                    totalSessions={profile.totalSessions}
-                    lifetimeVolume={profile.lifetimeVolume}
-                    totalPRs={profile.totalPRs}
-                />
+                <motion.div variants={staggerItem}>
+                    <IdentityCard
+                        name={profile.name}
+                        email={profile.email}
+                        createdAt={profile.createdAt}
+                        totalSessions={profile.totalSessions}
+                        lifetimeVolume={profile.lifetimeVolume}
+                        totalPRs={profile.totalPRs}
+                    />
+                </motion.div>
             )}
 
-            <div className="grid grid-cols-1 gap-4">
-                {stats && (
-                    <>
-                        <PerformanceSnapshots 
+            {stats && (
+                <>
+                    <motion.div variants={staggerItem}>
+                        <PerformanceSnapshots
                             peakStrength={stats.peakStrength}
                             volumeLeaders={stats.volumeLeaders}
                         />
-                        <TrainingDistributionChart 
-                            distribution={stats.distribution}
-                        />
-                    </>
-                )}
-                
+                    </motion.div>
+
+                    <motion.div variants={staggerItem}>
+                        <TrainingDistributionChart distribution={stats.distribution} />
+                    </motion.div>
+                </>
+            )}
+
+            <motion.div variants={staggerItem}>
                 <GovernanceSettings />
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 };
 

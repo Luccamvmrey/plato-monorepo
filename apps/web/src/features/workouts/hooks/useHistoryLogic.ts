@@ -6,7 +6,7 @@ import { useWorkouts } from "@/features/workouts/hooks/useWorkouts";
 import { useLocation } from "wouter";
 
 export const useHistoryLogic = () => {
-    const [_, navigate] = useLocation();
+    const [, navigate] = useLocation();
     const [selectedFilter, setSelectedFilter] = useState<string>("all");
     
     const { data: sessions, isLoading: sessionsLoading } = useQuery({
@@ -26,7 +26,7 @@ export const useHistoryLogic = () => {
 
     const filteredSessions = sessions?.filter(session => {
         if (selectedFilter === "all") {
-            return (session as any).workout?.isActive !== false;
+            return session.workout?.isActive !== false;
         }
         return session.workoutId === Number(selectedFilter);
     });

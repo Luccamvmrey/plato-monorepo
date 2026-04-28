@@ -44,7 +44,7 @@ export function useAppMutation<TData = unknown, TError = unknown, TVariables = v
             }
 
             if (onSuccess) {
-                await (onSuccess as any)(data, variables, context);
+                await onSuccess(data, variables, context);
             }
         },
         onError: async (error, variables, context) => {
@@ -57,7 +57,7 @@ export function useAppMutation<TData = unknown, TError = unknown, TVariables = v
             }
 
             if (onError) {
-                await (onError as any)(error, variables, context);
+                await onError(error, variables, context);
             }
         }
     });

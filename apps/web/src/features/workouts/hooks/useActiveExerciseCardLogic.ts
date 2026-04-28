@@ -33,9 +33,8 @@ export const useActiveExerciseCardLogic = (
         });
     };
 
-    const toggleEquipmentWeight = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setShowEquipmentWeight(!showEquipmentWeight);
+    const toggleEquipmentWeight = () => {
+        setShowEquipmentWeight(prev => !prev);
     };
 
     return {
