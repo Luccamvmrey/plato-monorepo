@@ -1,4 +1,5 @@
 import { motion, type Variants } from "framer-motion";
+import { AlertCircle } from "lucide-react";
 import { useActiveWorkoutLogic } from "@/features/workouts/hooks/useActiveWorkoutLogic.ts";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -34,6 +35,7 @@ const ActiveWorkoutPage = () => {
         handleFinishConfirm,
         handleCancelConfirm,
         isFinishPending,
+        finishError,
         isCancelPending,
         isAllCompleted,
         navigate,
@@ -80,6 +82,23 @@ const ActiveWorkoutPage = () => {
                 isCancelPending={isCancelPending}
                 isAllCompleted={isAllCompleted}
             />
+
+            {finishError && (
+                <div className="mt-3 flex items-start gap-3 px-4 py-3 rounded-xl
+                                bg-destructive/10 border border-destructive/20">
+                    <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <p className="text-[13px] text-destructive">{finishError}</p>
+                    </div>
+                    <button
+                        onClick={handleFinishConfirm}
+                        className="text-[12px] font-medium text-destructive underline
+                                   underline-offset-2 flex-shrink-0"
+                    >
+                        Tentar novamente
+                    </button>
+                </div>
+            )}
 
             <FinishWorkoutDialog
                 isOpen={isConfirmOpen}
