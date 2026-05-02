@@ -77,7 +77,7 @@ export const useWorkoutSession = (workoutId?: string) => {
             );
             clearState();
             await queryClient.invalidateQueries({ queryKey: ["workoutSessions"] });
-            navigate(`${path.WORKOUT_SUMMARY}/${activeSession.id}`);
+            navigate(`${path.WORKOUT_COMPLETE}/${activeSession.id}`);
         } catch {
             setFinishError(
                 "Não foi possível finalizar o treino. Verifique sua conexão e tente novamente."
