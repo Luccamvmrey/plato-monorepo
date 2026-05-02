@@ -5,6 +5,7 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
 import { useWorkoutEditorLogic } from "@/features/workouts/hooks/useWorkoutEditorLogic.ts";
 import { WorkoutEditorForm } from "@/features/workouts/components/workout-editor/components/WorkoutEditorForm.tsx";
 import { WorkoutEditorActions } from "@/features/workouts/components/workout-editor/components/WorkoutEditorActions.tsx";
+import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
 const enterAnimation: Variants = {
     hidden: { opacity: 0, y: 10 },
@@ -19,6 +20,9 @@ const WorkoutEditorPage = () => {
     const {
         isFetching,
         isSaving,
+        isSuccess,
+        validationError,
+        saveError,
         sensors,
         collisionDetection,
         handleSubmit,
@@ -43,7 +47,16 @@ const WorkoutEditorPage = () => {
             >
                 <WorkoutEditorForm formId={FORM_ID} onSubmit={handleSubmit} />
                 <NewExerciseSheet />
-                <WorkoutEditorActions formId={FORM_ID} isSaving={isSaving} />
+
+                {(validationError || saveError) && (
+                    <InlineErrorBanner message={(validationError ?? saveError)!} />
+                )}
+
+                <WorkoutEditorActions
+                    formId={FORM_ID}
+                    isSaving={isSaving}
+                    isSuccess={isSuccess}
+                />
             </motion.div>
 
             <LoadingOverlay isLoading={isFetching || isSaving} />

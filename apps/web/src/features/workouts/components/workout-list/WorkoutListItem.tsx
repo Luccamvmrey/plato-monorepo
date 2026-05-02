@@ -11,6 +11,7 @@ import { Archive, Play, SquarePen, Undo2 } from "lucide-react";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { useWorkoutListItemLogic } from "@/features/workouts/hooks/useWorkoutListItemLogic.ts";
+import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 import { cn } from "@/lib/utils.ts";
 
 type WorkoutListItemProps = {
@@ -26,7 +27,11 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
         isLoading,
         isResumingSession,
         isPending,
+        conflictError,
+        createError,
     } = useWorkoutListItemLogic(workout);
+
+    const inlineError = conflictError ?? createError;
 
     return (
         <Card className={cn(
@@ -76,21 +81,28 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
                     ))}
                 </div>
             </CardContent>
+
+            {inlineError && (
+                <div className="px-4 pb-2">
+                    <InlineErrorBanner message={inlineError} />
+                </div>
+            )}
+
             <CardFooter className="flex flex-row items-center justify-between gap-2 bg-transparent pt-2 border-t border-border/50">
                 <div className="flex gap-1">
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="size-9 text-muted-foreground" 
-                        onClick={handleToggleStatus} 
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 text-muted-foreground"
+                        onClick={handleToggleStatus}
                         title={workout.isActive ? "Arquivar" : "Reativar"}
                     >
                         {workout.isActive ? <Archive data-icon="inline" /> : <Undo2 data-icon="inline" />}
                     </Button>
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="size-9 text-muted-foreground" 
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 text-muted-foreground"
                         onClick={handleEdit}
                     >
                         <SquarePen data-icon="inline" />
@@ -98,8 +110,8 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
                 </div>
 
                 {workout.isActive && (
-                    <Button 
-                        onClick={handleQuickStart} 
+                    <Button
+                        onClick={handleQuickStart}
                         disabled={isLoading}
                         variant={isResumingSession ? "secondary" : "default"}
                         className={cn(
@@ -107,7 +119,7 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
                             isResumingSession && "border-primary/20 text-primary"
                         )}
                     >
-                        <Play data-icon="inline-start" className={cn( !isResumingSession && "fill-current")} />
+                        <Play data-icon="inline-start" className={cn(!isResumingSession && "fill-current")} />
                         {isResumingSession ? "Retomar" : "Iniciar"}
                     </Button>
                 )}

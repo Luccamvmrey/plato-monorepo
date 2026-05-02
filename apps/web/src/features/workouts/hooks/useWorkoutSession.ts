@@ -51,11 +51,11 @@ export const useWorkoutSession = (workoutId?: string) => {
     const createSessionMutation = useAppMutation({
         mutationFn: WorkoutSessionService.create,
         invalidateQueries: [["workoutSessions"], ["activeSession"]],
+        suppressDefaultError: true,
         onSuccess: (data) => {
             const { newSession } = data;
             navigate(path.ACTIVE_WORKOUT + `/${newSession.workoutId}`);
         },
-        errorMessage: "Algo deu errado ao iniciar a sessão. Tente novamente mais tarde."
     });
 
     const [isFinishing, setIsFinishing] = useState(false);
@@ -90,12 +90,11 @@ export const useWorkoutSession = (workoutId?: string) => {
     const deleteSessionMutation = useAppMutation({
         mutationFn: WorkoutSessionService.delete,
         invalidateQueries: [["activeSession"], ["workoutSessions"]],
+        suppressDefaultError: true,
         onSuccess: () => {
             clearState();
             navigate(path.WORKOUTS);
         },
-        successMessage: "Treino cancelado.",
-        errorMessage: "Algo deu errado ao cancelar a sessão. Tente novamente mais tarde."
     });
 
     return {

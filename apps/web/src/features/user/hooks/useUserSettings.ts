@@ -1,14 +1,17 @@
 import { useTheme } from "@/core/context/ThemeProvider";
 import { useAuthStore } from "@/features/auth/auth.store";
 import api from "@/core/api";
-import { toast } from "sonner";
 import { useState } from "react";
+import { useSuccessState } from "@/core/hooks/useSuccessState";
 
 export const useUserSettings = () => {
     const { theme, setTheme } = useTheme();
     const logout = useAuthStore(state => state.logout);
     const [isExporting, setIsExporting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [exportError, setExportError] = useState<string | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const { isSuccess: exportSuccess, trigger: triggerExportSuccess } = useSuccessState();
 
     const toggleTheme = () => {
         setTheme(theme === "dark" ? "light" : "dark");
@@ -16,6 +19,7 @@ export const useUserSettings = () => {
 
     const handleExportData = async () => {
         setIsExporting(true);
+        setExportError(null);
         try {
             const response = await api.get("/users/export");
             const data = response.data;
@@ -28,10 +32,10 @@ export const useUserSettings = () => {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            toast.success("Dados exportados com sucesso!");
+            triggerExportSuccess();
         } catch (error) {
             console.error("Export failed:", error);
-            toast.error("Falha ao exportar dados.");
+            setExportError("Falha ao exportar dados. Tente novamente.");
         } finally {
             setIsExporting(false);
         }
@@ -39,13 +43,13 @@ export const useUserSettings = () => {
 
     const handleDeleteAccount = async () => {
         setIsDeleting(true);
+        setDeleteError(null);
         try {
             await api.delete("/users/account");
-            toast.success("Conta excluída permanentemente.");
             logout();
         } catch (error) {
             console.error("Deletion failed:", error);
-            toast.error("Falha ao excluir conta.");
+            setDeleteError("Falha ao excluir conta. Tente novamente.");
         } finally {
             setIsDeleting(false);
         }
@@ -53,7 +57,6 @@ export const useUserSettings = () => {
 
     const handleLogout = () => {
         logout();
-        toast.success("Sessão encerrada.");
     };
 
     return {
@@ -63,6 +66,9 @@ export const useUserSettings = () => {
         handleDeleteAccount,
         handleLogout,
         isExporting,
-        isDeleting
+        isDeleting,
+        exportSuccess,
+        exportError,
+        deleteError,
     };
 };

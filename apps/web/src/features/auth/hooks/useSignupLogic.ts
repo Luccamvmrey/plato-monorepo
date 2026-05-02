@@ -25,6 +25,9 @@ export const useSignupLogic = () => {
         FORM_ID,
         signup,
         isLoading: registerMutation.isPending,
+        signupError: registerMutation.isError
+            ? "Falha ao criar conta. Verifique os dados e tente novamente."
+            : null,
         handleGoBack,
     }
 }

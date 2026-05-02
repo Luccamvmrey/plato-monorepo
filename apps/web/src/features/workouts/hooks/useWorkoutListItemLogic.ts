@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useWorkoutSession } from "@/features/workouts/hooks/useWorkoutSession";
-import { toast } from "sonner";
+import { useState } from "react";
 import { path } from "@/core/constants/path";
 import type { Workout } from "@/features/workouts/workout.types";
 import { useWorkouts } from "@/features/workouts/hooks/useWorkouts";
@@ -11,6 +11,8 @@ export const useWorkoutListItemLogic = (workout: Workout) => {
     const { toggleStatusMutation } = useWorkouts();
     const { data: activeSessionData, isLoading } = findActiveSessionQuery;
     const activeSession = activeSessionData?.activeSession;
+
+    const [conflictError, setConflictError] = useState<string | null>(null);
 
     const handleEdit = () => {
         navigate(path.WORKOUT_EDITOR + `/${workout.id}`);
@@ -29,14 +31,19 @@ export const useWorkoutListItemLogic = (workout: Workout) => {
                 return;
             }
 
-            toast.error("Você já possui uma sessão ativa. Finalize-a antes de iniciar outro treino.");
+            setConflictError("Você já possui uma sessão ativa. Finalize-a antes de iniciar outro treino.");
             return;
         }
 
+        setConflictError(null);
         createSessionMutation.mutate({ workoutId: workout.id });
     };
 
     const isResumingSession = activeSession?.workoutId === workout.id;
+
+    const createError = createSessionMutation.isError
+        ? "Algo deu errado ao iniciar a sessão. Tente novamente."
+        : null;
 
     return {
         handleEdit,
@@ -45,5 +52,7 @@ export const useWorkoutListItemLogic = (workout: Workout) => {
         isLoading,
         isResumingSession,
         isPending: createSessionMutation.isPending || toggleStatusMutation.isPending,
+        conflictError,
+        createError,
     };
 };

@@ -65,6 +65,10 @@ export const useActiveWorkoutLogic = () => {
 
     const isLoading = isLoadingSession || (!!id && isLoadingWorkout);
 
+    const cancelError = deleteSessionMutation.isError
+        ? "Algo deu errado ao cancelar a sessão. Tente novamente."
+        : null;
+
     return {
         id,
         navigate,
@@ -82,6 +86,7 @@ export const useActiveWorkoutLogic = () => {
         handleCancelConfirm,
         isFinishPending: isFinishing,
         finishError,
+        cancelError,
         isCancelPending: deleteSessionMutation.isPending,
         isAllCompleted,
     };
