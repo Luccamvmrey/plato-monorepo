@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MoreHorizontal, Loader2, CheckCircle2 } from "lucide-react";
+import { MoreHorizontal, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
 import { useActiveExerciseCardLogic } from "@/features/workouts/hooks/useActiveExerciseCardLogic.ts";
 import { useActiveSetInput } from "@/features/workouts/hooks/useActiveSetInput.ts";
@@ -20,12 +20,10 @@ import { UNITS } from "@/core/constants/units.ts";
 type ActiveExerciseCardProps = {
     record: EnrichedExerciseRecord;
     sessionId: number;
-    isReadOnly?: boolean;
-    onHeaderClick?: () => void;
     lastSession?: WorkoutSession | null;
 };
 
-const ActiveExerciseCard = ({ record, sessionId, isReadOnly = false, onHeaderClick, lastSession }: ActiveExerciseCardProps) => {
+const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCardProps) => {
     const {
         showEquipmentWeight,
         toggleEquipmentWeight,
@@ -34,7 +32,7 @@ const ActiveExerciseCard = ({ record, sessionId, isReadOnly = false, onHeaderCli
         pendingSetsCount,
         handleSetConfirm,
         isPending,
-    } = useActiveExerciseCardLogic(record, sessionId, lastSession, isReadOnly);
+    } = useActiveExerciseCardLogic(record, sessionId, lastSession);
 
     const { state, actions } = useActiveSetInput({
         setNumber: activeSetNumber,
@@ -59,34 +57,6 @@ const ActiveExerciseCard = ({ record, sessionId, isReadOnly = false, onHeaderCli
 
     const doneDots = record.logs.length;
     const totalDots = record.targetSets;
-    const activeDot = isReadOnly ? -1 : doneDots;
-
-    if (isReadOnly) {
-        return (
-            <div
-                className={cn(
-                    "flex flex-col gap-2 p-4 rounded-xl bg-card border border-border",
-                    onHeaderClick && "cursor-pointer hover:bg-muted/20 transition-colors"
-                )}
-                onClick={onHeaderClick}
-            >
-                <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4 text-success flex-shrink-0" />
-                    <span className="text-[13px] font-medium text-muted-foreground flex-1">
-                        {record.exercise.name}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                        {record.logs.length} / {record.targetSets} {record.targetSets === 1 ? UNITS.SINGLE_SET : UNITS.SETS}
-                    </span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                    {record.logs.map(log => (
-                        <CompletedSetRow key={log.id} log={log} variant="summary" />
-                    ))}
-                </div>
-            </div>
-        );
-    }
 
     return (
         <motion.div layout className="flex flex-col gap-2">
@@ -135,7 +105,7 @@ const ActiveExerciseCard = ({ record, sessionId, isReadOnly = false, onHeaderCli
                                 "w-2 h-2 rounded-full transition-colors",
                                 idx < doneDots
                                     ? "bg-success"
-                                    : idx === activeDot
+                                    : idx === doneDots
                                     ? "bg-primary"
                                     : "bg-muted"
                             )}

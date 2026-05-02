@@ -8,7 +8,7 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
 const SignupCard = () => {
-    const { FORM_ID, signup, isLoading, signupError, handleGoBack } = useSignupLogic();
+    const { FORM_ID, signup, isLoading, signupError, handleGoBack, errors, handleBlur } = useSignupLogic();
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -39,6 +39,8 @@ const SignupCard = () => {
                     <SignupForm
                         formId={FORM_ID}
                         onSubmit={handleSubmit}
+                        errors={errors}
+                        onBlur={handleBlur}
                     />
                     {signupError && <InlineErrorBanner message={signupError} />}
                 </CardContent>

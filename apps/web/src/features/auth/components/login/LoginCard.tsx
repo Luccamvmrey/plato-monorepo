@@ -7,7 +7,7 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
 const LoginCard = () => {
-    const { FORM_ID, logUserIn, isLoading, loginError, handleCreateAccount } = useLoginLogic();
+    const { FORM_ID, logUserIn, isLoading, loginError, handleCreateAccount, errors, handleBlur } = useLoginLogic();
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -32,6 +32,8 @@ const LoginCard = () => {
                     <LoginForm
                         formId={FORM_ID}
                         onSubmit={handleSubmit}
+                        errors={errors}
+                        onBlur={handleBlur}
                     />
                     {loginError && <InlineErrorBanner message={loginError} />}
                 </CardContent>

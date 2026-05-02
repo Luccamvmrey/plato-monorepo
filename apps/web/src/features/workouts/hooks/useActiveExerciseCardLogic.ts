@@ -7,21 +7,20 @@ import { type SetSubmissionData } from "@/features/workouts/components/active-wo
 export const useActiveExerciseCardLogic = (
     record: EnrichedExerciseRecord,
     sessionId: number,
-    lastSession?: WorkoutSession | null,
-    isReadOnly: boolean = false
+    lastSession?: WorkoutSession | null
 ) => {
     const { confirmSet } = useSessionSet();
-    const [manualEquipmentWeight, setManualEquipmentWeight] = useState(false);
+    const [equipmentWeightVisible, setEquipmentWeightVisible] = useState<boolean | null>(null);
 
     const { suggestions, activeSetNumber, pendingSetsCount, autoShowEquipmentWeight } = useExerciseSuggestions(
         record,
         lastSession,
     );
 
-    const showEquipmentWeight = autoShowEquipmentWeight || manualEquipmentWeight;
+    // null = follow auto-detection; true/false = explicit user override
+    const showEquipmentWeight = equipmentWeightVisible ?? autoShowEquipmentWeight;
 
     const handleSetConfirm = (setNumber: number, data: SetSubmissionData) => {
-        if (isReadOnly) return;
         confirmSet({
             workoutSessionId: sessionId,
             exerciseId: record.exerciseId,
@@ -34,7 +33,7 @@ export const useActiveExerciseCardLogic = (
     };
 
     const toggleEquipmentWeight = () => {
-        setManualEquipmentWeight(prev => !prev);
+        setEquipmentWeightVisible(prev => !(prev ?? autoShowEquipmentWeight));
     };
 
     return {
