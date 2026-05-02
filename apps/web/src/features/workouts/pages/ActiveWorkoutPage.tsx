@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion, type Variants } from "framer-motion";
 import { useActiveWorkoutLogic } from "@/features/workouts/hooks/useActiveWorkoutLogic.ts";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
@@ -22,6 +23,7 @@ const enterAnimation: Variants = {
 
 const ActiveWorkoutPage = () => {
     const {
+        id,
         activeSession,
         lastSession,
         workout,
@@ -39,6 +41,11 @@ const ActiveWorkoutPage = () => {
         isAllCompleted,
         navigate,
     } = useActiveWorkoutLogic();
+
+    useEffect(() => {
+        if (isLoading || !activeSession || id) return;
+        navigate(`${path.ACTIVE_WORKOUT}/${activeSession.workoutId}`);
+    }, [activeSession, id, isLoading, navigate]);
 
     if (isLoading) {
         return <LoadingOverlay isLoading={true} />;

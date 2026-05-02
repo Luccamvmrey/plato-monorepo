@@ -11,14 +11,14 @@ export const useActiveExerciseCardLogic = (
     isReadOnly: boolean = false
 ) => {
     const { confirmSet } = useSessionSet();
-    const [showEquipmentWeight, setShowEquipmentWeight] = useState(false);
+    const [manualEquipmentWeight, setManualEquipmentWeight] = useState(false);
 
-    const { suggestions, activeSetNumber, pendingSetsCount } = useExerciseSuggestions(
+    const { suggestions, activeSetNumber, pendingSetsCount, autoShowEquipmentWeight } = useExerciseSuggestions(
         record,
         lastSession,
-        showEquipmentWeight,
-        setShowEquipmentWeight
     );
+
+    const showEquipmentWeight = autoShowEquipmentWeight || manualEquipmentWeight;
 
     const handleSetConfirm = (setNumber: number, data: SetSubmissionData) => {
         if (isReadOnly) return;
@@ -34,7 +34,7 @@ export const useActiveExerciseCardLogic = (
     };
 
     const toggleEquipmentWeight = () => {
-        setShowEquipmentWeight(prev => !prev);
+        setManualEquipmentWeight(prev => !prev);
     };
 
     return {
