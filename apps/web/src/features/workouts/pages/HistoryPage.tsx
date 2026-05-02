@@ -32,6 +32,8 @@ const HistoryPage = () => {
         navigate,
     } = useHistoryLogic();
 
+    const isEmpty = filteredSessions?.length === 0 && !isLoading;
+
     return (
         <motion.div
             variants={stagger}
@@ -50,38 +52,44 @@ const HistoryPage = () => {
             </motion.div>
 
             {/* Lista de sessões */}
-            <motion.div variants={staggerItem} className="flex flex-col">
-                {filteredSessions?.map(session => (
-                    <SessionHistoryCard
-                        key={session.id}
-                        session={session}
-                        allRecords={allRecords}
-                        navigate={navigate}
-                    />
-                ))}
+            {!isEmpty && (
+                <motion.div variants={staggerItem} className="flex flex-col">
+                    {filteredSessions?.map(session => (
+                        <SessionHistoryCard
+                            key={session.id}
+                            session={session}
+                            allRecords={allRecords}
+                            navigate={navigate}
+                        />
+                    ))}
+                </motion.div>
+            )}
 
-                {/* Estado vazio */}
-                {filteredSessions?.length === 0 && !isLoading && (
-                    <div className="flex flex-col items-center justify-center gap-3 px-4 py-20">
-                        <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
-                            <History className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <p className="text-[15px] font-medium text-foreground text-center">
-                            Nenhum treino registrado
-                        </p>
-                        <p className="text-[13px] text-muted-foreground text-center">
-                            {selectedFilter === "all"
-                                ? "Complete um treino para ver seu histórico aqui."
-                                : "Nenhum registro para este treino."}
-                        </p>
-                        {selectedFilter === "all" && (
-                            <Button onClick={() => navigate(path.WORKOUTS)} className="mt-1">
-                                Ir para Treinos
-                            </Button>
-                        )}
+            {/* Estado vazio */}
+            {isEmpty && (
+                <motion.div
+                    variants={staggerItem}
+                    className="bg-dot-grid flex-1 flex flex-col items-center justify-center gap-3 rounded-xl
+                               min-h-[calc(100vh-220px)] text-center px-8"
+                >
+                    <div className="w-12 h-12 rounded-2xl bg-background/80 border border-border flex items-center justify-center">
+                        <History className="w-5 h-5 text-muted-foreground" />
                     </div>
-                )}
-            </motion.div>
+                    <p className="text-[15px] font-medium text-foreground">
+                        Nenhum treino registrado
+                    </p>
+                    <p className="text-[13px] text-muted-foreground">
+                        {selectedFilter === "all"
+                            ? "Complete um treino para ver seu histórico aqui."
+                            : "Nenhum registro para este treino."}
+                    </p>
+                    {selectedFilter === "all" && (
+                        <Button onClick={() => navigate(path.WORKOUTS)} className="mt-1">
+                            Ir para Treinos
+                        </Button>
+                    )}
+                </motion.div>
+            )}
 
             <LoadingOverlay isLoading={isLoading} />
         </motion.div>
