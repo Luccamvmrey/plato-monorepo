@@ -1,4 +1,4 @@
-import { calculateTotalVolume, calculateAverageRPE } from "@/features/workouts/utils/analytics";
+import { calculateSessionSummary } from "@/features/workouts/utils/analytics";
 import type { WorkoutSession } from "@/features/workouts/workout.types";
 import type { MuscleGroup } from "@plato/database/generated/prisma/enums";
 import { path } from "@/core/constants/path";
@@ -11,21 +11,12 @@ export const useSessionHistoryCardLogic = (
     const workoutName = session.workout?.name || "Treino Avulso";
     const isArchived = session.workout && !session.workout.isActive;
 
-    const totalVolume = calculateTotalVolume(session.sessionSet);
-    const avgRpe = calculateAverageRPE(session.sessionSet);
+    const summary = calculateSessionSummary(session);
+    const { totalVolume, avgRpe, duration, totalSets, exerciseCount } = summary;
+    
     const completedAt = session.completedAt ? new Date(session.completedAt) : null;
 
-    const duration =
-        session.completedAt && session.startedAt
-            ? Math.round(
-                (new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()) / 1000
-            )
-            : null;
-
-    const totalSets = session.sessionSet.length;
-
     const uniqueExerciseIds = Array.from(new Set(session.sessionSet.map(s => s.exerciseId)));
-    const exerciseCount = uniqueExerciseIds.length;
 
     const exercises = uniqueExerciseIds.map(exId => {
         const set = session.sessionSet.find((s) => s.exerciseId === exId);

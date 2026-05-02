@@ -2,6 +2,7 @@ import { Award, BarChart2 } from "lucide-react";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { cn } from "@/lib/utils";
 import type { MuscleGroup } from "@plato/database/generated/prisma/enums";
+import { formatWeight } from "@/core/utils/formatters";
 
 interface PerformanceSnapshotsProps {
     peakStrength: Record<string, number>;
@@ -70,7 +71,7 @@ export const PerformanceSnapshots = ({ peakStrength, volumeLeaders }: Performanc
                         >
                             <div className="flex items-center justify-between mb-1">
                                 <MuscleBadge muscle={muscle as MuscleGroup} />
-                                <span className="text-[12px] text-muted-foreground">{leader.volume.toLocaleString()} kg</span>
+                                <span className="text-[12px] text-muted-foreground">{formatWeight(leader.volume)}</span>
                             </div>
                             <p className="text-[13px] font-medium text-foreground">{leader.name}</p>
                         </div>

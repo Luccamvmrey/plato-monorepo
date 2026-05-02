@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatDateCustom } from "@/core/utils/formatters";
 import {
     ResponsiveContainer,
     AreaChart,
@@ -33,7 +33,7 @@ const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
     return (
         <div className="bg-card border border-border rounded-lg px-3 py-2">
             <p className="text-[11px] text-muted-foreground mb-1">
-                {format(new Date(label ?? 0), "dd/MM/yyyy")}
+                {formatDateCustom(label ?? 0, "dd/MM/yyyy")}
             </p>
             {payload.map((p) => (
                 <p key={p.name} className="text-[13px] font-medium" style={{ color: p.color }}>
@@ -95,7 +95,7 @@ export const AnalyticsChart: FC<AnalyticsChartProps> = ({ data, color, gradientI
                     dataKey="timestamp"
                     type="number"
                     domain={["dataMin", "dataMax"]}
-                    tickFormatter={(t) => format(new Date(t), "dd/MM")}
+                    tickFormatter={(t) => formatDateCustom(t, "dd/MM")}
                     {...axisStyle}
                     minTickGap={30}
                 />

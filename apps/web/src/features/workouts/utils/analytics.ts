@@ -1,4 +1,4 @@
-import type { SessionSet } from "../workout.types";
+import type { SessionSet, WorkoutSession } from "../workout.types";
 
 /**
  * Calculates Estimated 1RM using the Brzycki formula, adjusted for RPE.
@@ -45,4 +45,28 @@ export const calculateAverageRPE = (sets: SessionSet[]): number => {
     if (sets.length === 0) return 0;
     const sum = sets.reduce((total, set) => total + set.rpe, 0);
     return sum / sets.length;
+};
+
+/**
+ * Calculates the duration of a session in seconds.
+ */
+export const calculateSessionDuration = (session: Pick<WorkoutSession, 'startedAt' | 'completedAt'>): number => {
+    if (!session.startedAt || !session.completedAt) return 0;
+    return Math.round(
+        (new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()) / 1000
+    );
+};
+
+/**
+ * Summarizes basic session metrics.
+ */
+export const calculateSessionSummary = (session: WorkoutSession) => {
+    const sets = session.sessionSet || [];
+    return {
+        totalVolume: calculateTotalVolume(sets),
+        avgRpe: calculateAverageRPE(sets),
+        duration: calculateSessionDuration(session),
+        totalSets: sets.length,
+        exerciseCount: new Set(sets.map(s => s.exerciseId)).size,
+    };
 };

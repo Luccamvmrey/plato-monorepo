@@ -15,6 +15,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { EnrichedExerciseRecord, WorkoutSession } from "@/features/workouts/workout.types.ts";
+import { UNITS } from "@/core/constants/units.ts";
 
 type ActiveExerciseCardProps = {
     record: EnrichedExerciseRecord;
@@ -75,19 +76,12 @@ const ActiveExerciseCard = ({ record, sessionId, isReadOnly = false, onHeaderCli
                         {record.exercise.name}
                     </span>
                     <span className="text-[11px] text-muted-foreground">
-                        {record.logs.length} / {record.targetSets} séries
+                        {record.logs.length} / {record.targetSets} {record.targetSets === 1 ? UNITS.SINGLE_SET : UNITS.SETS}
                     </span>
                 </div>
                 <div className="flex flex-col gap-1.5">
                     {record.logs.map(log => (
-                        <div key={log.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-success-subtle">
-                            <span className="text-[13px] font-medium text-success-subtle-fg">
-                                Set {log.setNumber}
-                            </span>
-                            <span className="ml-auto text-[12px] text-success-subtle-fg/70 tabular-nums">
-                                {log.actualWeight}kg · {log.actualReps}rep · RPE {log.rpe}
-                            </span>
-                        </div>
+                        <CompletedSetRow key={log.id} log={log} variant="summary" />
                     ))}
                 </div>
             </div>
@@ -166,7 +160,7 @@ const ActiveExerciseCard = ({ record, sessionId, isReadOnly = false, onHeaderCli
                             className="input-workout"
                             onFocus={() => handleFocusScroll(weightRef)}
                         />
-                        <span className="text-[12px] text-muted-foreground text-center">kg</span>
+                        <span className="text-[12px] text-muted-foreground text-center">{UNITS.WEIGHT}</span>
                     </div>
 
                     <div className="flex-1 flex flex-col gap-1">
@@ -197,7 +191,7 @@ const ActiveExerciseCard = ({ record, sessionId, isReadOnly = false, onHeaderCli
                         <input
                             type="number"
                             inputMode="decimal"
-                            placeholder="kg"
+                            placeholder={UNITS.WEIGHT}
                             value={equipmentWeight}
                             onChange={(e) => setEquipmentWeight(e.target.value)}
                             disabled={isPending || wasSubmitted}
@@ -231,7 +225,7 @@ const ActiveExerciseCard = ({ record, sessionId, isReadOnly = false, onHeaderCli
                             Confirmando...
                         </span>
                     ) : (
-                        `Confirmar set ${activeSetNumber}`
+                        `Confirmar ${UNITS.SINGLE_SET} ${activeSetNumber}`
                     )}
                 </motion.button>
             </motion.div>

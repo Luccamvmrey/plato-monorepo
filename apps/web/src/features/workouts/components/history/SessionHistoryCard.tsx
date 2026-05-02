@@ -3,24 +3,14 @@ import type { WorkoutSession } from "@/features/workouts/workout.types";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { cn } from "@/lib/utils";
 import { useSessionHistoryCardLogic } from "@/features/workouts/hooks/useSessionHistoryCardLogic";
+import { formatDateFull } from "@/core/utils/formatters";
+import { formatDurationExtensive } from "@/core/utils/time";
+import { UNITS } from "@/core/constants/units";
 
 interface SessionHistoryCardProps {
     session: WorkoutSession;
     allRecords?: { exerciseId: number; date: string | Date }[];
     navigate: (path: string) => void;
-}
-
-function formatDate(date: Date): string {
-    return date.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
-}
-
-function formatMinutes(seconds: number): string {
-    if (seconds >= 3600) {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        return `${h}h ${m.toString().padStart(2, "0")}m`;
-    }
-    return `${Math.floor(seconds / 60)} min`;
 }
 
 export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHistoryCardProps) => {
@@ -52,12 +42,12 @@ export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHis
                         )}
                     </h3>
                     <p className="text-[12px] text-muted-foreground mt-0.5">
-                        {completedAt ? formatDate(completedAt) : "Em progresso"}
+                        {completedAt ? formatDateFull(completedAt) : "Em progresso"}
                     </p>
                 </div>
                 {duration !== null && (
                     <span className="text-[12px] text-muted-foreground">
-                        {formatMinutes(duration)}
+                        {formatDurationExtensive(duration)}
                     </span>
                 )}
             </div>
@@ -69,7 +59,7 @@ export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHis
                         Volume total
                     </p>
                     <p className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
-                        {totalVolume.toLocaleString()} kg
+                        {totalVolume.toLocaleString("pt-BR")} {UNITS.WEIGHT}
                     </p>
                 </div>
                 <div>
@@ -85,10 +75,10 @@ export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHis
             {/* Pills de contagem */}
             <div className="flex gap-2 mb-3">
                 <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
-                    {totalSets} {totalSets === 1 ? "set" : "sets"}
+                    {totalSets} {totalSets === 1 ? UNITS.SINGLE_SET : UNITS.SETS}
                 </span>
                 <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
-                    {exerciseCount} {exerciseCount === 1 ? "exercício" : "exercícios"}
+                    {exerciseCount} {exerciseCount === 1 ? UNITS.SINGLE_EXERCISE : UNITS.EXERCISES}
                 </span>
             </div>
 

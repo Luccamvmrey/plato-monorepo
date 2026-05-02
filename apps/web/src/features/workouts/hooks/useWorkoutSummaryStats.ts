@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { MuscleGroup } from "@plato/database/dist/generated/prisma/enums.ts";
 import type { Workout, WorkoutSession } from "@/features/workouts/workout.types.ts";
-import { calculateSetVolume, calculateTotalVolume } from "@/features/workouts/utils/analytics.ts";
+import { calculateSetVolume, calculateTotalVolume, calculateSessionDuration } from "@/features/workouts/utils/analytics.ts";
 
 export type SummaryStats = {
     totalVolume: number;
@@ -37,14 +37,7 @@ export const useWorkoutSummaryStats = (
 
         const sets = workoutSession.sessionSet || [];
 
-        const duration =
-            workoutSession.completedAt && workoutSession.startedAt
-                ? Math.round(
-                    (new Date(workoutSession.completedAt).getTime() -
-                        new Date(workoutSession.startedAt).getTime()) /
-                    1000
-                )
-                : 0;
+        const duration = calculateSessionDuration(workoutSession);
 
         const totalSets = sets.length;
         const totalVolume = calculateTotalVolume(sets);
