@@ -25,6 +25,9 @@ export const useLoginLogic = () => {
         FORM_ID,
         logUserIn,
         isLoading: loginMutation.isPending,
+        loginError: loginMutation.isError
+            ? "Falha ao fazer login. Verifique suas credenciais e tente novamente."
+            : null,
         handleCreateAccount,
     }
 }

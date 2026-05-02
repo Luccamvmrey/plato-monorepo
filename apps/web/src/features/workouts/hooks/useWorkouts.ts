@@ -30,31 +30,25 @@ export const useWorkouts = (id?: string, isActive?: boolean) => {
     const createWorkoutMutation = useAppMutation({
         mutationFn: WorkoutService.create,
         invalidateQueries: [["workouts"]],
-        successMessage: "Treino criado com sucesso!",
-        errorMessage: "Erro ao criar treino. Tente novamente mais tarde."
+        suppressDefaultError: true,
     });
 
     const updateWorkoutMutation = useAppMutation({
         mutationFn: WorkoutService.update,
         invalidateQueries: [["workouts"]],
-        successMessage: "Treino atualizado com sucesso!",
-        errorMessage: "Erro ao atualizar treino. Tente novamente mais tarde."
+        suppressDefaultError: true,
     });
 
     const toggleStatusMutation = useAppMutation({
         mutationFn: WorkoutService.toggleStatus,
         invalidateQueries: [["workouts"]],
-        successMessage: "Status do treino atualizado!",
-        errorMessage: "Erro ao atualizar status do treino."
     });
 
     const deleteWorkoutMutation = useAppMutation({
         mutationFn: WorkoutService.delete,
         invalidateQueries: [["workouts"]],
-        successMessage: "Treino deletado com sucesso!",
-        errorMessage: "Erro ao deletar treino. Tente novamente mais tarde.",
         onSuccess: () => reset()
-    })
+    });
 
     return {
         userWorkoutsQuery,

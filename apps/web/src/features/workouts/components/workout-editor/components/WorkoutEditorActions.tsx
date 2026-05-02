@@ -1,22 +1,31 @@
 import { Button } from "@/components/ui/button.tsx";
-import { Save } from "lucide-react";
+import { Check, Save } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface WorkoutEditorActionsProps {
     formId: string;
     isSaving?: boolean;
+    isSuccess?: boolean;
 }
 
-export const WorkoutEditorActions = ({ formId, isSaving }: WorkoutEditorActionsProps) => {
+export const WorkoutEditorActions = ({ formId, isSaving, isSuccess }: WorkoutEditorActionsProps) => {
     return (
-        <Button 
-            form={formId} 
+        <Button
+            form={formId}
             variant="default"
-            className="h-14 rounded-xl font-medium tracking-tight gap-2" 
+            className={cn(
+                "h-14 rounded-xl font-medium tracking-tight gap-2 transition-colors",
+                isSuccess && "bg-success text-success-foreground hover:bg-success/90"
+            )}
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || isSuccess}
         >
-            <Save data-icon="inline-start" />
-            {isSaving ? "Salvando..." : "Salvar Treino"}
+            {isSuccess ? (
+                <Check data-icon="inline-start" />
+            ) : (
+                <Save data-icon="inline-start" />
+            )}
+            {isSaving ? "Salvando..." : isSuccess ? "Salvo!" : "Salvar Treino"}
         </Button>
     );
 };

@@ -10,6 +10,7 @@ import WorkoutListPage from "@/features/workouts/pages/WorkoutListPage.tsx";
 import WorkoutEditorPage from "@/features/workouts/pages/WorkoutEditorPage.tsx";
 import Layout from "@/core/layout/Layout.tsx";
 import ActiveWorkoutPage from "@/features/workouts/pages/ActiveWorkoutPage.tsx";
+import WorkoutCompletePage from "@/features/workouts/pages/WorkoutCompletePage.tsx";
 import WorkoutSummaryPage from "@/features/workouts/pages/WorkoutSummaryPage.tsx";
 import HistoryPage from "@/features/workouts/pages/HistoryPage.tsx";
 import ExerciseAnalyticsPage from "@/features/workouts/pages/ExerciseAnalyticsPage.tsx";
@@ -26,6 +27,7 @@ export function App() {
                 <Switch>
                     <Route path={path.LOGIN} component={LoginPage}/>
                     <Route path={path.SIGNUP} component={SignupPage}/>
+                    <Route path={`${path.WORKOUT_COMPLETE}/:id`} component={WorkoutCompletePage}/>
 
                     <Layout>
                         <AuthGuard>

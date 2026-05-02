@@ -9,6 +9,7 @@ import { ActiveWorkoutActions } from "@/features/workouts/components/active-work
 import { FinishWorkoutDialog } from "@/features/workouts/components/active-workout/components/dialogs/FinishWorkoutDialog";
 import { CancelWorkoutDialog } from "@/features/workouts/components/active-workout/components/dialogs/CancelWorkoutDialog";
 import { SessionProgress } from "@/features/workouts/components/active-workout/SessionProgress.tsx";
+import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
 const enterAnimation: Variants = {
     hidden: { opacity: 0, y: 10 },
@@ -33,7 +34,7 @@ const ActiveWorkoutPage = () => {
         handleFinishClick,
         handleFinishConfirm,
         handleCancelConfirm,
-        isFinishPending,
+        cancelError,
         isCancelPending,
         isAllCompleted,
         navigate,
@@ -76,10 +77,19 @@ const ActiveWorkoutPage = () => {
             <ActiveWorkoutActions
                 onFinishClick={handleFinishClick}
                 onCancelClick={() => setIsCancelOpen(true)}
-                isFinishPending={isFinishPending}
+                isFinishPending={false}
                 isCancelPending={isCancelPending}
                 isAllCompleted={isAllCompleted}
             />
+
+            {cancelError && (
+                <InlineErrorBanner
+                    message={cancelError}
+                    actionLabel="Tentar novamente"
+                    onAction={handleCancelConfirm}
+                    className="mt-3"
+                />
+            )}
 
             <FinishWorkoutDialog
                 isOpen={isConfirmOpen}

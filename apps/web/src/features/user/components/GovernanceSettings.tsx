@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Sun, Moon, Download, LogOut, Trash2 } from "lucide-react";
+import { Settings, Sun, Moon, Download, LogOut, Trash2, Check } from "lucide-react";
 import { useUserSettings } from "../hooks/useUserSettings";
 import {
     AlertDialog,
@@ -12,17 +12,31 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
+import { cn } from "@/lib/utils";
 
 export const GovernanceSettings = () => {
-    const { theme, toggleTheme, handleExportData, handleDeleteAccount, handleLogout, isExporting, isDeleting } =
-        useUserSettings();
+    const {
+        theme,
+        toggleTheme,
+        handleExportData,
+        handleDeleteAccount,
+        handleLogout,
+        isExporting,
+        isDeleting,
+        exportSuccess,
+        exportError,
+        deleteError,
+    } = useUserSettings();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [confirmText, setConfirmText] = useState("");
 
     const onDeleteConfirm = async () => {
         await handleDeleteAccount();
-        setDeleteDialogOpen(false);
-        setConfirmText("");
+        if (!deleteError) {
+            setDeleteDialogOpen(false);
+            setConfirmText("");
+        }
     };
 
     return (
@@ -65,8 +79,19 @@ export const GovernanceSettings = () => {
                             Exportar todo seu histórico em JSON
                         </p>
                     </div>
-                    <Download className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <div className={cn(
+                        "w-4 h-4 flex-shrink-0 transition-colors",
+                        exportSuccess ? "text-success" : "text-muted-foreground"
+                    )}>
+                        {exportSuccess ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                    </div>
                 </button>
+
+                {exportError && (
+                    <div className="px-4 pb-3">
+                        <InlineErrorBanner message={exportError} />
+                    </div>
+                )}
 
                 {/* Encerrar sessão */}
                 <button
@@ -112,6 +137,8 @@ export const GovernanceSettings = () => {
                         placeholder="EXCLUIR"
                         className="h-11 rounded-md font-mono text-[13px]"
                     />
+
+                    {deleteError && <InlineErrorBanner message={deleteError} />}
 
                     <AlertDialogFooter>
                         <AlertDialogCancel className="rounded-lg">Cancelar</AlertDialogCancel>

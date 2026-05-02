@@ -38,3 +38,17 @@ export interface EnrichedExerciseRecord extends WorkoutExercise {
 }
 
 export type GetUserWorkoutsResponse = Array<Workout>;
+
+export interface SessionSetPayload {
+  workoutSessionId: number
+  exerciseId: number
+  setNumber: number
+  actualReps: number
+  actualWeight: number
+  equipmentWeight?: number
+  rpe: number
+}
+
+export interface FinishSessionPayload {
+  sets: SessionSetPayload[]
+}

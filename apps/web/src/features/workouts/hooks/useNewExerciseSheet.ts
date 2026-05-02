@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { Exercise } from "@/features/workouts/workout.types.ts";
 import { useWorkoutEditorStore } from "@/features/workouts/stores/workout-editor.store.ts";
-import { toast } from "sonner";
 
 export const useNewExerciseSheet = (exercises: Exercise[] | undefined) => {
     const addExercises = useWorkoutEditorStore(state => state.addExercises);
@@ -36,7 +35,6 @@ export const useNewExerciseSheet = (exercises: Exercise[] | undefined) => {
 
     const handleAddSelected = () => {
         addExercises(selectedExercises);
-        toast.success(`${selectedExercises.length} exercício(s) adicionado(s) ao treino!`);
         handleCloseSheet();
     }
 

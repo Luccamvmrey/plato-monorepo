@@ -110,16 +110,43 @@ const findActiveSession = async (userId: number) => {
     };
 }
 
-const finishSession = async (userId: number, workoutSessionId: number) => {
+const finishSession = async (userId: number, workoutSessionId: number, body: { sets: Array<{
+    workoutSessionId: number;
+    exerciseId: number;
+    setNumber: number;
+    actualReps: number;
+    actualWeight: number;
+    equipmentWeight?: number;
+    rpe: number;
+}> }) => {
     const now = new Date();
-    const result = await prisma.workoutSession.update({
-        where: { id: workoutSessionId, userId },
-        data: { completedAt: now },
-        include: SESSION_INCLUDE
+
+    const result = await prisma.$transaction(async (tx) => {
+        if (body.sets.length > 0) {
+            await tx.sessionSet.createMany({
+                data: body.sets.map((set) => ({
+                    workoutSessionId,
+                    exerciseId:      set.exerciseId,
+                    setNumber:       set.setNumber,
+                    actualReps:      set.actualReps,
+                    actualWeight:    set.actualWeight,
+                    equipmentWeight: set.equipmentWeight ?? null,
+                    rpe:             set.rpe,
+                })),
+            });
+        }
+
+        return tx.workoutSession.update({
+            where: { id: workoutSessionId, userId },
+            data:  { completedAt: now },
+            include: SESSION_INCLUDE,
+        });
     });
 
     // Fire and forget PR scanning
-    scanForRecords(userId, workoutSessionId).catch(err => console.error("PR Scanning background error:", err));
+    scanForRecords(userId, workoutSessionId).catch((err) =>
+        console.error("PR Scanning background error:", err)
+    );
 
     return result;
 }

@@ -49,7 +49,7 @@ const WorkoutListPage = () => {
                 </Button>
             </motion.div>
 
-            <motion.div variants={staggerItem}>
+            <motion.div variants={staggerItem} className="flex-1 flex flex-col">
                 <WorkoutList
                     workouts={workouts}
                     isArchivedView={showArchived}

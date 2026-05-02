@@ -1,33 +1,74 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { WorkoutSession } from "../workout.types";
+import type { WorkoutSession, SessionSetPayload } from "../workout.types";
+
+type ActiveSession = WorkoutSession & { pendingSets: SessionSetPayload[] }
+
+type FinalizationStatus = 'idle' | 'pending' | 'success' | 'error';
+
+interface FinalizationState {
+    status: FinalizationStatus;
+    sessionId: number | null;
+    error: string | null;
+}
 
 interface ActiveWorkoutState {
-    activeSession: WorkoutSession | null;
+    activeSession: ActiveSession | null;
     lastSession: WorkoutSession | null;
+    finalization: FinalizationState;
 }
 
 interface ActiveWorkoutActions {
     setActiveSession: (session: WorkoutSession | null, lastSession?: WorkoutSession | null) => void;
     clearState: () => void;
+    addPendingSet: (payload: SessionSetPayload) => void;
+    setFinalization: (state: FinalizationState) => void;
+    resetFinalization: () => void;
 }
+
+const IDLE_FINALIZATION: FinalizationState = { status: 'idle', sessionId: null, error: null };
 
 export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutActions>()(
     persist(
         (set) => ({
             activeSession: null,
             lastSession: null,
+            finalization: IDLE_FINALIZATION,
 
-            setActiveSession: (session, lastSession = null) => set({ 
-                activeSession: session, 
-                lastSession: lastSession 
-            }),
+            setActiveSession: (session, lastSession = null) =>
+                set((state) => ({
+                    activeSession: session
+                        ? {
+                            ...session,
+                            pendingSets: state.activeSession?.pendingSets ?? [],
+                          }
+                        : null,
+                    lastSession,
+                })),
 
             clearState: () => set({ activeSession: null, lastSession: null }),
+
+            addPendingSet: (payload) =>
+                set((state) => ({
+                    activeSession: state.activeSession
+                        ? {
+                            ...state.activeSession,
+                            pendingSets: [...state.activeSession.pendingSets, payload],
+                          }
+                        : state.activeSession,
+                })),
+
+            setFinalization: (finalization) => set({ finalization }),
+
+            resetFinalization: () => set({ finalization: IDLE_FINALIZATION }),
         }),
         {
             name: "active-workout-storage",
-            storage: createJSONStorage(() => localStorage)
+            storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                activeSession: state.activeSession,
+                lastSession: state.lastSession,
+            }),
         }
     )
 )

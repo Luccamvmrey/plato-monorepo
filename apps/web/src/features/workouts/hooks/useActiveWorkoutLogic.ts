@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useWorkoutSession } from "./useWorkoutSession";
 import { useWorkouts } from "./useWorkouts";
 import { useExerciseStack } from "./useExerciseStack";
+import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
 import { path } from "@/core/constants/path";
 
 export const useActiveWorkoutLogic = () => {
@@ -11,7 +12,11 @@ export const useActiveWorkoutLogic = () => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isCancelOpen, setIsCancelOpen] = useState(false);
 
-    const { findActiveSessionQuery, finishSessionMutation, deleteSessionMutation } = useWorkoutSession();
+    const {
+        findActiveSessionQuery,
+        finishSession,
+        deleteSessionMutation,
+    } = useWorkoutSession();
     const { data: sessionData, isLoading: isLoadingSession, isFetched: isSessionFetched } = findActiveSessionQuery;
     const activeSession = sessionData?.activeSession;
     const lastSession = sessionData?.lastSession;
@@ -19,7 +24,8 @@ export const useActiveWorkoutLogic = () => {
     const { workoutByIdQuery } = useWorkouts(id);
     const { data: workout, isLoading: isLoadingWorkout } = workoutByIdQuery;
 
-    const { exerciseStack } = useExerciseStack(workout, activeSession || undefined);
+    const pendingSets = useActiveWorkoutStore((s) => s.activeSession?.pendingSets);
+    const { exerciseStack } = useExerciseStack(workout, activeSession || undefined, pendingSets);
 
     const isAllCompleted = useMemo(() => {
         if (!exerciseStack.length) return false;
@@ -45,7 +51,7 @@ export const useActiveWorkoutLogic = () => {
 
     const handleFinishConfirm = () => {
         if (!activeSession) return;
-        finishSessionMutation.mutate(activeSession.id);
+        void finishSession();
         setIsConfirmOpen(false);
     };
 
@@ -56,6 +62,10 @@ export const useActiveWorkoutLogic = () => {
     };
 
     const isLoading = isLoadingSession || (!!id && isLoadingWorkout);
+
+    const cancelError = deleteSessionMutation.isError
+        ? "Algo deu errado ao cancelar a sessão. Tente novamente."
+        : null;
 
     return {
         id,
@@ -72,7 +82,7 @@ export const useActiveWorkoutLogic = () => {
         handleFinishClick,
         handleFinishConfirm,
         handleCancelConfirm,
-        isFinishPending: finishSessionMutation.isPending,
+        cancelError,
         isCancelPending: deleteSessionMutation.isPending,
         isAllCompleted,
     };

@@ -1,24 +1,14 @@
 import api from "@/core/api";
-
-export interface SessionSet {
-    workoutSessionId: number;
-    exerciseId: number;
-    setNumber: number;
-    actualReps: number;
-    actualWeight: number;
-    equipmentWeight?: number;
-    rpe: number;
-}
+import type { SessionSetPayload, FinishSessionPayload } from "@/features/workouts/workout.types";
 
 export interface UpdateSessionSetPayload {
     sessionSetId: number;
-    payload: Partial<SessionSet>;
+    payload: Partial<SessionSetPayload>;
 }
 
 export const SessionSetService = {
-    create: async (payload: SessionSet) => {
-        const { data } = await api.post(`/sessions/sets`, payload);
-        return data;
+    finishSession: async (sessionId: number, payload: FinishSessionPayload): Promise<void> => {
+        await api.post(`/sessions/${sessionId}/finish`, payload);
     },
 
     update: async ({ sessionSetId, payload }: UpdateSessionSetPayload) => {

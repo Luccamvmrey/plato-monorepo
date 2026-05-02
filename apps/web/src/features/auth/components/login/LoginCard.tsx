@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button.tsx";
 import { useLoginLogic } from "@/features/auth/hooks/useLoginLogic.ts";
 import type { FormEvent } from "react";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
 const LoginCard = () => {
-    const { FORM_ID, logUserIn, isLoading, handleCreateAccount } = useLoginLogic();
+    const { FORM_ID, logUserIn, isLoading, loginError, handleCreateAccount } = useLoginLogic();
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -27,11 +28,12 @@ const LoginCard = () => {
                         Faça login em sua conta.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex flex-col gap-3">
                     <LoginForm
                         formId={FORM_ID}
                         onSubmit={handleSubmit}
                     />
+                    {loginError && <InlineErrorBanner message={loginError} />}
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
                     <Button

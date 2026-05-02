@@ -2,9 +2,9 @@ import { useLocation, useParams } from "wouter";
 import { useWorkouts } from "./useWorkouts";
 import { useWorkoutEditorStore } from "@/features/workouts/stores/workout-editor.store";
 import { useSensor, useSensors, type DragEndEvent, closestCenter, TouchSensor, MouseSensor } from "@dnd-kit/core";
-import { type FormEvent, useEffect } from "react";
-import { toast } from "sonner";
+import { type FormEvent, useEffect, useState } from "react";
 import { path } from "@/core/constants/path";
+import { useSuccessState } from "@/core/hooks/useSuccessState";
 
 export const useWorkoutEditorLogic = () => {
     const { id } = useParams();
@@ -20,6 +20,13 @@ export const useWorkoutEditorLogic = () => {
     const reorderExercises = useWorkoutEditorStore(state => state.reorderExercises);
     const loadWorkout = useWorkoutEditorStore(state => state.loadWorkout);
     const reset = useWorkoutEditorStore(state => state.reset);
+
+    const [validationError, setValidationError] = useState<string | null>(null);
+    const { isSuccess, trigger: triggerSuccess } = useSuccessState();
+
+    const saveError = (updateWorkoutMutation.isError || createWorkoutMutation.isError)
+        ? "Erro ao salvar treino. Verifique sua conexão e tente novamente."
+        : null;
 
     useEffect(() => {
         if (isFetching) return;
@@ -41,7 +48,6 @@ export const useWorkoutEditorLogic = () => {
     const sensors = useSensors(
         useSensor(MouseSensor),
         useSensor(TouchSensor, {
-            // Press and hold for 250ms to start dragging, allowing for scrolling
             activationConstraint: {
                 delay: 250,
                 tolerance: 5,
@@ -51,10 +57,14 @@ export const useWorkoutEditorLogic = () => {
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return toast.error("O nome do treino é obrigatório.");
-        if (exercises.length === 0) return toast.error("Adicione pelo menos um exercício.");
-        if (exercises.some((ex) => ex.targetSets === 0 || ex.targetReps === 0))
-            return toast.error("Defina as séries e repetições para todos os exercícios.");
+
+        if (!name.trim()) { setValidationError("O nome do treino é obrigatório."); return; }
+        if (exercises.length === 0) { setValidationError("Adicione pelo menos um exercício."); return; }
+        if (exercises.some((ex) => ex.targetSets === 0 || ex.targetReps === 0)) {
+            setValidationError("Defina as séries e repetições para todos os exercícios.");
+            return;
+        }
+        setValidationError(null);
 
         const payload = {
             name,
@@ -67,13 +77,19 @@ export const useWorkoutEditorLogic = () => {
             }))
         };
 
-        if (id && id !== "new") {
-            await updateWorkoutMutation.mutateAsync({ id, payload });
-        } else {
-            await createWorkoutMutation.mutateAsync(payload);
+        try {
+            if (id && id !== "new") {
+                await updateWorkoutMutation.mutateAsync({ id, payload });
+            } else {
+                await createWorkoutMutation.mutateAsync(payload);
+            }
+            reset();
+            triggerSuccess();
+            await new Promise(r => setTimeout(r, 1500));
+            navigate(path.WORKOUTS);
+        } catch {
+            // saveError is derived from mutation.isError above
         }
-        reset();
-        navigate(path.WORKOUTS);
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -91,6 +107,9 @@ export const useWorkoutEditorLogic = () => {
         id,
         isFetching,
         isSaving,
+        isSuccess,
+        validationError,
+        saveError,
         sensors,
         handleSubmit,
         handleDragEnd,

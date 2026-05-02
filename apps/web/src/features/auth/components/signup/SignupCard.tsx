@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button.tsx";
 import { ArrowLeft } from "lucide-react";
 import SignupForm from "@/features/auth/components/signup/SignupForm.tsx";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
 const SignupCard = () => {
-    const { FORM_ID, signup, isLoading, handleGoBack } = useSignupLogic();
+    const { FORM_ID, signup, isLoading, signupError, handleGoBack } = useSignupLogic();
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -34,11 +35,12 @@ const SignupCard = () => {
                     </CardAction>
                 </CardHeader>
 
-                <CardContent>
+                <CardContent className="flex flex-col gap-3">
                     <SignupForm
                         formId={FORM_ID}
                         onSubmit={handleSubmit}
                     />
+                    {signupError && <InlineErrorBanner message={signupError} />}
                 </CardContent>
 
                 <CardFooter>
