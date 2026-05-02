@@ -15,8 +15,6 @@ export const useActiveWorkoutLogic = () => {
     const {
         findActiveSessionQuery,
         finishSession,
-        isFinishing,
-        finishError,
         deleteSessionMutation,
     } = useWorkoutSession();
     const { data: sessionData, isLoading: isLoadingSession, isFetched: isSessionFetched } = findActiveSessionQuery;
@@ -84,8 +82,6 @@ export const useActiveWorkoutLogic = () => {
         handleFinishClick,
         handleFinishConfirm,
         handleCancelConfirm,
-        isFinishPending: isFinishing,
-        finishError,
         cancelError,
         isCancelPending: deleteSessionMutation.isPending,
         isAllCompleted,

@@ -34,8 +34,6 @@ const ActiveWorkoutPage = () => {
         handleFinishClick,
         handleFinishConfirm,
         handleCancelConfirm,
-        isFinishPending,
-        finishError,
         cancelError,
         isCancelPending,
         isAllCompleted,
@@ -79,19 +77,10 @@ const ActiveWorkoutPage = () => {
             <ActiveWorkoutActions
                 onFinishClick={handleFinishClick}
                 onCancelClick={() => setIsCancelOpen(true)}
-                isFinishPending={isFinishPending}
+                isFinishPending={false}
                 isCancelPending={isCancelPending}
                 isAllCompleted={isAllCompleted}
             />
-
-            {finishError && (
-                <InlineErrorBanner
-                    message={finishError}
-                    actionLabel="Tentar novamente"
-                    onAction={handleFinishConfirm}
-                    className="mt-3"
-                />
-            )}
 
             {cancelError && (
                 <InlineErrorBanner

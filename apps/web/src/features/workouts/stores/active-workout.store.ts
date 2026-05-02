@@ -4,22 +4,36 @@ import type { WorkoutSession, SessionSetPayload } from "../workout.types";
 
 type ActiveSession = WorkoutSession & { pendingSets: SessionSetPayload[] }
 
+type FinalizationStatus = 'idle' | 'pending' | 'success' | 'error';
+
+interface FinalizationState {
+    status: FinalizationStatus;
+    sessionId: number | null;
+    error: string | null;
+}
+
 interface ActiveWorkoutState {
     activeSession: ActiveSession | null;
     lastSession: WorkoutSession | null;
+    finalization: FinalizationState;
 }
 
 interface ActiveWorkoutActions {
     setActiveSession: (session: WorkoutSession | null, lastSession?: WorkoutSession | null) => void;
     clearState: () => void;
-    addPendingSet: (set: SessionSetPayload) => void;
+    addPendingSet: (payload: SessionSetPayload) => void;
+    setFinalization: (state: FinalizationState) => void;
+    resetFinalization: () => void;
 }
+
+const IDLE_FINALIZATION: FinalizationState = { status: 'idle', sessionId: null, error: null };
 
 export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutActions>()(
     persist(
         (set) => ({
             activeSession: null,
             lastSession: null,
+            finalization: IDLE_FINALIZATION,
 
             setActiveSession: (session, lastSession = null) =>
                 set((state) => ({
@@ -43,10 +57,18 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
                           }
                         : state.activeSession,
                 })),
+
+            setFinalization: (finalization) => set({ finalization }),
+
+            resetFinalization: () => set({ finalization: IDLE_FINALIZATION }),
         }),
         {
             name: "active-workout-storage",
-            storage: createJSONStorage(() => localStorage)
+            storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                activeSession: state.activeSession,
+                lastSession: state.lastSession,
+            }),
         }
     )
 )

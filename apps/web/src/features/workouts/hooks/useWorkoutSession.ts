@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { WorkoutSessionService } from "../services/workout-session/workout-session.service";
 import { SessionSetService } from "../services/workout-session/session-set.service";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store.ts";
@@ -16,7 +16,7 @@ export const useWorkoutSession = (workoutId?: string) => {
     const token = useAuthStore((state) => state.token);
     const isAuthenticated = !!token;
 
-    const { setActiveSession, clearState } = useActiveWorkoutStore();
+    const { setActiveSession, clearState, setFinalization } = useActiveWorkoutStore();
     const activeSession = useActiveWorkoutStore((s) => s.activeSession);
 
     const sessionByUserQuery = useQuery({
@@ -36,7 +36,6 @@ export const useWorkoutSession = (workoutId?: string) => {
         enabled: isAuthenticated,
     });
 
-    // Sync Zustand with React Query for offline persistence
     useEffect(() => {
         if (findActiveSessionQuery.data) {
             setActiveSession(
@@ -58,32 +57,32 @@ export const useWorkoutSession = (workoutId?: string) => {
         },
     });
 
-    const [isFinishing, setIsFinishing] = useState(false);
-    const [finishError, setFinishError] = useState<string | null>(null);
-
     const finishSession = async () => {
         if (!activeSession) return;
-        setIsFinishing(true);
-        setFinishError(null);
 
+        const sessionId = activeSession.id;
         const payload: FinishSessionPayload = {
             sets: activeSession.pendingSets ?? [],
         };
 
+        // Navigate immediately — animation starts while API runs in parallel
+        setFinalization({ status: 'pending', sessionId, error: null });
+        navigate(`${path.WORKOUT_COMPLETE}/${sessionId}`);
+
         try {
             await withRetry(
-                () => SessionSetService.finishSession(activeSession.id, payload),
+                () => SessionSetService.finishSession(sessionId, payload),
                 { retries: 3, baseDelayMs: 2000 }
             );
             clearState();
             await queryClient.invalidateQueries({ queryKey: ["workoutSessions"] });
-            navigate(`${path.WORKOUT_COMPLETE}/${activeSession.id}`);
+            setFinalization({ status: 'success', sessionId, error: null });
         } catch {
-            setFinishError(
-                "Não foi possível finalizar o treino. Verifique sua conexão e tente novamente."
-            );
-        } finally {
-            setIsFinishing(false);
+            setFinalization({
+                status: 'error',
+                sessionId,
+                error: "Não foi possível finalizar o treino. Verifique sua conexão e tente novamente.",
+            });
         }
     };
 
@@ -103,8 +102,6 @@ export const useWorkoutSession = (workoutId?: string) => {
         findActiveSessionQuery,
         createSessionMutation,
         finishSession,
-        isFinishing,
-        finishError,
         deleteSessionMutation,
     }
 }
