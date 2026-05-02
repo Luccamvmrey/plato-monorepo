@@ -10,7 +10,7 @@ export const useActiveExerciseCardLogic = (
     lastSession?: WorkoutSession | null,
     isReadOnly: boolean = false
 ) => {
-    const { createSessionSetMutation } = useSessionSet();
+    const { confirmSet } = useSessionSet();
     const [showEquipmentWeight, setShowEquipmentWeight] = useState(false);
 
     const { suggestions, activeSetNumber, pendingSetsCount } = useExerciseSuggestions(
@@ -22,7 +22,7 @@ export const useActiveExerciseCardLogic = (
 
     const handleSetConfirm = (setNumber: number, data: SetSubmissionData) => {
         if (isReadOnly) return;
-        createSessionSetMutation.mutate({
+        confirmSet({
             workoutSessionId: sessionId,
             exerciseId: record.exerciseId,
             setNumber: setNumber,
@@ -44,6 +44,6 @@ export const useActiveExerciseCardLogic = (
         activeSetNumber,
         pendingSetsCount,
         handleSetConfirm,
-        isPending: createSessionSetMutation.isPending,
+        isPending: false,
     };
 };

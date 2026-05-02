@@ -55,7 +55,7 @@ const finishSession = async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const workoutSessionId = extractId(req);
 
-    const result = await workoutSessionService.finishSession(userId, workoutSessionId);
+    const result = await workoutSessionService.finishSession(userId, workoutSessionId, req.body);
 
     res.json(result);
 }
