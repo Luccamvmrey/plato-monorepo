@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import type { EnrichedExerciseRecord, WorkoutSession } from "@/features/workouts/workout.types.ts";
 import ExerciseHeaderMinimized from "./records/ExerciseHeaderMinimized";
 import ActiveExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/ActiveExerciseCard.tsx";
+import CompletedExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/CompletedExerciseCard.tsx";
 import ExercisePreviewItem from "@/features/workouts/components/active-workout/exercise-stack/records/ExercisePreviewItem.tsx";
 
 type ExerciseRecordProps = {
@@ -18,12 +19,9 @@ const ExerciseRecord = ({ record, sessionId, lastSession }: ExerciseRecordProps)
         case "COMPLETED":
             if (isExpanded) {
                 return (
-                    <ActiveExerciseCard
+                    <CompletedExerciseCard
                         record={record}
-                        sessionId={sessionId}
-                        isReadOnly={true}
                         onHeaderClick={() => setIsExpanded(false)}
-                        lastSession={lastSession}
                     />
                 );
             }
