@@ -1,5 +1,4 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatDateCustom, formatWeight } from "@/core/utils/formatters";
 
 interface IdentityCardProps {
     name: string;
@@ -38,11 +37,11 @@ export const IdentityCard = ({
                 {[
                     {
                         label: "Membro desde",
-                        value: format(new Date(createdAt), "MMM 'de' yyyy", { locale: ptBR }),
+                        value: formatDateCustom(createdAt, "MMM 'de' yyyy"),
                     },
                     { label: "Total de sessões", value: String(totalSessions) },
                     { label: "Recordes (PRs)", value: String(totalPRs) },
-                    { label: "Volume total", value: `${lifetimeVolume.toLocaleString()} kg` },
+                    { label: "Volume total", value: formatWeight(lifetimeVolume) },
                 ].map(({ label, value }) => (
                     <div key={label}>
                         <p className="text-[10px] font-medium tracking-[0.05em] uppercase

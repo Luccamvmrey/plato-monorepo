@@ -6,6 +6,9 @@ import { MuscleBadge } from "@/core/components/MuscleBadge.tsx";
 import { cn } from "@/lib/utils.ts";
 import { path } from "@/core/constants/path.ts";
 import { useWorkoutSummaryLogic } from "@/features/workouts/hooks/useWorkoutSummaryLogic.ts";
+import { formatDateShort } from "@/core/utils/formatters";
+import { formatDurationExtensive } from "@/core/utils/time";
+import { UNITS } from "@/core/constants/units";
 
 const stagger: Variants = {
     hidden: {},
@@ -20,19 +23,6 @@ const staggerItem: Variants = {
         transition: { type: "spring", stiffness: 380, damping: 28 },
     },
 };
-
-function formatDate(date: Date | string): string {
-    return new Date(date).toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
-}
-
-function formatMinutes(seconds: number): string {
-    if (seconds >= 3600) {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        return `${h}h ${m.toString().padStart(2, "0")}m`;
-    }
-    return `${Math.floor(seconds / 60)} min`;
-}
 
 const WorkoutSummaryPage = () => {
     const { navigate, workoutSession, workout, stats, handleFinish, isLoading } =
@@ -52,8 +42,8 @@ const WorkoutSummaryPage = () => {
     }
 
     const metrics = [
-        { label: "Volume", value: String(stats.totalVolume), unit: "kg" },
-        { label: "Duração", value: formatMinutes(stats.duration), unit: null },
+        { label: "Volume", value: String(stats.totalVolume), unit: UNITS.WEIGHT },
+        { label: "Duração", value: formatDurationExtensive(stats.duration), unit: null },
         { label: "Sets", value: String(stats.totalSets), unit: null },
     ];
 
@@ -74,8 +64,8 @@ const WorkoutSummaryPage = () => {
                 </h1>
                 {workoutSession.completedAt && (
                     <p className="text-[13px] text-muted-foreground mt-1">
-                        {formatDate(workoutSession.completedAt)}
-                        {stats.duration > 0 && ` · ${formatMinutes(stats.duration)}`}
+                        {formatDateShort(workoutSession.completedAt)}
+                        {stats.duration > 0 && ` · ${formatDurationExtensive(stats.duration)}`}
                     </p>
                 )}
             </motion.div>
@@ -99,8 +89,8 @@ const WorkoutSummaryPage = () => {
                             <p key={pr.exerciseId} className="text-[12px] text-pr-subtle-fg/80">
                                 {pr.exerciseName} —{" "}
                                 {pr.previousMax !== null
-                                    ? `${pr.previousMax}kg → ${pr.newMax}kg`
-                                    : `Novo recorde: ${pr.newMax}kg`}
+                                    ? `${pr.previousMax}${UNITS.WEIGHT} → ${pr.newMax}${UNITS.WEIGHT}`
+                                    : `Novo recorde: ${pr.newMax}${UNITS.WEIGHT}`}
                             </p>
                         ))}
                     </div>
@@ -172,7 +162,7 @@ const WorkoutSummaryPage = () => {
                             <div className="flex items-center justify-between mb-1.5">
                                 <MuscleBadge muscle={group} />
                                 <span className="text-[12px] text-muted-foreground">
-                                    {Math.round(volume)}kg · {Math.round(percentage)}%
+                                    {Math.round(volume)}{UNITS.WEIGHT} · {Math.round(percentage)}%
                                 </span>
                             </div>
                             <div className="h-[3px] bg-muted rounded-full overflow-hidden">

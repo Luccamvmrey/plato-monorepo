@@ -1,10 +1,9 @@
 import { useLocation, useParams } from "wouter";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useWorkoutSession } from "./useWorkoutSession";
 import { useWorkouts } from "./useWorkouts";
 import { useExerciseStack } from "./useExerciseStack";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
-import { path } from "@/core/constants/path";
 
 export const useActiveWorkoutLogic = () => {
     const navigate = useLocation()[1];
@@ -17,7 +16,7 @@ export const useActiveWorkoutLogic = () => {
         finishSession,
         deleteSessionMutation,
     } = useWorkoutSession();
-    const { data: sessionData, isLoading: isLoadingSession, isFetched: isSessionFetched } = findActiveSessionQuery;
+    const { data: sessionData, isLoading: isLoadingSession } = findActiveSessionQuery;
     const activeSession = sessionData?.activeSession;
     const lastSession = sessionData?.lastSession;
 
@@ -31,15 +30,6 @@ export const useActiveWorkoutLogic = () => {
         if (!exerciseStack.length) return false;
         return exerciseStack.every(ex => ex.status === "COMPLETED");
     }, [exerciseStack]);
-
-    useEffect(() => {
-        if (isLoadingSession || !isSessionFetched) return;
-
-        if (activeSession && !id) {
-            navigate(`${path.ACTIVE_WORKOUT}/${activeSession.workoutId}`);
-            return;
-        }
-    }, [activeSession, id, isLoadingSession, isSessionFetched, navigate]);
 
     const handleFinishClick = () => {
         if (isAllCompleted) {
