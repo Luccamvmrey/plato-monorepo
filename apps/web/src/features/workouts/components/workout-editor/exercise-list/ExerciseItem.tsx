@@ -50,8 +50,8 @@ const ExerciseItem = ({ exercise }: ExerciseItemProps) => {
                         inputMode="numeric"
                         min={1}
                         placeholder="0"
-                        value={exercise.targetSets}
-                        onChange={(e) => onEditSets(exercise.instanceId, parseInt(e.target.value))}
+                        value={exercise.targetSets === 0 ? "" : exercise.targetSets}
+                        onChange={(e) => onEditSets(exercise.instanceId, parseInt(e.target.value) || 0)}
                         className="w-10 h-8 p-0 border-none bg-transparent text-center focus-visible:ring-0 font-medium tabular-nums"
                     />
                     <span className="text-[10px] font-bold text-muted-foreground/50 uppercase">s</span>
@@ -63,8 +63,8 @@ const ExerciseItem = ({ exercise }: ExerciseItemProps) => {
                         inputMode="numeric"
                         min={1}
                         placeholder="0"
-                        value={exercise.targetReps}
-                        onChange={(e) => onEditReps(exercise.instanceId, parseInt(e.target.value))}
+                        value={exercise.targetReps === 0 ? "" : exercise.targetReps}
+                        onChange={(e) => onEditReps(exercise.instanceId, parseInt(e.target.value) || 0)}
                         className="w-10 h-8 p-0 border-none bg-transparent text-center focus-visible:ring-0 font-medium tabular-nums"
                     />
                     <span className="text-[10px] font-bold text-muted-foreground/50 uppercase">r</span>
