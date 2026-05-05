@@ -1,9 +1,11 @@
 import { motion, type Variants } from "framer-motion";
 import { useState } from "react";
 import { useWorkouts } from "@/features/workouts/hooks/useWorkouts.ts";
+import { useStreakData } from "@/features/user/hooks/useStreakData";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
 import WorkoutListHeader from "@/features/workouts/components/workout-list/WorkoutListHeader.tsx";
 import WorkoutList from "@/features/workouts/components/workout-list/WorkoutList.tsx";
+import StreakWidget from "@/features/workouts/components/workout-list/StreakWidget.tsx";
 import { Button } from "@/components/ui/button.tsx";
 
 const stagger: Variants = {
@@ -23,6 +25,7 @@ const staggerItem: Variants = {
 const WorkoutListPage = () => {
     const [showArchived, setShowArchived] = useState(false);
     const { userWorkoutsQuery, lastCompletedSessionQuery } = useWorkouts(undefined, !showArchived);
+    const { data: streakData } = useStreakData();
 
     const { data: workouts, isLoading } = userWorkoutsQuery;
     const lastCompletedWorkoutId = lastCompletedSessionQuery.data?.workoutId;
@@ -37,6 +40,12 @@ const WorkoutListPage = () => {
             <motion.div variants={staggerItem}>
                 <WorkoutListHeader />
             </motion.div>
+
+            {streakData && (
+                <motion.div variants={staggerItem}>
+                    <StreakWidget streak={streakData} />
+                </motion.div>
+            )}
 
             <motion.div variants={staggerItem} className="flex justify-end -mt-2">
                 <Button

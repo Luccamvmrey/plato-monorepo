@@ -8,6 +8,7 @@ import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { CompletedSetRow } from "./CompletedSetRow";
 import { PendingSetRow } from "./PendingSetRow";
 import { RpeSelector } from "../../components/RpeSelector";
+import { Textarea } from "@/components/ui/textarea";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,6 +33,10 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
         pendingSetsCount,
         handleSetConfirm,
         isPending,
+        noteVisible,
+        toggleNote,
+        note,
+        setNote,
     } = useActiveExerciseCardLogic(record, sessionId, lastSession);
 
     const { state, actions } = useActiveSetInput({
@@ -56,7 +61,7 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
     };
 
     const doneDots = record.logs.length;
-    const totalDots = record.targetSets;
+    const totalDots = record.effectiveTargetSets;
 
     return (
         <motion.div layout className="flex flex-col gap-2">
@@ -91,6 +96,9 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onSelect={toggleEquipmentWeight}>
                                 {showEquipmentWeight ? "Remover Barra" : "Adicionar Barra"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={toggleNote}>
+                                {noteVisible ? "Ocultar nota" : "Adicionar nota"}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -177,6 +185,17 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                     </span>
                     <RpeSelector value={rpe} onChange={setRpe} disabled={isPending || wasSubmitted} />
                 </div>
+
+                {/* Note textarea (optional) */}
+                {noteVisible && (
+                    <Textarea
+                        placeholder="Observações sobre o exercício..."
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        className="text-[13px] resize-none min-h-[64px]"
+                        rows={2}
+                    />
+                )}
 
                 {/* Confirm button */}
                 <motion.button

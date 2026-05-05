@@ -14,6 +14,7 @@ router.use(authenticate);
 router.get("/", workoutSessionController.listByUserId);
 router.get("/active", workoutSessionController.findActiveSession);
 router.get("/workout/:id", workoutSessionController.listByWorkoutId);
+router.get("/exercise/:id", workoutSessionController.listByExerciseId);
 router.get("/:id", workoutSessionController.listById);
 router.post("/", validateBody(createWorkoutSessionSchema), workoutSessionController.create);
 router.post("/:id/finish", validateBody(finishSessionSchema), workoutSessionController.finishSession);
