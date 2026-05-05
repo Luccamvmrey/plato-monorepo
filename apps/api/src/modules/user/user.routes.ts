@@ -10,6 +10,7 @@ router.use(authenticate);
 
 router.get('/profile', userController.profile);
 router.get('/stats', userController.stats);
+router.get('/streak', userController.streak);
 router.get('/export', userController.exportData);
 router.delete('/account', userController.deleteAccount);
 

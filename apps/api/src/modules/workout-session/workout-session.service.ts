@@ -118,6 +118,7 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
     actualWeight: number;
     equipmentWeight?: number;
     rpe: number;
+    userObservation?: string;
 }> }) => {
     const now = new Date();
 
@@ -132,6 +133,7 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
                     actualWeight:    set.actualWeight,
                     equipmentWeight: set.equipmentWeight ?? null,
                     rpe:             set.rpe,
+                    userObservation: set.userObservation ?? null,
                 })),
             });
         }
@@ -151,10 +153,27 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
     return result;
 }
 
+const listByExerciseId = async (userId: number, exerciseId: number) => {
+    return prisma.workoutSession.findMany({
+        where: {
+            userId,
+            completedAt: { not: null },
+            sessionSet: { some: { exerciseId } }
+        },
+        include: {
+            sessionSet: {
+                where: { exerciseId },
+                include: { exercise: true }
+            }
+        },
+        orderBy: { completedAt: "asc" }
+    });
+}
+
 const deleteSession = async (userId: number, workoutSessionId: number) => {
     return prisma.workoutSession.delete({
         where: { id: workoutSessionId, userId }
     });
 }
 
-export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, deleteSession };
+export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, deleteSession };

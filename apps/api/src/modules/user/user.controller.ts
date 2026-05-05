@@ -46,4 +46,10 @@ const deleteAccount = async (req: Request, res: Response) => {
     res.status(204).send();
 }
 
-export { list, getById, update, profile, stats, exportData, deleteAccount }
+const streak = async (req: Request, res: Response) => {
+    const userId = (req as any).user.id;
+    const data = await userService.getStreak(userId);
+    res.json(data);
+}
+
+export { list, getById, update, profile, stats, exportData, deleteAccount, streak }

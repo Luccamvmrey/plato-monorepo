@@ -76,6 +76,7 @@ export const useWorkoutSession = (workoutId?: string) => {
             );
             clearState();
             await queryClient.invalidateQueries({ queryKey: ["workoutSessions"] });
+            await queryClient.invalidateQueries({ queryKey: ["user-streak"] });
             setFinalization({ status: 'success', sessionId, error: null });
         } catch {
             setFinalization({

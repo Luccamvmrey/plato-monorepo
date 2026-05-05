@@ -1,8 +1,10 @@
 import { motion, type Variants } from "framer-motion";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useUserStats } from "../hooks/useUserStats";
+import { useStreakData } from "../hooks/useStreakData";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { IdentityCard } from "../components/IdentityCard";
+import StreakCard from "../components/StreakCard";
 import { PerformanceSnapshots } from "../components/PerformanceSnapshots";
 import { TrainingDistributionChart } from "../components/TrainingDistributionChart";
 import { GovernanceSettings } from "../components/GovernanceSettings";
@@ -24,6 +26,7 @@ const staggerItem: Variants = {
 const UserProfilePage = () => {
     const { data: profile, isLoading: profileLoading } = useUserProfile();
     const { data: stats, isLoading: statsLoading } = useUserStats();
+    const { data: streakData } = useStreakData();
 
     const isLoading = profileLoading || statsLoading;
 
@@ -51,6 +54,12 @@ const UserProfilePage = () => {
                         lifetimeVolume={profile.lifetimeVolume}
                         totalPRs={profile.totalPRs}
                     />
+                </motion.div>
+            )}
+
+            {streakData && (
+                <motion.div variants={staggerItem}>
+                    <StreakCard streak={streakData} />
                 </motion.div>
             )}
 

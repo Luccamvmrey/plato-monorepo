@@ -7,6 +7,7 @@ interface SetEntry {
     reps: number;
     rpe: number;
     e1rm: number;
+    note?: string;
 }
 
 interface ExecutionHistoryListProps {
@@ -16,14 +17,14 @@ interface ExecutionHistoryListProps {
 export const ExecutionHistoryList = ({ data }: ExecutionHistoryListProps) => {
     const sorted = data.slice().reverse();
 
-    const grouped: { date: string; sets: SetEntry[] }[] = [];
+    const grouped: { date: string; sets: SetEntry[]; note?: string }[] = [];
     const seen = new Set<string>();
 
     for (const entry of sorted) {
         const key = formatDateShort(entry.date);
         if (!seen.has(key)) {
             seen.add(key);
-            grouped.push({ date: key, sets: [] });
+            grouped.push({ date: key, sets: [], note: entry.note });
         }
         grouped[grouped.length - 1].sets.push(entry);
     }
@@ -34,12 +35,17 @@ export const ExecutionHistoryList = ({ data }: ExecutionHistoryListProps) => {
                 <p className="text-[13px] font-medium text-foreground">Últimas execuções</p>
             </div>
 
-            {grouped.map(({ date, sets }) => (
+            {grouped.map(({ date, sets, note }) => (
                 <div key={date}>
                     <div className="px-4 py-2 bg-muted/40">
                         <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground">
                             {date}
                         </p>
+                        {note && (
+                            <p className="text-[11px] text-muted-foreground italic mt-0.5">
+                                {note}
+                            </p>
+                        )}
                     </div>
                     {sets.map((set, i) => (
                         <div

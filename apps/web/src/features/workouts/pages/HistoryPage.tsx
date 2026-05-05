@@ -26,7 +26,7 @@ const HistoryPage = () => {
         selectedFilter,
         setSelectedFilter,
         workouts,
-        allRecords,
+        sessionPrMap,
         isLoading,
         filteredSessions,
         navigate,
@@ -58,7 +58,7 @@ const HistoryPage = () => {
                         <SessionHistoryCard
                             key={session.id}
                             session={session}
-                            allRecords={allRecords}
+                            sessionPrMap={sessionPrMap}
                             navigate={navigate}
                         />
                     ))}

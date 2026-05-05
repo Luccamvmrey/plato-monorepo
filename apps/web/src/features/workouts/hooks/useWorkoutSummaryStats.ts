@@ -80,31 +80,30 @@ export const useWorkoutSummaryStats = (
                 };
             });
 
-        const newPRs: SummaryStats["newPRs"] = [];
+        const currentMaxByExercise: Record<number, number> = {};
+        sets.forEach(set => {
+            const total = set.actualWeight + (set.equipmentWeight || 0);
+            currentMaxByExercise[set.exerciseId] = Math.max(currentMaxByExercise[set.exerciseId] || 0, total);
+        });
 
+        const lastMaxByExercise: Record<number, number> = {};
         if (lastSession) {
-            const currentMaxByExercise: Record<number, number> = {};
-            sets.forEach(set => {
-                const total = set.actualWeight + (set.equipmentWeight || 0);
-                currentMaxByExercise[set.exerciseId] = Math.max(currentMaxByExercise[set.exerciseId] || 0, total);
-            });
-
-            const lastMaxByExercise: Record<number, number> = {};
             lastSession.sessionSet.forEach(set => {
                 const total = set.actualWeight + (set.equipmentWeight || 0);
                 lastMaxByExercise[set.exerciseId] = Math.max(lastMaxByExercise[set.exerciseId] || 0, total);
             });
-
-            Object.entries(currentMaxByExercise).forEach(([exId, newMax]) => {
-                const exerciseId = parseInt(exId);
-                const previousMax = lastMaxByExercise[exerciseId];
-                if (previousMax !== undefined && newMax > previousMax) {
-                    const exerciseName =
-                        workout.workoutExercise.find(we => we.exerciseId === exerciseId)?.exercise?.name || "Exercício";
-                    newPRs.push({ exerciseId, exerciseName, previousMax, newMax });
-                }
-            });
         }
+
+        const newPRs: SummaryStats["newPRs"] = [];
+        Object.entries(currentMaxByExercise).forEach(([exId, newMax]) => {
+            const exerciseId = parseInt(exId);
+            const previousMax = lastMaxByExercise[exerciseId] ?? 0;
+            if (newMax > previousMax) {
+                const exerciseName =
+                    workout.workoutExercise.find(we => we.exerciseId === exerciseId)?.exercise?.name || "Exercício";
+                newPRs.push({ exerciseId, exerciseName, previousMax: lastMaxByExercise[exerciseId] ?? null, newMax });
+            }
+        });
 
         return { totalVolume, duration, totalSets, completedExercises, volumeByGroup, newPRs };
     }, [workoutSession, workout, lastSession]);

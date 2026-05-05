@@ -16,6 +16,7 @@ import HistoryPage from "@/features/workouts/pages/HistoryPage.tsx";
 import ExerciseAnalyticsPage from "@/features/workouts/pages/ExerciseAnalyticsPage.tsx";
 import UserProfilePage from "@/features/user/pages/UserProfilePage.tsx";
 import ErrorBoundary from "@/core/components/ErrorBoundary";
+import { SessionRecoveryDialog } from "@/features/workouts/components/active-workout/components/dialogs/SessionRecoveryDialog.tsx";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ export function App() {
                     </Layout>
                 </Switch>
 
+                <SessionRecoveryDialog />
                 <Toaster position="top-center"/>
             </QueryClientProvider>
         </div>

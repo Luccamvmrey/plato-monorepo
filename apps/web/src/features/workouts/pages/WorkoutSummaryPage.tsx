@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button.tsx";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
 import { path } from "@/core/constants/path.ts";
 import { useWorkoutSummaryLogic } from "@/features/workouts/hooks/useWorkoutSummaryLogic.ts";
+import { useStreakData } from "@/features/user/hooks/useStreakData";
 import { formatDateShort, formatWeight } from "@/core/utils/formatters";
 import { formatDurationExtensive } from "@/core/utils/time";
 import SummaryPRBanner from "../components/workout-summary/SummaryPRBanner";
+import StreakBanner from "../components/workout-summary/StreakBanner";
 import SummaryMetricsGrid from "../components/workout-summary/SummaryMetricsGrid";
 import SummaryExerciseList from "../components/workout-summary/SummaryExerciseList";
 import SummaryVolumeChart from "../components/workout-summary/SummaryVolumeChart";
@@ -23,6 +25,7 @@ const staggerItem: Variants = {
 const WorkoutSummaryPage = () => {
     const { navigate, workoutSession, workout, stats, handleFinish, isLoading } =
         useWorkoutSummaryLogic();
+    const { data: streakData } = useStreakData();
 
     if (isLoading) return <LoadingOverlay isLoading={true} />;
 
@@ -64,6 +67,7 @@ const WorkoutSummaryPage = () => {
             </motion.div>
 
             <SummaryPRBanner newPRs={stats.newPRs} />
+            {streakData && <StreakBanner streak={streakData} />}
             <SummaryMetricsGrid metrics={metrics} />
             <SummaryExerciseList exercises={stats.completedExercises} />
             <SummaryVolumeChart volumeByGroup={stats.volumeByGroup} />

@@ -5,7 +5,7 @@ import { path } from "@/core/constants/path";
 
 export const useSessionHistoryCardLogic = (
     session: WorkoutSession,
-    allRecords: { exerciseId: number; date: string | Date }[] | undefined,
+    sessionPrMap: Map<number, Set<number>>,
     navigate: (path: string) => void
 ) => {
     const workoutName = session.workout?.name || "Treino Avulso";
@@ -13,26 +13,23 @@ export const useSessionHistoryCardLogic = (
 
     const summary = calculateSessionSummary(session);
     const { totalVolume, avgRpe, duration, totalSets, exerciseCount } = summary;
-    
+
     const completedAt = session.completedAt ? new Date(session.completedAt) : null;
 
     const uniqueExerciseIds = Array.from(new Set(session.sessionSet.map(s => s.exerciseId)));
 
+    const prExercises = sessionPrMap.get(session.id);
+
     const exercises = uniqueExerciseIds.map(exId => {
         const set = session.sessionSet.find((s) => s.exerciseId === exId);
         const exercise = set?.exercise;
-        const hasPr =
-            allRecords?.some((r) => {
-                if (r.exerciseId !== exId || !completedAt) return false;
-                const recordDate = new Date(r.date).toISOString().slice(0, 10);
-                const sessionDate = completedAt.toISOString().slice(0, 10);
-                return recordDate === sessionDate;
-            }) ?? false;
+        const rawNote = session.sessionSet.find(s => s.exerciseId === exId)?.userObservation;
         return {
             id: exId,
             name: exercise?.name || "Exercício Removido",
             muscleGroup: exercise?.targetMuscle as MuscleGroup | undefined,
-            hasPr,
+            hasPr: prExercises?.has(exId) ?? false,
+            note: rawNote ?? undefined,
         };
     });
 

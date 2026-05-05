@@ -21,6 +21,11 @@ export const WorkoutSessionService = {
         return data;
     },
 
+    getByExerciseId: async (exerciseId: number) => {
+        const { data } = await api.get<WorkoutSession[]>(`/sessions/exercise/${exerciseId}`);
+        return data;
+    },
+
     getByWorkoutId: async (workoutId: string) => {
         const { data } = await api.get<WorkoutSession[]>(`/sessions/workout/${workoutId}`);
         return data;

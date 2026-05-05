@@ -41,9 +41,7 @@ export const useWorkoutEditorLogic = () => {
         if (workout) {
             loadWorkout(workout);
         }
-
-        return () => reset();
-    }, [workout, loadWorkout, reset]);
+    }, [workout, loadWorkout]);
 
     const sensors = useSensors(
         useSensor(MouseSensor),

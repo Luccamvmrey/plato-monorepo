@@ -24,7 +24,18 @@ export const useActiveWorkoutLogic = () => {
     const { data: workout, isLoading: isLoadingWorkout } = workoutByIdQuery;
 
     const pendingSets = useActiveWorkoutStore((s) => s.activeSession?.pendingSets);
-    const { exerciseStack } = useExerciseStack(workout, activeSession || undefined, pendingSets);
+    const sessionExerciseOrder = useActiveWorkoutStore((s) => s.activeSession?.sessionExerciseOrder ?? null);
+    const exerciseExtraSets = useActiveWorkoutStore((s) => s.activeSession?.exerciseExtraSets);
+    const setExerciseOrder = useActiveWorkoutStore((s) => s.setExerciseOrder);
+    const addExtraSet = useActiveWorkoutStore((s) => s.addExtraSet);
+
+    const { exerciseStack } = useExerciseStack(
+        workout,
+        activeSession || undefined,
+        pendingSets,
+        sessionExerciseOrder,
+        exerciseExtraSets,
+    );
 
     const isAllCompleted = useMemo(() => {
         if (!exerciseStack.length) return false;
@@ -75,5 +86,7 @@ export const useActiveWorkoutLogic = () => {
         cancelError,
         isCancelPending: deleteSessionMutation.isPending,
         isAllCompleted,
+        setExerciseOrder,
+        addExtraSet,
     };
 };
