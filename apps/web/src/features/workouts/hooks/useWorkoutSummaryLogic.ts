@@ -22,7 +22,7 @@ export const useWorkoutSummaryLogic = () => {
     const workoutSession = sessionQuery.data;
 
     const workoutQuery = useQuery({
-        queryKey: ["workout", workoutSession?.workoutId],
+        queryKey: ["workout", workoutSession?.workoutId?.toString()],
         queryFn: () => WorkoutService.getById(workoutSession!.workoutId.toString()),
         enabled: !!workoutSession,
     });
