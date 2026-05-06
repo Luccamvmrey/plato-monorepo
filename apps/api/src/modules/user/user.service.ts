@@ -127,24 +127,22 @@ const deleteAccount = async (userId: number) => {
     return prisma.user.delete({ where: { id: userId } });
 }
 
-const getStreak = async (userId: number) => {
+const getStreak = async (userId: number, timezone: string = 'UTC') => {
     const sessions = await prisma.workoutSession.findMany({
         where: { userId, completedAt: { not: null } },
         select: { completedAt: true },
     });
 
     const trainedDates = new Set<string>(
-        sessions.map(s => _toDateStr(s.completedAt!))
+        sessions.map(s => _toDateStrTZ(s.completedAt!, timezone))
     );
 
     const now = new Date();
-    const today = _toDateStr(now);
-    const weekMonday = _getMondayOf(now);
+    const today = _toDateStrTZ(now, timezone);
+    const weekMondayStr = _getMondayStrOf(now, timezone);
 
     const weekDays = Array.from({ length: 7 }, (_, i) => {
-        const day = new Date(weekMonday);
-        day.setUTCDate(day.getUTCDate() + i);
-        const dateStr = _toDateStr(day);
+        const dateStr = _addDays(weekMondayStr, i);
         const status = trainedDates.has(dateStr)
             ? 'trained'
             : dateStr < today
@@ -160,14 +158,13 @@ const getStreak = async (userId: number) => {
     let streak = 0;
     let restDaysUsedThisWeek = 0;
     let isFirstWeek = true;
-    const weekStart = new Date(weekMonday);
+    let weekStartStr = weekMondayStr;
 
     while (true) {
-        const weekSunday = new Date(weekStart);
-        weekSunday.setUTCDate(weekSunday.getUTCDate() + 6);
-        const upperBound = isFirstWeek ? now : weekSunday;
+        const weekSundayStr = _addDays(weekStartStr, 6);
+        const upperBoundStr = isFirstWeek ? today : weekSundayStr;
 
-        const days = _getDaysBetween(weekStart, upperBound);
+        const days = _getDaysBetweenStr(weekStartStr, upperBoundStr);
         const trained = days.filter(d => trainedDates.has(d));
         let notTrained = days.filter(d => !trainedDates.has(d));
 
@@ -184,30 +181,40 @@ const getStreak = async (userId: number) => {
             isFirstWeek = false;
         }
 
-        weekStart.setUTCDate(weekStart.getUTCDate() - 7);
+        weekStartStr = _addDays(weekStartStr, -7);
     }
 
     return { currentStreak: streak, restDaysUsedThisWeek, weekDays };
 };
 
-const _toDateStr = (date: Date) => date.toISOString().split('T')[0];
+const _toDateStrTZ = (date: Date, tz: string): string =>
+    new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(date);
 
-const _getMondayOf = (date: Date): Date => {
-    const d = new Date(date);
-    const day = d.getUTCDay();
-    d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day));
-    d.setUTCHours(0, 0, 0, 0);
-    return d;
+const _addDays = (dateStr: string, days: number): string => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(Date.UTC(year, month - 1, day + days));
+    return d.toISOString().split('T')[0];
 };
 
-const _getDaysBetween = (start: Date, end: Date): string[] => {
+const _getMondayStrOf = (date: Date, tz: string): string => {
+    const localDateStr = _toDateStrTZ(date, tz);
+    const [year, month, day] = localDateStr.split('-').map(Number);
+    const d = new Date(Date.UTC(year, month - 1, day));
+    const dow = d.getUTCDay();
+    return _addDays(localDateStr, dow === 0 ? -6 : 1 - dow);
+};
+
+const _getDaysBetweenStr = (startStr: string, endStr: string): string[] => {
     const days: string[] = [];
-    const cur = new Date(start);
-    cur.setUTCHours(0, 0, 0, 0);
-    const endStr = _toDateStr(end);
-    while (_toDateStr(cur) <= endStr) {
-        days.push(_toDateStr(cur));
-        cur.setUTCDate(cur.getUTCDate() + 1);
+    let cur = startStr;
+    while (cur <= endStr) {
+        days.push(cur);
+        cur = _addDays(cur, 1);
     }
     return days;
 };

@@ -14,10 +14,11 @@ export interface StreakData {
 }
 
 export const useStreakData = () => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     return useQuery<StreakData>({
-        queryKey: ['user-streak'],
+        queryKey: ['user-streak', tz],
         queryFn: async () => {
-            const response = await api.get('/users/streak');
+            const response = await api.get('/users/streak', { params: { tz } });
             return response.data;
         },
     });
