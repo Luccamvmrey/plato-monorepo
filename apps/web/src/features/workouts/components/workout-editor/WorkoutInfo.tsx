@@ -29,12 +29,12 @@ const WorkoutInfo = ({ nameError, onNameBlur }: WorkoutInfoProps) => {
                 <h1 className="text-xl font-medium tracking-tight">{title} Treino</h1>
 
                 {id === "new" ? (
-                    <Button variant="ghost" size="icon" className="rounded-full" type="button" onClick={handleBack}>
+                    <Button variant="ghost" size="icon" className="rounded-full" type="button" onClick={handleBack} aria-label="Fechar editor">
                         <X className="size-5" />
                     </Button>
                 ) : (
                     <DeletionAlertDialog onConfirm={handleDelete}>
-                        <Button variant="ghost" size="icon" className="rounded-full text-destructive" type="button">
+                        <Button variant="ghost" size="icon" className="rounded-full text-destructive" type="button" aria-label="Excluir treino">
                             <Trash2 className="size-5" />
                         </Button>
                     </DeletionAlertDialog>

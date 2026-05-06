@@ -33,14 +33,14 @@ export const SessionHistoryCard = ({ session, sessionPrMap, navigate }: SessionH
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
                 <div>
-                    <h3 className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
+                    <h2 className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
                         {workoutName}
                         {isArchived && (
                             <span className="text-[10px] ml-2 text-muted-foreground uppercase tracking-[0.04em]">
                                 Arquivado
                             </span>
                         )}
-                    </h3>
+                    </h2>
                     <p className="text-[12px] text-muted-foreground mt-0.5">
                         {completedAt ? formatDateFull(completedAt) : "Em progresso"}
                     </p>

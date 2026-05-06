@@ -95,7 +95,7 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
                         size="icon"
                         className="size-9 text-muted-foreground"
                         onClick={handleToggleStatus}
-                        title={workout.isActive ? "Arquivar" : "Reativar"}
+                        aria-label={workout.isActive ? "Arquivar treino" : "Reativar treino"}
                     >
                         {workout.isActive ? <Archive data-icon="inline" /> : <Undo2 data-icon="inline" />}
                     </Button>
@@ -104,6 +104,7 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
                         size="icon"
                         className="size-9 text-muted-foreground"
                         onClick={handleEdit}
+                        aria-label="Editar treino"
                     >
                         <SquarePen data-icon="inline" />
                     </Button>

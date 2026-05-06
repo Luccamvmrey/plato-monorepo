@@ -1,14 +1,18 @@
 import { useLocation } from "wouter";
 import { useActiveSession } from "@/features/workouts/hooks/useActiveSession";
+import { useAppMutation } from "@/core/hooks/useAppMutation";
 import { useState } from "react";
 import { path } from "@/core/constants/path";
 import type { Workout } from "@/features/workouts/workout.types";
-import { useWorkouts } from "@/features/workouts/hooks/useWorkouts";
+import { WorkoutService } from "@/features/workouts/services/workout.service";
 
 export const useWorkoutListItemLogic = (workout: Workout) => {
     const navigate = useLocation()[1];
     const { createSessionMutation, findActiveSessionQuery } = useActiveSession();
-    const { toggleStatusMutation } = useWorkouts();
+    const toggleStatusMutation = useAppMutation({
+        mutationFn: WorkoutService.toggleStatus,
+        invalidateQueries: [["workouts"]],
+    });
     const { data: activeSessionData, isLoading } = findActiveSessionQuery;
     const activeSession = activeSessionData?.activeSession;
 
