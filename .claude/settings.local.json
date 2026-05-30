@@ -2,7 +2,21 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(Get-Date -Format 'HH:mm')",
+      "Bash(echo \"| $\\(Get-Date -Format 'HH:mm'\\) | fix: volume overflow em SummaryMetricsGrid — min-w-0 + formatWeight | SummaryMetricsGrid.tsx, WorkoutSummaryPage.tsx | fixed | ~50 |\")",
+      "mcp__chrome-devtools__list_pages",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__fill",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__lighthouse_audit"
     ]
   }
 }

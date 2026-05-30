@@ -21,7 +21,7 @@ export const useWorkoutEditorLogic = () => {
     const loadWorkout = useWorkoutEditorStore(state => state.loadWorkout);
     const reset = useWorkoutEditorStore(state => state.reset);
 
-    const [validationError, setValidationError] = useState<string | null>(null);
+    const [validationErrors, setValidationErrors] = useState<{ name?: string; exercises?: string }>({});
     const { isSuccess, trigger: triggerSuccess } = useSuccessState();
 
     const saveError = (updateWorkoutMutation.isError || createWorkoutMutation.isError)
@@ -41,9 +41,7 @@ export const useWorkoutEditorLogic = () => {
         if (workout) {
             loadWorkout(workout);
         }
-
-        return () => reset();
-    }, [workout, loadWorkout, reset]);
+    }, [workout, loadWorkout]);
 
     const sensors = useSensors(
         useSensor(MouseSensor),
@@ -55,16 +53,25 @@ export const useWorkoutEditorLogic = () => {
         })
     );
 
+    const handleNameBlur = (value: string) => {
+        if (!value.trim()) {
+            setValidationErrors(prev => ({ ...prev, name: "O nome do treino é obrigatório." }));
+        } else {
+            setValidationErrors(prev => { const next = { ...prev }; delete next.name; return next; });
+        }
+    };
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
-        if (!name.trim()) { setValidationError("O nome do treino é obrigatório."); return; }
-        if (exercises.length === 0) { setValidationError("Adicione pelo menos um exercício."); return; }
+        setValidationErrors({});
+
+        if (!name.trim()) { setValidationErrors({ name: "O nome do treino é obrigatório." }); return; }
+        if (exercises.length === 0) { setValidationErrors({ exercises: "Adicione pelo menos um exercício." }); return; }
         if (exercises.some((ex) => ex.targetSets === 0 || ex.targetReps === 0)) {
-            setValidationError("Defina as séries e repetições para todos os exercícios.");
+            setValidationErrors({ exercises: "Defina as séries e repetições para todos os exercícios." });
             return;
         }
-        setValidationError(null);
 
         const payload = {
             name,
@@ -108,10 +115,11 @@ export const useWorkoutEditorLogic = () => {
         isFetching,
         isSaving,
         isSuccess,
-        validationError,
+        validationErrors,
         saveError,
         sensors,
         handleSubmit,
+        handleNameBlur,
         handleDragEnd,
         handleDragStart,
         collisionDetection: closestCenter,

@@ -13,5 +13,6 @@ export const finishSessionSchema = z.object({
         actualWeight:     z.number().nonnegative(),
         equipmentWeight:  z.number().nonnegative().optional(),
         rpe:              z.number().min(1).max(10),
+        userObservation:  z.string().optional(),
     }))
 });

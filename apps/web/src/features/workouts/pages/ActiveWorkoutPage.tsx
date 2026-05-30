@@ -40,6 +40,8 @@ const ActiveWorkoutPage = () => {
         isCancelPending,
         isAllCompleted,
         navigate,
+        setExerciseOrder,
+        addExtraSet,
     } = useActiveWorkoutLogic();
 
     useEffect(() => {
@@ -79,6 +81,8 @@ const ActiveWorkoutPage = () => {
                 exerciseStack={exerciseStack}
                 session={activeSession}
                 lastSession={lastSession}
+                setExerciseOrder={setExerciseOrder}
+                addExtraSet={addExtraSet}
             />
 
             <ActiveWorkoutActions

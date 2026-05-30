@@ -9,7 +9,7 @@ export const WorkoutTimer = ({ startedAt }: WorkoutTimerProps) => {
     const { elapsedSeconds } = useWorkoutTimer(startedAt);
 
     return (
-        <div className="bg-muted rounded-full px-3 py-1 text-[12px] font-mono text-muted-foreground tabular-nums flex-shrink-0">
+        <div className="bg-muted rounded-full px-4 py-1.5 text-sm font-mono text-foreground tabular-nums flex-shrink-0">
             {formatTime(elapsedSeconds)}
         </div>
     );

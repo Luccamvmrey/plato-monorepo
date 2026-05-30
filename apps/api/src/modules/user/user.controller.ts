@@ -46,4 +46,16 @@ const deleteAccount = async (req: Request, res: Response) => {
     res.status(204).send();
 }
 
-export { list, getById, update, profile, stats, exportData, deleteAccount }
+const streak = async (req: Request, res: Response) => {
+    const userId = (req as any).user.id;
+    const tz = typeof req.query.tz === 'string' ? req.query.tz : 'UTC';
+    try {
+        Intl.DateTimeFormat(undefined, { timeZone: tz });
+    } catch {
+        return res.status(400).json({ message: 'Invalid timezone' });
+    }
+    const data = await userService.getStreak(userId, tz);
+    res.json(data);
+}
+
+export { list, getById, update, profile, stats, exportData, deleteAccount, streak }

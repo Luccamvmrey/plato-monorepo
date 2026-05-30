@@ -13,11 +13,9 @@ export const useWorkouts = (id?: string, isActive?: boolean) => {
     });
 
     const lastCompletedSessionQuery = useQuery({
-        queryKey: ["last-completed-session"],
-        queryFn: async () => {
-            const sessions = await WorkoutSessionService.getByUserId();
-            return sessions.find(s => s.completedAt !== null) || null;
-        }
+        queryKey: ["sessions"],
+        queryFn: () => WorkoutSessionService.getByUserId(),
+        select: (sessions) => sessions.find(s => s.completedAt !== null) ?? null,
     });
 
     const workoutByIdQuery = useQuery({

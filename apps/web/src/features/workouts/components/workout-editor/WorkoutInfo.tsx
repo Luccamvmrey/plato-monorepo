@@ -5,8 +5,14 @@ import { Button } from "@/components/ui/button.tsx";
 import { Trash2, X } from "lucide-react";
 import DeletionAlertDialog from "@/core/components/DeletionAlertDialog.tsx";
 import { useWorkoutInfoLogic } from "@/features/workouts/hooks/useWorkoutInfoLogic.ts";
+import { cn } from "@/lib/utils";
 
-const WorkoutInfo = () => {
+interface WorkoutInfoProps {
+    nameError?: string;
+    onNameBlur?: (value: string) => void;
+}
+
+const WorkoutInfo = ({ nameError, onNameBlur }: WorkoutInfoProps) => {
     const {
         id,
         title,
@@ -23,12 +29,12 @@ const WorkoutInfo = () => {
                 <h1 className="text-xl font-medium tracking-tight">{title} Treino</h1>
 
                 {id === "new" ? (
-                    <Button variant="ghost" size="icon" className="rounded-full" type="button" onClick={handleBack}>
+                    <Button variant="ghost" size="icon" className="rounded-full" type="button" onClick={handleBack} aria-label="Fechar editor">
                         <X className="size-5" />
                     </Button>
                 ) : (
                     <DeletionAlertDialog onConfirm={handleDelete}>
-                        <Button variant="ghost" size="icon" className="rounded-full text-destructive" type="button">
+                        <Button variant="ghost" size="icon" className="rounded-full text-destructive" type="button" aria-label="Excluir treino">
                             <Trash2 className="size-5" />
                         </Button>
                     </DeletionAlertDialog>
@@ -45,10 +51,12 @@ const WorkoutInfo = () => {
                         name="name"
                         type="text"
                         placeholder="Ex.: Treino A - Foco Peito"
-                        className="h-12 text-lg font-medium tracking-tight"
+                        className={cn("h-12 text-lg font-medium tracking-tight", nameError && "border-destructive")}
                         value={name}
                         onChange={(e) => setWorkoutInfo("name", e.target.value)}
+                        onBlur={(e) => onNameBlur?.(e.target.value)}
                     />
+                    {nameError && <p className="text-destructive text-[12px] mt-1">{nameError}</p>}
                 </div>
                 <div className="w-full flex flex-col gap-2">
                     <Label htmlFor="description" className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">

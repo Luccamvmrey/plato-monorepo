@@ -127,4 +127,96 @@ const deleteAccount = async (userId: number) => {
     return prisma.user.delete({ where: { id: userId } });
 }
 
-export { getAll, getById, update, getProfile, getStats, getExportData, deleteAccount }
+const getStreak = async (userId: number, timezone: string = 'UTC') => {
+    const sessions = await prisma.workoutSession.findMany({
+        where: { userId, completedAt: { not: null } },
+        select: { completedAt: true },
+    });
+
+    const trainedDates = new Set<string>(
+        sessions.map(s => _toDateStrTZ(s.completedAt!, timezone))
+    );
+
+    const now = new Date();
+    const today = _toDateStrTZ(now, timezone);
+    const weekMondayStr = _getMondayStrOf(now, timezone);
+
+    const weekDays = Array.from({ length: 7 }, (_, i) => {
+        const dateStr = _addDays(weekMondayStr, i);
+        const status = trainedDates.has(dateStr)
+            ? 'trained'
+            : dateStr < today
+                ? 'rest_used'
+                : 'future';
+        return { date: dateStr, dayOfWeek: i, status } as const;
+    });
+
+    if (trainedDates.size === 0) {
+        return { currentStreak: 0, restDaysUsedThisWeek: 0, weekDays };
+    }
+
+    let streak = 0;
+    let restDaysUsedThisWeek = 0;
+    let isFirstWeek = true;
+    let weekStartStr = weekMondayStr;
+
+    while (true) {
+        const weekSundayStr = _addDays(weekStartStr, 6);
+        const upperBoundStr = isFirstWeek ? today : weekSundayStr;
+
+        const days = _getDaysBetweenStr(weekStartStr, upperBoundStr);
+        const trained = days.filter(d => trainedDates.has(d));
+        let notTrained = days.filter(d => !trainedDates.has(d));
+
+        if (isFirstWeek && !trainedDates.has(today)) {
+            notTrained = notTrained.filter(d => d !== today);
+        }
+
+        if (notTrained.length > 2) break;
+        if (trained.length === 0 && !isFirstWeek) break;
+
+        streak += trained.length;
+        if (isFirstWeek) {
+            restDaysUsedThisWeek = notTrained.length;
+            isFirstWeek = false;
+        }
+
+        weekStartStr = _addDays(weekStartStr, -7);
+    }
+
+    return { currentStreak: streak, restDaysUsedThisWeek, weekDays };
+};
+
+const _toDateStrTZ = (date: Date, tz: string): string =>
+    new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(date);
+
+const _addDays = (dateStr: string, days: number): string => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(Date.UTC(year, month - 1, day + days));
+    return d.toISOString().split('T')[0];
+};
+
+const _getMondayStrOf = (date: Date, tz: string): string => {
+    const localDateStr = _toDateStrTZ(date, tz);
+    const [year, month, day] = localDateStr.split('-').map(Number);
+    const d = new Date(Date.UTC(year, month - 1, day));
+    const dow = d.getUTCDay();
+    return _addDays(localDateStr, dow === 0 ? -6 : 1 - dow);
+};
+
+const _getDaysBetweenStr = (startStr: string, endStr: string): string[] => {
+    const days: string[] = [];
+    let cur = startStr;
+    while (cur <= endStr) {
+        days.push(cur);
+        cur = _addDays(cur, 1);
+    }
+    return days;
+};
+
+export { getAll, getById, update, getProfile, getStats, getExportData, deleteAccount, getStreak }

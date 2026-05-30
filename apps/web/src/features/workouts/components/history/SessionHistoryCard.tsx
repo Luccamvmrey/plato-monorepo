@@ -9,11 +9,11 @@ import { UNITS } from "@/core/constants/units";
 
 interface SessionHistoryCardProps {
     session: WorkoutSession;
-    allRecords?: { exerciseId: number; date: string | Date }[];
+    sessionPrMap: Map<number, Set<number>>;
     navigate: (path: string) => void;
 }
 
-export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHistoryCardProps) => {
+export const SessionHistoryCard = ({ session, sessionPrMap, navigate }: SessionHistoryCardProps) => {
     const {
         workoutName,
         isArchived,
@@ -25,7 +25,7 @@ export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHis
         exerciseCount,
         exercises,
         handleExerciseClick,
-    } = useSessionHistoryCardLogic(session, allRecords, navigate);
+    } = useSessionHistoryCardLogic(session, sessionPrMap, navigate);
 
     return (
         <div className="bg-card border border-border rounded-xl p-4 mb-3">
@@ -33,14 +33,14 @@ export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHis
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
                 <div>
-                    <h3 className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
+                    <h2 className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
                         {workoutName}
                         {isArchived && (
                             <span className="text-[10px] ml-2 text-muted-foreground uppercase tracking-[0.04em]">
                                 Arquivado
                             </span>
                         )}
-                    </h3>
+                    </h2>
                     <p className="text-[12px] text-muted-foreground mt-0.5">
                         {completedAt ? formatDateFull(completedAt) : "Em progresso"}
                     </p>
@@ -94,16 +94,23 @@ export const SessionHistoryCard = ({ session, allRecords, navigate }: SessionHis
                     key={ex.id}
                     onClick={() => handleExerciseClick(ex.id)}
                     className={cn(
-                        "flex items-center gap-2 w-full py-2 text-left hover:opacity-80 transition-opacity",
+                        "flex flex-col gap-0.5 w-full py-2 text-left hover:opacity-80 transition-opacity",
                         i < exercises.length - 1 && "border-b border-border"
                     )}
                 >
-                    <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
-                        {ex.name}
-                    </span>
-                    {ex.muscleGroup && <MuscleBadge muscle={ex.muscleGroup} />}
-                    {ex.hasPr && <span className="badge-pr">PR</span>}
-                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-1" />
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
+                            {ex.name}
+                        </span>
+                        {ex.muscleGroup && <MuscleBadge muscle={ex.muscleGroup} />}
+                        {ex.hasPr && <span className="badge-pr">PR</span>}
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-1" />
+                    </div>
+                    {ex.note && (
+                        <p className="text-[11px] text-muted-foreground italic pl-0">
+                            {ex.note}
+                        </p>
+                    )}
                 </button>
             ))}
         </div>

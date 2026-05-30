@@ -35,7 +35,7 @@ export const useExerciseSuggestions = (
     return {
         suggestions,
         activeSetNumber,
-        pendingSetsCount: Math.max(0, record.targetSets - activeSetNumber),
+        pendingSetsCount: Math.max(0, record.effectiveTargetSets - activeSetNumber),
         autoShowEquipmentWeight,
     };
 };

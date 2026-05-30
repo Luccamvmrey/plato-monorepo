@@ -21,11 +21,12 @@ const WorkoutEditorPage = () => {
         isFetching,
         isSaving,
         isSuccess,
-        validationError,
+        validationErrors,
         saveError,
         sensors,
         collisionDetection,
         handleSubmit,
+        handleNameBlur,
         handleDragEnd,
         handleDragStart,
     } = useWorkoutEditorLogic();
@@ -45,11 +46,15 @@ const WorkoutEditorPage = () => {
                 animate="show"
                 className="h-full flex flex-col gap-3 mb-[100px]"
             >
-                <WorkoutEditorForm formId={FORM_ID} onSubmit={handleSubmit} />
+                <WorkoutEditorForm formId={FORM_ID} onSubmit={handleSubmit} nameError={validationErrors.name} onNameBlur={handleNameBlur} />
                 <NewExerciseSheet />
 
-                {(validationError || saveError) && (
-                    <InlineErrorBanner message={(validationError ?? saveError)!} />
+                {validationErrors.exercises && (
+                    <p className="text-destructive text-[12px] px-1">{validationErrors.exercises}</p>
+                )}
+
+                {saveError && (
+                    <InlineErrorBanner message={saveError} />
                 )}
 
                 <WorkoutEditorActions

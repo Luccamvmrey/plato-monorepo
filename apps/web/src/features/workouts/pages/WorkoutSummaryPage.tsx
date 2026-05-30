@@ -1,14 +1,16 @@
 import { motion, type Variants } from "framer-motion";
-import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
-import { MuscleBadge } from "@/core/components/MuscleBadge.tsx";
-import { cn } from "@/lib/utils.ts";
 import { path } from "@/core/constants/path.ts";
 import { useWorkoutSummaryLogic } from "@/features/workouts/hooks/useWorkoutSummaryLogic.ts";
-import { formatDateShort } from "@/core/utils/formatters";
+import { useStreakData } from "@/features/user/hooks/useStreakData";
+import { formatDateShort, formatWeight } from "@/core/utils/formatters";
 import { formatDurationExtensive } from "@/core/utils/time";
-import { UNITS } from "@/core/constants/units";
+import SummaryPRBanner from "../components/workout-summary/SummaryPRBanner";
+import StreakBanner from "../components/workout-summary/StreakBanner";
+import SummaryMetricsGrid from "../components/workout-summary/SummaryMetricsGrid";
+import SummaryExerciseList from "../components/workout-summary/SummaryExerciseList";
+import SummaryVolumeChart from "../components/workout-summary/SummaryVolumeChart";
 
 const stagger: Variants = {
     hidden: {},
@@ -17,20 +19,15 @@ const stagger: Variants = {
 
 const staggerItem: Variants = {
     hidden: { opacity: 0, y: 14 },
-    show: {
-        opacity: 1,
-        y: 0,
-        transition: { type: "spring", stiffness: 380, damping: 28 },
-    },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 380, damping: 28 } },
 };
 
 const WorkoutSummaryPage = () => {
     const { navigate, workoutSession, workout, stats, handleFinish, isLoading } =
         useWorkoutSummaryLogic();
+    const { data: streakData } = useStreakData();
 
-    if (isLoading) {
-        return <LoadingOverlay isLoading={true} />;
-    }
+    if (isLoading) return <LoadingOverlay isLoading={true} />;
 
     if (!workoutSession || !workout || !stats) {
         return (
@@ -42,7 +39,7 @@ const WorkoutSummaryPage = () => {
     }
 
     const metrics = [
-        { label: "Volume", value: String(stats.totalVolume), unit: UNITS.WEIGHT },
+        { label: "Volume", value: formatWeight(stats.totalVolume), unit: null },
         { label: "Duração", value: formatDurationExtensive(stats.duration), unit: null },
         { label: "Sets", value: String(stats.totalSets), unit: null },
     ];
@@ -54,7 +51,6 @@ const WorkoutSummaryPage = () => {
             animate="show"
             className="flex flex-col pb-24 overflow-y-auto"
         >
-            {/* Header */}
             <motion.div variants={staggerItem} className="pt-6 pb-4 px-4">
                 <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.05em] mb-1">
                     Treino finalizado
@@ -70,118 +66,12 @@ const WorkoutSummaryPage = () => {
                 )}
             </motion.div>
 
-            {/* PR Banner */}
-            {stats.newPRs.length > 0 && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    className="mx-4 mb-4 p-4 rounded-xl bg-pr-subtle border border-pr/20 flex items-start gap-3"
-                >
-                    <Trophy className="w-5 h-5 text-pr flex-shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-[13px] font-medium text-pr-subtle-fg mb-1">
-                            {stats.newPRs.length === 1
-                                ? "Novo recorde pessoal!"
-                                : `${stats.newPRs.length} novos recordes!`}
-                        </p>
-                        {stats.newPRs.map(pr => (
-                            <p key={pr.exerciseId} className="text-[12px] text-pr-subtle-fg/80">
-                                {pr.exerciseName} —{" "}
-                                {pr.previousMax !== null
-                                    ? `${pr.previousMax}${UNITS.WEIGHT} → ${pr.newMax}${UNITS.WEIGHT}`
-                                    : `Novo recorde: ${pr.newMax}${UNITS.WEIGHT}`}
-                            </p>
-                        ))}
-                    </div>
-                </motion.div>
-            )}
+            <SummaryPRBanner newPRs={stats.newPRs} />
+            {streakData && <StreakBanner streak={streakData} />}
+            <SummaryMetricsGrid metrics={metrics} />
+            <SummaryExerciseList exercises={stats.completedExercises} />
+            <SummaryVolumeChart volumeByGroup={stats.volumeByGroup} />
 
-            {/* Metrics grid */}
-            <motion.div variants={staggerItem} className="grid grid-cols-3 gap-3 mx-4 mb-4">
-                {metrics.map(m => (
-                    <div
-                        key={m.label}
-                        className="bg-card border border-border rounded-xl p-3 flex flex-col gap-1"
-                    >
-                        <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground">
-                            {m.label}
-                        </p>
-                        <p className="text-[22px] font-medium tracking-[-0.03em] text-foreground leading-none">
-                            {m.value}
-                            {m.unit && (
-                                <span className="text-[13px] font-normal text-muted-foreground ml-1">
-                                    {m.unit}
-                                </span>
-                            )}
-                        </p>
-                    </div>
-                ))}
-            </motion.div>
-
-            {/* Exercícios realizados */}
-            {stats.completedExercises.length > 0 && (
-                <motion.div
-                    variants={staggerItem}
-                    className="mx-4 mb-4 bg-card border border-border rounded-xl overflow-hidden"
-                >
-                    <div className="px-4 py-3 border-b border-border">
-                        <p className="text-[13px] font-medium text-foreground">Exercícios realizados</p>
-                    </div>
-                    {stats.completedExercises.map((ex, i) => (
-                        <div
-                            key={ex.id}
-                            className={cn(
-                                "flex items-center gap-3 px-4 py-3",
-                                i < stats.completedExercises.length - 1 && "border-b border-border"
-                            )}
-                        >
-                            <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
-                                {ex.name}
-                            </span>
-                            <MuscleBadge muscle={ex.muscleGroup} />
-                            <span className="text-[12px] text-muted-foreground ml-2 flex-shrink-0">
-                                {ex.sets}×{ex.reps}
-                            </span>
-                        </div>
-                    ))}
-                </motion.div>
-            )}
-
-            {/* Distribuição de volume */}
-            {stats.volumeByGroup.length > 0 && (
-                <motion.div
-                    variants={staggerItem}
-                    className="mx-4 mb-4 bg-card border border-border rounded-xl p-4"
-                >
-                    <p className="text-[13px] font-medium text-foreground mb-3">
-                        Distribuição de volume
-                    </p>
-                    {stats.volumeByGroup.map(({ group, volume, percentage }) => (
-                        <div key={group} className="mb-3 last:mb-0">
-                            <div className="flex items-center justify-between mb-1.5">
-                                <MuscleBadge muscle={group} />
-                                <span className="text-[12px] text-muted-foreground">
-                                    {Math.round(volume)}{UNITS.WEIGHT} · {Math.round(percentage)}%
-                                </span>
-                            </div>
-                            <div className="h-[3px] bg-muted rounded-full overflow-hidden">
-                                <motion.div
-                                    className="h-full rounded-full"
-                                    style={{
-                                        background: `var(--muscle-${group.toLowerCase().replace(/_/g, "-")})`,
-                                    }}
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percentage}%` }}
-                                    transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </motion.div>
-            )}
-
-            {/* Fixed footer */}
             <div className="fixed bottom-0 inset-x-0 p-4 pb-6 bg-background/95 backdrop-blur-sm border-t border-border">
                 <Button
                     onClick={handleFinish}

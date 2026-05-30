@@ -20,7 +20,7 @@ export const useWorkoutSession = (workoutId?: string) => {
     const activeSession = useActiveWorkoutStore((s) => s.activeSession);
 
     const sessionByUserQuery = useQuery({
-        queryKey: ["workoutSessions"],
+        queryKey: ["sessions"],
         queryFn: () => WorkoutSessionService.getByUserId(),
     });
 
@@ -49,7 +49,7 @@ export const useWorkoutSession = (workoutId?: string) => {
 
     const createSessionMutation = useAppMutation({
         mutationFn: WorkoutSessionService.create,
-        invalidateQueries: [["workoutSessions"], ["activeSession"]],
+        invalidateQueries: [["sessions"], ["activeSession"]],
         suppressDefaultError: true,
         onSuccess: (data) => {
             const { newSession } = data;
@@ -65,8 +65,10 @@ export const useWorkoutSession = (workoutId?: string) => {
             sets: activeSession.pendingSets ?? [],
         };
 
-        // Navigate immediately — animation starts while API runs in parallel
-        setFinalization({ status: 'pending', sessionId, error: null });
+        // Optimistically clear active session cache before navigating so
+        // SessionRecoveryDialog doesn't fire on the completion page.
+        queryClient.setQueryData(["activeSession"], null);
+        setFinalization({ status: 'pending', sessionId, error: null, payload });
         navigate(`${path.WORKOUT_COMPLETE}/${sessionId}`);
 
         try {
@@ -75,20 +77,23 @@ export const useWorkoutSession = (workoutId?: string) => {
                 { retries: 3, baseDelayMs: 2000 }
             );
             clearState();
-            await queryClient.invalidateQueries({ queryKey: ["workoutSessions"] });
-            setFinalization({ status: 'success', sessionId, error: null });
+            await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+            await queryClient.invalidateQueries({ queryKey: ["activeSession"] });
+            await queryClient.invalidateQueries({ queryKey: ["user-streak"] });
+            setFinalization({ status: 'success', sessionId, error: null, payload: null });
         } catch {
             setFinalization({
                 status: 'error',
                 sessionId,
                 error: "Não foi possível finalizar o treino. Verifique sua conexão e tente novamente.",
+                payload,
             });
         }
     };
 
     const deleteSessionMutation = useAppMutation({
         mutationFn: WorkoutSessionService.delete,
-        invalidateQueries: [["activeSession"], ["workoutSessions"]],
+        invalidateQueries: [["activeSession"], ["sessions"]],
         suppressDefaultError: true,
         onSuccess: () => {
             clearState();

@@ -1,8 +1,13 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { WorkoutSession, SessionSetPayload } from "../workout.types";
+import type { WorkoutSession, SessionSetPayload, FinishSessionPayload } from "../workout.types";
 
-type ActiveSession = WorkoutSession & { pendingSets: SessionSetPayload[] }
+type ActiveSession = WorkoutSession & {
+    pendingSets: SessionSetPayload[];
+    exerciseNotes: Record<number, string>;
+    exerciseExtraSets: Record<number, number>;
+    sessionExerciseOrder: number[] | null;
+}
 
 type FinalizationStatus = 'idle' | 'pending' | 'success' | 'error';
 
@@ -10,6 +15,7 @@ interface FinalizationState {
     status: FinalizationStatus;
     sessionId: number | null;
     error: string | null;
+    payload: FinishSessionPayload | null;
 }
 
 interface ActiveWorkoutState {
@@ -24,9 +30,12 @@ interface ActiveWorkoutActions {
     addPendingSet: (payload: SessionSetPayload) => void;
     setFinalization: (state: FinalizationState) => void;
     resetFinalization: () => void;
+    setExerciseNote: (exerciseId: number, note: string) => void;
+    addExtraSet: (exerciseId: number) => void;
+    setExerciseOrder: (order: number[]) => void;
 }
 
-const IDLE_FINALIZATION: FinalizationState = { status: 'idle', sessionId: null, error: null };
+const IDLE_FINALIZATION: FinalizationState = { status: 'idle', sessionId: null, error: null, payload: null };
 
 export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutActions>()(
     persist(
@@ -41,6 +50,9 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
                         ? {
                             ...session,
                             pendingSets: state.activeSession?.pendingSets ?? [],
+                            exerciseNotes: state.activeSession?.exerciseNotes ?? {},
+                            exerciseExtraSets: state.activeSession?.exerciseExtraSets ?? {},
+                            sessionExerciseOrder: state.activeSession?.sessionExerciseOrder ?? null,
                           }
                         : null,
                     lastSession,
@@ -55,6 +67,36 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
                             ...state.activeSession,
                             pendingSets: [...state.activeSession.pendingSets, payload],
                           }
+                        : state.activeSession,
+                })),
+
+            setExerciseNote: (exerciseId, note) =>
+                set((state) => ({
+                    activeSession: state.activeSession
+                        ? {
+                            ...state.activeSession,
+                            exerciseNotes: { ...state.activeSession.exerciseNotes, [exerciseId]: note },
+                          }
+                        : state.activeSession,
+                })),
+
+            addExtraSet: (exerciseId) =>
+                set((state) => ({
+                    activeSession: state.activeSession
+                        ? {
+                            ...state.activeSession,
+                            exerciseExtraSets: {
+                                ...state.activeSession.exerciseExtraSets,
+                                [exerciseId]: (state.activeSession.exerciseExtraSets[exerciseId] ?? 0) + 1,
+                            },
+                          }
+                        : state.activeSession,
+                })),
+
+            setExerciseOrder: (order) =>
+                set((state) => ({
+                    activeSession: state.activeSession
+                        ? { ...state.activeSession, sessionExerciseOrder: order }
                         : state.activeSession,
                 })),
 

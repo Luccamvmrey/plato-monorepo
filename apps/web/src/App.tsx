@@ -15,6 +15,8 @@ import WorkoutSummaryPage from "@/features/workouts/pages/WorkoutSummaryPage.tsx
 import HistoryPage from "@/features/workouts/pages/HistoryPage.tsx";
 import ExerciseAnalyticsPage from "@/features/workouts/pages/ExerciseAnalyticsPage.tsx";
 import UserProfilePage from "@/features/user/pages/UserProfilePage.tsx";
+import ErrorBoundary from "@/core/components/ErrorBoundary";
+import { SessionRecoveryDialog } from "@/features/workouts/components/active-workout/components/dialogs/SessionRecoveryDialog.tsx";
 
 const queryClient = new QueryClient();
 
@@ -31,25 +33,36 @@ export function App() {
 
                     <Layout>
                         <AuthGuard>
-                            <Route path={path.WORKOUTS} component={WorkoutListPage}/>
+                            <Route path={path.WORKOUTS}>
+                                <ErrorBoundary><WorkoutListPage /></ErrorBoundary>
+                            </Route>
 
                             <Route path={path.WORKOUT_EDITOR} component={WorkoutEditorPage}/>
                             <Route path={`${path.WORKOUT_EDITOR}/:id`} component={WorkoutEditorPage}/>
 
-                            <Route path={path.ACTIVE_WORKOUT} component={ActiveWorkoutPage}/>
-                            <Route path={`${path.ACTIVE_WORKOUT}/:id`} component={ActiveWorkoutPage}/>
+                            <Route path={path.ACTIVE_WORKOUT}>
+                                <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
+                            </Route>
+                            <Route path={`${path.ACTIVE_WORKOUT}/:id`}>
+                                <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
+                            </Route>
 
                             <Route path={`${path.WORKOUT_SUMMARY}/:id`} component={WorkoutSummaryPage}/>
 
-                            <Route path={path.HISTORY} component={HistoryPage}/>
+                            <Route path={path.HISTORY}>
+                                <ErrorBoundary><HistoryPage /></ErrorBoundary>
+                            </Route>
 
                             <Route path={`${path.EXERCISE_ANALYTICS}/:id`} component={ExerciseAnalyticsPage}/>
 
-                            <Route path={path.USER_PROFILE} component={UserProfilePage}/>
+                            <Route path={path.USER_PROFILE}>
+                                <ErrorBoundary><UserProfilePage /></ErrorBoundary>
+                            </Route>
                         </AuthGuard>
                     </Layout>
                 </Switch>
 
+                <SessionRecoveryDialog />
                 <Toaster position="top-center"/>
             </QueryClientProvider>
         </div>

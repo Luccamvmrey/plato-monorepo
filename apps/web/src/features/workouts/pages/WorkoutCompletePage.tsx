@@ -5,9 +5,10 @@ import { Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { path } from "@/core/constants/path";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
-import { useWorkoutSession } from "@/features/workouts/hooks/useWorkoutSession";
+import { SessionSetService } from "@/features/workouts/services/workout-session/session-set.service";
 import { WorkoutSessionService } from "@/features/workouts/services/workout-session/workout-session.service";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
+import { withRetry } from "@/lib/retry";
 
 type Phase = 'entering' | 'holding' | 'exiting';
 
@@ -20,7 +21,8 @@ const WorkoutCompletePage = () => {
 
     const finalization = useActiveWorkoutStore((s) => s.finalization);
     const resetFinalization = useActiveWorkoutStore((s) => s.resetFinalization);
-    const { finishSession } = useWorkoutSession();
+    const setFinalization = useActiveWorkoutStore((s) => s.setFinalization);
+    const clearState = useActiveWorkoutStore((s) => s.clearState);
 
     const [phase, setPhase] = useState<Phase>('entering');
     const [retryKey, setRetryKey] = useState(0);
@@ -76,10 +78,32 @@ const WorkoutCompletePage = () => {
         return () => clearTimeout(timer);
     }, [phase, finalization.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const handleRetry = () => {
+    const handleRetry = async () => {
+        if (!finalization.sessionId || !finalization.payload) return;
+        const { sessionId, payload } = { sessionId: finalization.sessionId, payload: finalization.payload };
+
         setPhase('entering');
         setRetryKey(k => k + 1);
-        void finishSession();
+        setFinalization({ status: 'pending', sessionId, error: null, payload });
+
+        try {
+            await withRetry(
+                () => SessionSetService.finishSession(sessionId, payload),
+                { retries: 3, baseDelayMs: 2000 }
+            );
+            clearState();
+            await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+            await queryClient.invalidateQueries({ queryKey: ["activeSession"] });
+            await queryClient.invalidateQueries({ queryKey: ["user-streak"] });
+            setFinalization({ status: 'success', sessionId, error: null, payload: null });
+        } catch {
+            setFinalization({
+                status: 'error',
+                sessionId,
+                error: "Não foi possível finalizar o treino. Verifique sua conexão e tente novamente.",
+                payload,
+            });
+        }
     };
 
     // Error state

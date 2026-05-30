@@ -35,6 +35,7 @@ export interface EnrichedExerciseRecord extends WorkoutExercise {
     exercise: Exercise;
     logs: SessionSet[];
     status: ExerciseStatus;
+    effectiveTargetSets: number;
 }
 
 export type GetUserWorkoutsResponse = Array<Workout>;
@@ -47,6 +48,7 @@ export interface SessionSetPayload {
   actualWeight: number
   equipmentWeight?: number
   rpe: number
+  userObservation?: string
 }
 
 export interface FinishSessionPayload {

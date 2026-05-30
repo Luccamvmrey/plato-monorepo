@@ -5,12 +5,14 @@ import type { FormEvent } from "react";
 interface WorkoutEditorFormProps {
     formId: string;
     onSubmit: (e: FormEvent) => void;
+    nameError?: string;
+    onNameBlur?: (value: string) => void;
 }
 
-export const WorkoutEditorForm = ({ formId, onSubmit }: WorkoutEditorFormProps) => {
+export const WorkoutEditorForm = ({ formId, onSubmit, nameError, onNameBlur }: WorkoutEditorFormProps) => {
     return (
         <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-3">
-            <WorkoutInfo />
+            <WorkoutInfo nameError={nameError} onNameBlur={onNameBlur} />
             <ExerciseList />
         </form>
     );
