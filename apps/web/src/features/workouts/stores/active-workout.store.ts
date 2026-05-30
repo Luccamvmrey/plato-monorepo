@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { WorkoutSession, SessionSetPayload } from "../workout.types";
+import type { WorkoutSession, SessionSetPayload, FinishSessionPayload } from "../workout.types";
 
 type ActiveSession = WorkoutSession & {
     pendingSets: SessionSetPayload[];
@@ -15,6 +15,7 @@ interface FinalizationState {
     status: FinalizationStatus;
     sessionId: number | null;
     error: string | null;
+    payload: FinishSessionPayload | null;
 }
 
 interface ActiveWorkoutState {
@@ -34,7 +35,7 @@ interface ActiveWorkoutActions {
     setExerciseOrder: (order: number[]) => void;
 }
 
-const IDLE_FINALIZATION: FinalizationState = { status: 'idle', sessionId: null, error: null };
+const IDLE_FINALIZATION: FinalizationState = { status: 'idle', sessionId: null, error: null, payload: null };
 
 export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutActions>()(
     persist(

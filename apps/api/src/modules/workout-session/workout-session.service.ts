@@ -120,6 +120,16 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
     rpe: number;
     userObservation?: string;
 }> }) => {
+    const existing = await prisma.workoutSession.findUnique({
+        where: { id: workoutSessionId, userId },
+        include: SESSION_INCLUDE,
+    });
+
+    if (!existing) throw new AppError("Workout session not found", 404);
+
+    // Idempotency: if already completed, return without creating duplicate sets
+    if (existing.completedAt !== null) return existing;
+
     const now = new Date();
 
     const result = await prisma.$transaction(async (tx) => {

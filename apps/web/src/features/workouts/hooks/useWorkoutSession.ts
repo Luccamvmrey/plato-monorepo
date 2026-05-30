@@ -68,7 +68,7 @@ export const useWorkoutSession = (workoutId?: string) => {
         // Optimistically clear active session cache before navigating so
         // SessionRecoveryDialog doesn't fire on the completion page.
         queryClient.setQueryData(["activeSession"], null);
-        setFinalization({ status: 'pending', sessionId, error: null });
+        setFinalization({ status: 'pending', sessionId, error: null, payload });
         navigate(`${path.WORKOUT_COMPLETE}/${sessionId}`);
 
         try {
@@ -80,12 +80,13 @@ export const useWorkoutSession = (workoutId?: string) => {
             await queryClient.invalidateQueries({ queryKey: ["sessions"] });
             await queryClient.invalidateQueries({ queryKey: ["activeSession"] });
             await queryClient.invalidateQueries({ queryKey: ["user-streak"] });
-            setFinalization({ status: 'success', sessionId, error: null });
+            setFinalization({ status: 'success', sessionId, error: null, payload: null });
         } catch {
             setFinalization({
                 status: 'error',
                 sessionId,
                 error: "Não foi possível finalizar o treino. Verifique sua conexão e tente novamente.",
+                payload,
             });
         }
     };
