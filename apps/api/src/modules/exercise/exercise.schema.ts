@@ -18,11 +18,14 @@ const MUSCLE_GROUPS = [
     "CORE",
     "LOWER_BACK",
     "NECK"
-]
+] as const;
 
 export const createExerciseSchema = z.object({
     name: z.string().min(2, "Exercise name is required"),
     targetMuscle: z.enum(MUSCLE_GROUPS),
+    secondaryMuscles: z.array(z.enum(MUSCLE_GROUPS)).optional().default([]),
 });
 
-// Update schema if needed
+export const bulkCreateExerciseSchema = z.object({
+    exercises: z.array(createExerciseSchema).min(1),
+});

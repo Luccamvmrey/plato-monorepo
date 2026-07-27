@@ -49,7 +49,7 @@ const WorkoutSummaryPage = () => {
             variants={stagger}
             initial="hidden"
             animate="show"
-            className="flex flex-col pb-24 overflow-y-auto"
+            className="flex flex-col pb-[184px] overflow-y-auto"
         >
             <motion.div variants={staggerItem} className="pt-6 pb-4 px-4">
                 <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.05em] mb-1">
@@ -72,7 +72,10 @@ const WorkoutSummaryPage = () => {
             <SummaryExerciseList exercises={stats.completedExercises} />
             <SummaryVolumeChart volumeByGroup={stats.volumeByGroup} />
 
-            <div className="fixed bottom-0 inset-x-0 p-4 pb-6 bg-background/95 backdrop-blur-sm border-t border-border">
+            {/* Sits above the NavBar rather than sharing `bottom-0` with it —
+                the NavBar is z-50 and would otherwise render on top, making this
+                the page's primary action unclickable. */}
+            <div className="fixed bottom-[92px] inset-x-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
                 <Button
                     onClick={handleFinish}
                     className="w-full h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] bg-primary text-primary-foreground"

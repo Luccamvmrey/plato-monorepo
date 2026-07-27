@@ -50,7 +50,14 @@ const WorkoutEditorPage = () => {
                 <NewExerciseSheet />
 
                 {validationErrors.exercises && (
-                    <p className="text-destructive text-[12px] px-1">{validationErrors.exercises}</p>
+                    <p
+                        data-exercises-error
+                        role="alert"
+                        tabIndex={-1}
+                        className="text-destructive text-[12px] px-1 outline-none"
+                    >
+                        {validationErrors.exercises}
+                    </p>
                 )}
 
                 {saveError && (

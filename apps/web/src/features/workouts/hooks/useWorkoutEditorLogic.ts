@@ -5,6 +5,7 @@ import { useSensor, useSensors, type DragEndEvent, closestCenter, TouchSensor, M
 import { type FormEvent, useEffect, useState } from "react";
 import { path } from "@/core/constants/path";
 import { useSuccessState } from "@/core/hooks/useSuccessState";
+import { focusField } from "@/core/utils/focus";
 
 export const useWorkoutEditorLogic = () => {
     const { id } = useParams();
@@ -66,10 +67,25 @@ export const useWorkoutEditorLogic = () => {
 
         setValidationErrors({});
 
-        if (!name.trim()) { setValidationErrors({ name: "O nome do treino é obrigatório." }); return; }
-        if (exercises.length === 0) { setValidationErrors({ exercises: "Adicione pelo menos um exercício." }); return; }
-        if (exercises.some((ex) => ex.targetSets === 0 || ex.targetReps === 0)) {
+        // Every branch below sends the user to the thing that failed. Without this
+        // the error renders at the bottom of a long form — off-screen, and further
+        // off-screen still once the keyboard is up — so submitting looks like a no-op.
+        if (!name.trim()) {
+            setValidationErrors({ name: "O nome do treino é obrigatório." });
+            focusField('[data-editor-field="name"]');
+            return;
+        }
+        if (exercises.length === 0) {
+            setValidationErrors({ exercises: "Adicione pelo menos um exercício." });
+            focusField("[data-exercises-error]");
+            return;
+        }
+
+        const firstIncomplete = exercises.find((ex) => ex.targetSets === 0 || ex.targetReps === 0);
+        if (firstIncomplete) {
             setValidationErrors({ exercises: "Defina as séries e repetições para todos os exercícios." });
+            const field = firstIncomplete.targetSets === 0 ? "sets" : "reps";
+            focusField(`[data-instance-id="${firstIncomplete.instanceId}"] [data-editor-field="${field}"]`);
             return;
         }
 

@@ -5,12 +5,21 @@ import { Button } from "@/components/ui/button.tsx";
 import { Trash2, X } from "lucide-react";
 import DeletionAlertDialog from "@/core/components/DeletionAlertDialog.tsx";
 import { useWorkoutInfoLogic } from "@/features/workouts/hooks/useWorkoutInfoLogic.ts";
+import { focusNextField } from "@/core/utils/focus.ts";
 import { cn } from "@/lib/utils";
+import type { KeyboardEvent } from "react";
 
 interface WorkoutInfoProps {
     nameError?: string;
     onNameBlur?: (value: string) => void;
 }
+
+/** Enter advances to the next field instead of submitting a half-filled workout. */
+const handleFieldKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (!focusNextField(e.currentTarget)) e.currentTarget.blur();
+};
 
 const WorkoutInfo = ({ nameError, onNameBlur }: WorkoutInfoProps) => {
     const {
@@ -50,13 +59,18 @@ const WorkoutInfo = ({ nameError, onNameBlur }: WorkoutInfoProps) => {
                         id="name"
                         name="name"
                         type="text"
+                        enterKeyHint="next"
+                        data-editor-field="name"
+                        aria-invalid={!!nameError}
+                        aria-describedby={nameError ? "name-error" : undefined}
                         placeholder="Ex.: Treino A - Foco Peito"
                         className={cn("h-12 text-lg font-medium tracking-tight", nameError && "border-destructive")}
                         value={name}
                         onChange={(e) => setWorkoutInfo("name", e.target.value)}
                         onBlur={(e) => onNameBlur?.(e.target.value)}
+                        onKeyDown={handleFieldKeyDown}
                     />
-                    {nameError && <p className="text-destructive text-[12px] mt-1">{nameError}</p>}
+                    {nameError && <p id="name-error" role="alert" className="text-destructive text-[12px] mt-1">{nameError}</p>}
                 </div>
                 <div className="w-full flex flex-col gap-2">
                     <Label htmlFor="description" className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">

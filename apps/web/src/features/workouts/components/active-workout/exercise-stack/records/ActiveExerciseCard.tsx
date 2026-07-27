@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MoreHorizontal, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
@@ -48,17 +47,12 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
         isPending,
     });
 
-    const weightRef = useRef<HTMLInputElement>(null);
-    const repsRef = useRef<HTMLInputElement>(null);
-
     const { weight, reps, rpe, equipmentWeight, wasSubmitted } = state;
     const { setWeight, setReps, setRpe, setEquipmentWeight, handleConfirm } = actions;
 
-    const handleFocusScroll = (ref: React.RefObject<HTMLInputElement | null>) => {
-        setTimeout(() => {
-            ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 300);
-    };
+    // Scrolling the focused field into view is handled globally by
+    // useKeepFocusedFieldVisible (mounted in Layout), which also covers the bar-weight
+    // input and the note textarea that this card's ad-hoc handler used to miss.
 
     const doneDots = record.logs.length;
     const totalDots = record.effectiveTargetSets;
@@ -71,8 +65,11 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                 ))}
             </AnimatePresence>
 
+            {/* Keeping the whole card on screen — not just the focused input — is what
+                keeps the RPE chips and the confirm button reachable with the keyboard up. */}
             <motion.div
                 layout
+                data-keyboard-anchor
                 className="border-2 border-primary/40 rounded-xl bg-card p-4 flex flex-col gap-4"
             >
                 {/* Header */}
@@ -128,7 +125,6 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             Carga
                         </span>
                         <input
-                            ref={weightRef}
                             type="number"
                             inputMode="decimal"
                             placeholder={suggestions.weight ? `${suggestions.weight}` : "0"}
@@ -136,7 +132,6 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             onChange={(e) => setWeight(e.target.value)}
                             disabled={isPending || wasSubmitted}
                             className="input-workout"
-                            onFocus={() => handleFocusScroll(weightRef)}
                         />
                         <span className="text-[12px] text-muted-foreground text-center">{UNITS.WEIGHT}</span>
                     </div>
@@ -146,7 +141,6 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             Reps
                         </span>
                         <input
-                            ref={repsRef}
                             type="number"
                             inputMode="numeric"
                             placeholder={record.targetReps.toString()}
@@ -154,7 +148,6 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             onChange={(e) => setReps(e.target.value)}
                             disabled={isPending || wasSubmitted}
                             className="input-workout"
-                            onFocus={() => handleFocusScroll(repsRef)}
                         />
                         <span className="text-[12px] text-muted-foreground text-center">repetições</span>
                     </div>
