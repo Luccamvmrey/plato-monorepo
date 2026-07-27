@@ -1,3 +1,4 @@
+import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
 import { cn } from "@/lib/utils.ts";
 
 interface ActiveWorkoutActionsProps {
@@ -15,8 +16,18 @@ export const ActiveWorkoutActions = ({
     isCancelPending,
     isAllCompleted,
 }: ActiveWorkoutActionsProps) => {
+    const isKeyboardOpen = useKeyboardOpen();
+
     return (
-        <div className="fixed bottom-[92px] inset-x-0 p-4 pb-3 bg-background/95 backdrop-blur-sm border-t border-border flex items-center gap-3">
+        <div
+            className={cn(
+                "fixed bottom-[92px] inset-x-0 p-4 pb-3 bg-background/95 backdrop-blur-sm border-t border-border flex items-center gap-3",
+                // Finishing/cancelling is never the next action while logging a set,
+                // and this bar sits directly over the RPE selector and confirm button
+                // once the keyboard is up.
+                isKeyboardOpen && "hidden"
+            )}
+        >
             <button
                 onClick={onFinishClick}
                 disabled={isFinishPending || isCancelPending}

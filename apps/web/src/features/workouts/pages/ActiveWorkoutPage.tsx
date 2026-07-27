@@ -11,6 +11,8 @@ import { FinishWorkoutDialog } from "@/features/workouts/components/active-worko
 import { CancelWorkoutDialog } from "@/features/workouts/components/active-workout/components/dialogs/CancelWorkoutDialog";
 import { SessionProgress } from "@/features/workouts/components/active-workout/SessionProgress.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
+import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
+import { cn } from "@/lib/utils.ts";
 
 const enterAnimation: Variants = {
     hidden: { opacity: 0, y: 10 },
@@ -44,6 +46,8 @@ const ActiveWorkoutPage = () => {
         addExtraSet,
     } = useActiveWorkoutLogic();
 
+    const isKeyboardOpen = useKeyboardOpen();
+
     useEffect(() => {
         if (isLoading || !activeSession || id) return;
         navigate(`${path.ACTIVE_WORKOUT}/${activeSession.workoutId}`);
@@ -67,7 +71,7 @@ const ActiveWorkoutPage = () => {
             variants={enterAnimation}
             initial="hidden"
             animate="show"
-            className="flex flex-col gap-3 pb-[320px]"
+            className={cn("flex flex-col gap-3", isKeyboardOpen ? "pb-6" : "pb-[320px]")}
         >
             <ActiveWorkoutHeader
                 workout={workout}
