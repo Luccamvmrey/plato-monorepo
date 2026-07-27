@@ -24,4 +24,9 @@ const remove = async (req: Request, res: Response) => {
     res.status(204).send();
 }
 
-export { list, create, update, remove };
+const bulkCreate = async (req: Request, res: Response) => {
+    const result = await exerciseService.bulkCreate(req.body.exercises);
+    res.status(201).json(result);
+}
+
+export { list, create, bulkCreate, update, remove };
