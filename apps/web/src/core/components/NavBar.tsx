@@ -13,7 +13,9 @@ const NavBar = () => {
     return (
         <div
             className={cn(
-                "w-screen h-[92px] z-50 fixed bottom-0 left-0 right-0 shadow-2xl border-t rounded-t-3xl p-4 flex items-center justify-around bg-background",
+                // h-navbar = 92px + env(safe-area-inset-bottom), para a barra não
+                // ficar parcialmente sob o home indicator em PWA standalone.
+                "w-screen h-navbar z-50 fixed bottom-0 left-0 right-0 shadow-2xl border-t rounded-t-3xl p-4 flex items-center justify-around bg-background",
                 // While typing the keyboard already occupies the bottom of the screen;
                 // keeping the bar mounted here would steal ~92px and cover the controls
                 // the user is reaching for.

@@ -24,7 +24,10 @@
   --popover-foreground:  oklch(0.13 0.01 265);
 
   /* Primary → Azul (ação, CTA, foco) */
-  --primary:             oklch(0.60 0.19 245);   /* sky-600 ~#0284c7 */
+  /* L 0.60 dava 3.80:1 como texto sobre --background E 3.60:1 para o
+     --primary-foreground sobre ele (o CTA principal falhava nas duas pontas).
+     L 0.51 resolve os dois: 5.43:1 e 5.14:1. Medido, não estimado. */
+  --primary:             oklch(0.51 0.19 245);   /* sky-700 */
   --primary-foreground:  oklch(0.98 0.005 245);
 
   /* Secondary — superfície leve */
@@ -45,11 +48,14 @@
   /* Bordas e inputs */
   --border:              oklch(0.918 0.005 265);
   --input:               oklch(0.918 0.005 265);
-  --ring:                oklch(0.60 0.19 245);    /* segue primary */
+  --ring:                oklch(0.51 0.19 245);    /* segue primary */
 
   /* ── Tokens semânticos extras (Plato-specific) ── */
   /* Verde → exclusivo para sucesso/conclusão */
-  --success:             oklch(0.60 0.15 162);    /* green-600 */
+  /* Mesmo problema do --primary: text-success é texto de verdade em 3 lugares
+     (medidor de senha, GovernanceSettings, badge de 10px do WorkoutListItem) e dava
+     3.58:1, e o --success-foreground sobre ele dava 3.31:1. L 0.515 → 5.01 e 4.64. */
+  --success:             oklch(0.515 0.15 162);   /* green-700 */
   --success-foreground:  oklch(0.97 0.02 162);
   --success-subtle:      oklch(0.95 0.05 162);    /* bg de badges "done" */
   --success-subtle-fg:   oklch(0.35 0.12 162);
@@ -70,12 +76,14 @@
      · Neck           → Violeta (isolado, raramente treinado junto)
      ──────────────────────────────────────────────────────────────── */
 
-  /* Push superior — Azul */
-  --muscle-chest:            oklch(0.60 0.19 245);
+  /* Push superior — Azul
+     Badges são 11px/500, então precisam de 4.5:1 e não do limite de texto grande.
+     Ratios medidos abaixo (rasterizando oklch em canvas), não estimados. */
+  --muscle-chest:            oklch(0.51 0.19 245);   /* era 0.60 → 3.27:1; agora 4.67:1 */
   --muscle-chest-bg:         oklch(0.95 0.05 245);
-  --muscle-shoulders:        oklch(0.60 0.19 245);
+  --muscle-shoulders:        oklch(0.51 0.19 245);
   --muscle-shoulders-bg:     oklch(0.95 0.05 245);
-  --muscle-triceps:          oklch(0.60 0.19 245);
+  --muscle-triceps:          oklch(0.51 0.19 245);
   --muscle-triceps-bg:       oklch(0.95 0.05 245);
 
   /* Pull superior — Verde */
@@ -87,9 +95,9 @@
   --muscle-traps-bg:         oklch(0.95 0.06 162);
 
   /* Braços pull — Teal (diferencia de back) */
-  --muscle-biceps:           oklch(0.55 0.13 195);
+  --muscle-biceps:           oklch(0.50 0.13 195);   /* era 0.55 → 3.79:1; agora 4.66:1 */
   --muscle-biceps-bg:        oklch(0.95 0.05 195);
-  --muscle-forearms:         oklch(0.55 0.13 195);
+  --muscle-forearms:         oklch(0.50 0.13 195);
   --muscle-forearms-bg:      oklch(0.95 0.05 195);
 
   /* Inferior — Vermelho */
@@ -103,11 +111,11 @@
   --muscle-calves-bg:        oklch(0.96 0.04 22);
 
   /* Core / Trunk — Âmbar */
-  --muscle-core:             oklch(0.58 0.14 75);
-  --muscle-core-bg:          oklch(0.97 0.05 85);
+  --muscle-core:             oklch(0.54 0.14 75);    /* era 0.58 → 3.96:1; agora 4.61:1 */
+  --muscle-core-bg:          oklch(0.97 0.05 75);    /* hue era 85, fora de sincronia com o fg */
 
   /* Pescoço — Violeta (grupo isolado) */
-  --muscle-neck:             oklch(0.55 0.18 295);
+  --muscle-neck:             oklch(0.54 0.18 295);   /* era 0.55 → 4.44:1; agora 4.63:1 */
   --muscle-neck-bg:          oklch(0.95 0.05 295);
 
   /* Radius — 0.75rem resolve o efeito "template shadcn" */
@@ -476,6 +484,69 @@
 .btn-finish[data-ready="true"] {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* ─────────────────────────────────────────────
+   Movimento reduzido
+   O Framer Motion é coberto por <MotionConfig reducedMotion="user"> no main.tsx;
+   isto cobre só o que é animação CSS, que ele não alcança.
+   animate-spin fica de fora de propósito: um spinner congelado lê como app travado.
+   ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+  }
+
+  /* Transições decorativas viram instantâneas, sem quebrar estados de :hover/:focus */
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Safe area — notch / home indicator
+   Só resolve para != 0px porque o meta viewport tem viewport-fit=cover.
+   ───────────────────────────────────────────── */
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Altura da NavBar já somada ao inset — usada pela barra e por quem reserva
+   espaço para ela, para os três valores não saírem de sincronia. */
+.h-navbar {
+  height: calc(92px + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+}
+
+.pb-navbar {
+  padding-bottom: calc(84px + var(--safe-bottom));
+}
+
+.mb-navbar {
+  margin-bottom: calc(96px + var(--safe-bottom));
+}
+
+/* Para barras fixas que se empilham ACIMA da NavBar. Tem que carregar o inset:
+   um `bottom-[92px]` cru fica por baixo da barra em aparelho com notch, porque a
+   NavBar passa a ter 92px + inset. */
+.bottom-navbar {
+  bottom: calc(92px + var(--safe-bottom));
+}
+
+/* ─────────────────────────────────────────────
+   Esconder scrollbar mantendo o scroll
+   Usada em 4 componentes e não existia em stylesheet nenhuma — era um no-op.
+   ───────────────────────────────────────────── */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ─────────────────────────────────────────────

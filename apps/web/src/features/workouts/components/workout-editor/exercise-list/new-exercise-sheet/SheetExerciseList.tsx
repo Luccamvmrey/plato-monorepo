@@ -2,6 +2,7 @@ import type { Exercise } from "@/features/workouts/workout.types.ts";
 import { MuscleGroup } from "@plato/database/generated/prisma/enums.ts";
 import { muscleGroupTranslation } from "@/core/utils/translations.ts";
 import { cn } from "@/lib/utils.ts";
+import { SearchX } from "lucide-react";
 import { MuscleBadge } from "@/core/components/MuscleBadge.tsx";
 
 type SheetExerciseListProps = {
@@ -20,6 +21,22 @@ const SheetExerciseList = ({ exercises, selectedExercises, onExerciseClick }: Sh
             exercises: exercisesForGroup
         };
     });
+
+    // Cada grupo retorna null quando está vazio, então uma busca sem resultado
+    // renderizava uma área totalmente em branco.
+    if (exercises.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                <SearchX className="w-8 h-8 text-muted-foreground opacity-20" />
+                <p className="text-[13px] text-muted-foreground">
+                    Nenhum exercício encontrado
+                </p>
+                <p className="text-[12px] text-muted-foreground/70">
+                    Tente outro termo ou troque o filtro de músculo.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col gap-6">

@@ -11,7 +11,11 @@ const SelectedExercisesList = ({ selectedExercises, onExerciseClick }: SelectedE
     if (selectedExercises.length === 0) return null;
 
     return (
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        // shrink-0 é obrigatório: `overflow-x-auto` faz desta linha um scroll container,
+        // cujo tamanho mínimo automático é 0 (e não o do conteúdo). Como irmã de uma
+        // lista muito mais alta que a viewport dentro de um flex-col, ela era esmagada
+        // para height:0 e os chips ficavam invisíveis — nunca apareceram, nem antes.
+        <div className="flex gap-2 overflow-x-auto no-scrollbar shrink-0">
             {selectedExercises.map((exercise) => (
                 <Badge key={exercise.id} onClick={() => onExerciseClick(exercise)}>
                     {exercise.name}

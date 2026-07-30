@@ -38,7 +38,7 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
         setNote,
     } = useActiveExerciseCardLogic(record, sessionId, lastSession);
 
-    const { state, actions } = useActiveSetInput({
+    const { state, refs, actions } = useActiveSetInput({
         setNumber: activeSetNumber,
         targetReps: record.targetReps,
         previousWeight: suggestions.weight,
@@ -48,7 +48,8 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
     });
 
     const { weight, reps, rpe, equipmentWeight, wasSubmitted } = state;
-    const { setWeight, setReps, setRpe, setEquipmentWeight, handleConfirm } = actions;
+    const { containerRef, weightRef, repsRef, equipmentRef } = refs;
+    const { setWeight, setReps, setRpe, setEquipmentWeight, handleConfirm, handleFieldKeyDown } = actions;
 
     // Scrolling the focused field into view is handled globally by
     // useKeepFocusedFieldVisible (mounted in Layout), which also covers the bar-weight
@@ -69,6 +70,7 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                 keeps the RPE chips and the confirm button reachable with the keyboard up. */}
             <motion.div
                 layout
+                ref={containerRef}
                 data-keyboard-anchor
                 className="border-2 border-primary/40 rounded-xl bg-card p-4 flex flex-col gap-4"
             >
@@ -124,12 +126,18 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                         <span className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground text-center">
                             Carga
                         </span>
+                        {/* type="text" e não "number": com "number" o browser descarta a
+                            vírgula decimal do teclado pt-BR e "82,5" chega como "". */}
                         <input
-                            type="number"
+                            ref={weightRef}
+                            type="text"
                             inputMode="decimal"
+                            enterKeyHint="next"
+                            aria-label="Carga"
                             placeholder={suggestions.weight ? `${suggestions.weight}` : "0"}
                             value={weight}
                             onChange={(e) => setWeight(e.target.value)}
+                            onKeyDown={handleFieldKeyDown("weight")}
                             disabled={isPending || wasSubmitted}
                             className="input-workout"
                         />
@@ -141,11 +149,15 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             Reps
                         </span>
                         <input
-                            type="number"
+                            ref={repsRef}
+                            type="text"
                             inputMode="numeric"
+                            enterKeyHint={showEquipmentWeight ? "next" : "done"}
+                            aria-label="Repetições"
                             placeholder={record.targetReps.toString()}
                             value={reps}
                             onChange={(e) => setReps(e.target.value)}
+                            onKeyDown={handleFieldKeyDown("reps")}
                             disabled={isPending || wasSubmitted}
                             className="input-workout"
                         />
@@ -160,11 +172,15 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             Peso da Barra
                         </span>
                         <input
-                            type="number"
+                            ref={equipmentRef}
+                            type="text"
                             inputMode="decimal"
+                            enterKeyHint="done"
+                            aria-label="Peso da barra"
                             placeholder={UNITS.WEIGHT}
                             value={equipmentWeight}
                             onChange={(e) => setEquipmentWeight(e.target.value)}
+                            onKeyDown={handleFieldKeyDown("equipment")}
                             disabled={isPending || wasSubmitted}
                             className="input-workout"
                         />
@@ -179,13 +195,14 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                     <RpeSelector value={rpe} onChange={setRpe} disabled={isPending || wasSubmitted} />
                 </div>
 
-                {/* Note textarea (optional) */}
+                {/* Note textarea (optional) — sem override de font-size: o base do
+                    Textarea é 16px no mobile, e abaixo disso o iOS dá zoom ao focar. */}
                 {noteVisible && (
                     <Textarea
                         placeholder="Observações sobre o exercício..."
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        className="text-[13px] resize-none min-h-[64px]"
+                        className="resize-none min-h-[64px]"
                         rows={2}
                     />
                 )}

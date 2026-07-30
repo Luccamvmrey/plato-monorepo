@@ -3,6 +3,11 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { arrayMove } from "@dnd-kit/sortable";
 
+// Novos exercícios já entram num estado válido — 0/0 era exatamente o que a
+// validação de submit rejeita, forçando o usuário a preencher 2 campos por exercício.
+const DEFAULT_TARGET_SETS = 3;
+const DEFAULT_TARGET_REPS = 10;
+
 const generateSafeId = () => {
     if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
         return window.crypto.randomUUID();
@@ -59,8 +64,8 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
                 const drafts: WorkoutExerciseDraft[] = newExercises.map((ex, index) => ({
                     instanceId: generateSafeId(),
                     exercise: ex,
-                    targetSets: 0,
-                    targetReps: 0,
+                    targetSets: DEFAULT_TARGET_SETS,
+                    targetReps: DEFAULT_TARGET_REPS,
                     orderIndex: state.exercises.length + index + 1
                 }));
                 return { exercises: [...state.exercises, ...drafts] };

@@ -45,6 +45,17 @@ export const useNewExerciseSheet = (exercises: Exercise[] | undefined) => {
         setOpen(false);
     }
 
+    // Todo caminho de saída passa por aqui — Cancelar, X, Esc e clique no overlay.
+    // Ligar o onOpenChange direto no setOpen deixava seleções, busca e filtro de
+    // músculo vazarem para a próxima abertura da sheet.
+    const handleOpenChange = (next: boolean) => {
+        if (next) {
+            setOpen(true);
+            return;
+        }
+        handleCloseSheet();
+    }
+
     return {
         state: {
             open,
@@ -55,6 +66,7 @@ export const useNewExerciseSheet = (exercises: Exercise[] | undefined) => {
         },
         actions: {
             setOpen,
+            handleOpenChange,
             handleSearchChange,
             handleMuscleGroupSelect,
             handleExerciseClick,
