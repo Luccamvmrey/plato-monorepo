@@ -1,6 +1,6 @@
 import { motion, type Variants } from "framer-motion";
 import { ChevronLeft, TrendingUp, Dumbbell, Trophy } from "lucide-react";
-import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { ExerciseAnalyticsSkeleton } from "../components/exercise-analytics/ExerciseAnalyticsSkeleton";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { AnalyticsChart } from "../components/exercise-analytics/AnalyticsChart";
 import { ExecutionHistoryList } from "../components/exercise-analytics/ExecutionHistoryList";
@@ -25,28 +25,43 @@ const CHART_COLORS = {
     volume: "var(--color-success)",
 };
 
+/** A mesma barra aparecia em três estados da página — carregando, vazio e cheio. */
+const TopBar = ({ onBack }: { onBack: () => void }) => (
+    <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+        <button
+            type="button"
+            aria-label="Voltar"
+            onClick={onBack}
+            className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center
+                       text-muted-foreground hover:text-foreground transition-colors relative tap-target"
+        >
+            <ChevronLeft className="w-4 h-4" />
+        </button>
+        <h1 className="text-[15px] font-medium tracking-[-0.02em]">
+            Análise de Exercício
+        </h1>
+    </div>
+);
+
 const ExerciseAnalyticsPage = ({ params }: { params: { id: string } }) => {
     const exerciseId = parseInt(params.id);
     const { isLoading, exerciseInfo, records, chartData, exerciseData, goBack } =
         useExerciseAnalytics(exerciseId);
 
-    if (isLoading) return <LoadingOverlay isLoading={true} />;
+    if (isLoading) {
+        return (
+            // A barra é estática: não há motivo para ela esperar as queries.
+            <div className="flex flex-col mb-[100px] -mx-4 -mt-4">
+                <TopBar onBack={goBack} />
+                <ExerciseAnalyticsSkeleton />
+            </div>
+        );
+    }
 
     if (exerciseData.length === 0) {
         return (
             <div className="flex flex-col mb-[100px] -mx-4 -mt-4">
-                <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-                    <button
-                        onClick={goBack}
-                        className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center
-                                   text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <h1 className="text-[15px] font-medium tracking-[-0.02em]">
-                        Análise de Exercício
-                    </h1>
-                </div>
+                <TopBar onBack={goBack} />
                 <div className="mx-4 mt-8 flex flex-col items-center justify-center py-12 text-center
                                 bg-card border border-border rounded-xl gap-3">
                     <TrendingUp className="w-10 h-10 text-muted-foreground opacity-20" />
@@ -54,8 +69,9 @@ const ExerciseAnalyticsPage = ({ params }: { params: { id: string } }) => {
                         Este exercício ainda não foi realizado em nenhuma sessão concluída.
                     </p>
                     <button
+                        type="button"
                         onClick={goBack}
-                        className="text-[13px] text-primary font-medium mt-1"
+                        className="text-[13px] text-primary font-medium mt-1 relative tap-target"
                     >
                         Voltar para Histórico
                     </button>
@@ -74,19 +90,7 @@ const ExerciseAnalyticsPage = ({ params }: { params: { id: string } }) => {
             animate="show"
             className="flex flex-col mb-[100px] -mx-4 -mt-4"
         >
-            {/* Top bar */}
-            <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-                <button
-                    onClick={goBack}
-                    className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center
-                               text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    <ChevronLeft className="w-4 h-4" />
-                </button>
-                <h1 className="text-[15px] font-medium tracking-[-0.02em]">
-                    Análise de Exercício
-                </h1>
-            </div>
+            <TopBar onBack={goBack} />
 
             {/* Hero */}
             <motion.div variants={staggerItem} className="px-4 pt-2 pb-4">
@@ -142,6 +146,7 @@ const ExerciseAnalyticsPage = ({ params }: { params: { id: string } }) => {
                     data={e1rmData}
                     color={CHART_COLORS.e1rm}
                     gradientId="e1rmGrad"
+                    emptyLabel="Curva de força"
                 />
             </motion.div>
 
@@ -159,6 +164,7 @@ const ExerciseAnalyticsPage = ({ params }: { params: { id: string } }) => {
                     data={volumeData}
                     color={CHART_COLORS.volume}
                     gradientId="volumeGrad"
+                    emptyLabel="Curva de volume"
                 />
             </motion.div>
 

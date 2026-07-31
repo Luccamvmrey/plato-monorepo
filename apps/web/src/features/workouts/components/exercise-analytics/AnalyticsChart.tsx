@@ -14,6 +14,8 @@ export interface AnalyticsChartProps {
     data: { date: Date; value: number }[];
     color: string;
     gradientId: string;
+    /** Texto do placeholder enquanto não há 3 sessões. */
+    emptyLabel: string;
 }
 
 interface TooltipEntry {
@@ -44,15 +46,21 @@ const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
     );
 };
 
-const ChartEmpty = ({ current }: { current: number }) => {
+/**
+ * Antes: 160px de altura, duas vezes na mesma página, com o texto repetido palavra
+ * por palavra — ~360px de tela quase vazia logo na primeira visita. Agora é uma
+ * linha só, com os pontos de progresso ao lado em vez de embaixo, e o `label`
+ * diz de qual gráfico se trata.
+ */
+const ChartEmpty = ({ current, label }: { current: number; label: string }) => {
     const total = 3;
     const remaining = total - current;
     return (
-        <div className="h-[160px] flex flex-col items-center justify-center gap-2">
-            <p className="text-[13px] text-muted-foreground text-center">
-                Complete mais {remaining} {remaining === 1 ? "sessão" : "sessões"} para ver a evolução
+        <div className="flex items-center justify-between gap-3 py-1">
+            <p className="text-[12px] text-muted-foreground">
+                {label} em {remaining} {remaining === 1 ? "sessão" : "sessões"}
             </p>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 shrink-0" aria-hidden="true">
                 {Array.from({ length: total }).map((_, i) => (
                     <div
                         key={i}
@@ -72,9 +80,9 @@ const axisStyle = {
 
 const chartMargin = { top: 8, right: 8, left: -16, bottom: 0 };
 
-export const AnalyticsChart: FC<AnalyticsChartProps> = ({ data, color, gradientId }) => {
+export const AnalyticsChart: FC<AnalyticsChartProps> = ({ data, color, gradientId, emptyLabel }) => {
     if (data.length < 3) {
-        return <ChartEmpty current={data.length} />;
+        return <ChartEmpty current={data.length} label={emptyLabel} />;
     }
 
     const formattedData = data.map(d => ({

@@ -1,6 +1,6 @@
 import { motion, type Variants } from "framer-motion";
 import { Button } from "@/components/ui/button.tsx";
-import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { WorkoutSummarySkeleton } from "../components/workout-summary/WorkoutSummarySkeleton";
 import { path } from "@/core/constants/path.ts";
 import { useWorkoutSummaryLogic } from "@/features/workouts/hooks/useWorkoutSummaryLogic.ts";
 import { useStreakData } from "@/features/user/hooks/useStreakData";
@@ -27,7 +27,7 @@ const WorkoutSummaryPage = () => {
         useWorkoutSummaryLogic();
     const { data: streakData } = useStreakData();
 
-    if (isLoading) return <LoadingOverlay isLoading={true} />;
+    if (isLoading) return <WorkoutSummarySkeleton />;
 
     if (!workoutSession || !workout || !stats) {
         return (
@@ -74,8 +74,11 @@ const WorkoutSummaryPage = () => {
 
             {/* Sits above the NavBar rather than sharing `bottom-0` with it —
                 the NavBar is z-50 and would otherwise render on top, making this
-                the page's primary action unclickable. */}
-            <div className="fixed bottom-[92px] inset-x-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
+                the page's primary action unclickable. `.bottom-navbar` em vez de
+                `bottom-[92px]` cru: a NavBar mede 92px + safe-area-inset, então o
+                valor fixo deixava o botão parcialmente sob a barra em aparelho
+                com notch. */}
+            <div className="fixed bottom-navbar inset-x-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
                 <Button
                     onClick={handleFinish}
                     className="w-full h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] bg-primary text-primary-foreground"

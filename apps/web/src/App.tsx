@@ -41,8 +41,12 @@ export function App() {
                                     <ErrorBoundary><WorkoutListPage /></ErrorBoundary>
                                 </Route>
 
-                                <Route path={path.WORKOUT_EDITOR} component={WorkoutEditorPage}/>
-                                <Route path={`${path.WORKOUT_EDITOR}/:id`} component={WorkoutEditorPage}/>
+                                <Route path={path.WORKOUT_EDITOR}>
+                                    <ErrorBoundary><WorkoutEditorPage /></ErrorBoundary>
+                                </Route>
+                                <Route path={`${path.WORKOUT_EDITOR}/:id`}>
+                                    <ErrorBoundary><WorkoutEditorPage /></ErrorBoundary>
+                                </Route>
 
                                 <Route path={path.ACTIVE_WORKOUT}>
                                     <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
@@ -51,13 +55,21 @@ export function App() {
                                     <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
                                 </Route>
 
-                                <Route path={`${path.WORKOUT_SUMMARY}/:id`} component={WorkoutSummaryPage}/>
+                                <Route path={`${path.WORKOUT_SUMMARY}/:id`}>
+                                    <ErrorBoundary><WorkoutSummaryPage /></ErrorBoundary>
+                                </Route>
 
                                 <Route path={path.HISTORY}>
                                     <ErrorBoundary><HistoryPage /></ErrorBoundary>
                                 </Route>
 
-                                <Route path={`${path.EXERCISE_ANALYTICS}/:id`} component={ExerciseAnalyticsPage}/>
+                                {/* Function-as-child: esta página recebe `params` por
+                                    prop, então não dá para trocar por children solto. */}
+                                <Route path={`${path.EXERCISE_ANALYTICS}/:id`}>
+                                    {(params) => (
+                                        <ErrorBoundary><ExerciseAnalyticsPage params={params} /></ErrorBoundary>
+                                    )}
+                                </Route>
 
                                 <Route path={path.USER_PROFILE}>
                                     <ErrorBoundary><UserProfilePage /></ErrorBoundary>

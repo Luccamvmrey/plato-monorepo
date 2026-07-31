@@ -12,6 +12,7 @@ import type { KeyboardEvent } from "react";
 interface WorkoutInfoProps {
     nameError?: string;
     onNameBlur?: (value: string) => void;
+    onNameChange?: (value: string) => void;
 }
 
 /** Enter advances to the next field instead of submitting a half-filled workout. */
@@ -21,7 +22,7 @@ const handleFieldKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!focusNextField(e.currentTarget)) e.currentTarget.blur();
 };
 
-const WorkoutInfo = ({ nameError, onNameBlur }: WorkoutInfoProps) => {
+const WorkoutInfo = ({ nameError, onNameBlur, onNameChange }: WorkoutInfoProps) => {
     const {
         id,
         title,
@@ -66,7 +67,10 @@ const WorkoutInfo = ({ nameError, onNameBlur }: WorkoutInfoProps) => {
                         placeholder="Ex.: Treino A - Foco Peito"
                         className={cn("h-12 text-lg font-medium tracking-tight", nameError && "border-destructive")}
                         value={name}
-                        onChange={(e) => setWorkoutInfo("name", e.target.value)}
+                        onChange={(e) => {
+                            setWorkoutInfo("name", e.target.value);
+                            onNameChange?.(e.target.value);
+                        }}
                         onBlur={(e) => onNameBlur?.(e.target.value)}
                         onKeyDown={handleFieldKeyDown}
                     />

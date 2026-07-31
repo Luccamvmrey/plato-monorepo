@@ -537,6 +537,36 @@
 }
 
 /* ─────────────────────────────────────────────
+   Alvo de toque de 44px
+   Quase nenhum elemento interativo do app chegava a 44px (16–36px). Aumentar o
+   tamanho visual quebraria as linhas densas de 390px (ExerciseItem carrega alça
+   de arrastar + nome + 2 inputs + excluir na mesma linha), então o alvo real é
+   um ::after centrado: a área de toque cresce, o desenho não muda.
+
+   A classe NÃO declara `position`: quem usa põe `relative` junto (ou já é
+   `absolute`/`fixed`). Isto não é purismo — as utilities do Plato moram fora de
+   `@layer`, e CSS sem layer vence QUALQUER layer independente de especificidade.
+   Um `position: relative` aqui sobrescrevia o `absolute` do botão de fechar da
+   sheet e jogava ele para fora da tela (medido: left: -12px).
+
+   Outro cuidado: o alvo não pode estar sob `overflow: hidden` — o badge do
+   shadcn traz `overflow-hidden` e precisa de `overflow-visible` junto, e
+   `overflow-x-auto` faz o eixo Y computar para `auto` (ou seja, recorta também),
+   então uma linha rolável horizontal precisa de folga vertical própria.
+   ───────────────────────────────────────────── */
+.tap-target::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  min-width: 44px;
+  min-height: 44px;
+  width: 100%;
+  height: 100%;
+}
+
+/* ─────────────────────────────────────────────
    Esconder scrollbar mantendo o scroll
    Usada em 4 componentes e não existia em stylesheet nenhuma — era um no-op.
    ───────────────────────────────────────────── */

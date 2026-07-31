@@ -20,16 +20,27 @@ export const NavBarSlot = ({ link, slotIcon, label, showBadge }: NavBarSlotProps
     }
 
     return (
-        <div
-            className="flex flex-col items-center justify-center gap-2 size-[64px]"
+        // Era um <div onClick>: sem role, sem tabIndex, invisível para leitor de tela
+        // e inalcançável por teclado — a navegação principal do app inteiro.
+        // 64px já passa da diretriz de 44px, então só a semântica mudou.
+        <button
+            type="button"
+            aria-current={isActive ? "page" : undefined}
+            className="flex flex-col items-center justify-center gap-2 size-[64px] rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             onClick={handleClick}
         >
             <div className="relative size-8 flex items-center justify-center">
                 <Icon className={isActive ? "text-primary" : "text-muted-foreground"}/>
 
                 {showBadge && (
-                    <span
-                        className="absolute top-0 right-0 size-2.5 bg-primary rounded-full border-2 border-background animate-pulse"/>
+                    <>
+                        <span
+                            aria-hidden="true"
+                            className="absolute top-0 right-0 size-2.5 bg-primary rounded-full border-2 border-background animate-pulse"/>
+                        {/* O ponto pulsante é puramente visual; sem isto o leitor de
+                            tela anuncia "Sessão" igual a qualquer outra aba. */}
+                        <span className="sr-only">— sessão em andamento</span>
+                    </>
                 )}
             </div>
             <span className={cn(
@@ -38,7 +49,7 @@ export const NavBarSlot = ({ link, slotIcon, label, showBadge }: NavBarSlotProps
             )}>
                 {label}
             </span>
-        </div>
+        </button>
     );
 };
 

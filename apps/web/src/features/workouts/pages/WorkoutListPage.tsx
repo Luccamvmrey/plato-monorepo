@@ -2,7 +2,7 @@ import { motion, type Variants } from "framer-motion";
 import { useState } from "react";
 import { useWorkouts } from "@/features/workouts/hooks/useWorkouts.ts";
 import { useStreakData } from "@/features/user/hooks/useStreakData";
-import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { WorkoutListSkeleton } from "@/features/workouts/components/workout-list/WorkoutListSkeleton.tsx";
 import WorkoutListHeader from "@/features/workouts/components/workout-list/WorkoutListHeader.tsx";
 import WorkoutList from "@/features/workouts/components/workout-list/WorkoutList.tsx";
 import StreakWidget from "@/features/workouts/components/workout-list/StreakWidget.tsx";
@@ -52,21 +52,27 @@ const WorkoutListPage = () => {
                     variant="link"
                     size="sm"
                     onClick={() => setShowArchived(!showArchived)}
-                    className="text-muted-foreground text-xs font-normal h-auto p-0 hover:no-underline"
+                    className="text-muted-foreground text-xs font-normal h-auto p-0 hover:no-underline relative tap-target"
                 >
                     {showArchived ? "Ver Ativos" : "Ver Arquivados"}
                 </Button>
             </motion.div>
 
             <motion.div variants={staggerItem} className="flex-1 flex flex-col">
-                <WorkoutList
-                    workouts={workouts}
-                    isArchivedView={showArchived}
-                    lastCompletedWorkoutId={lastCompletedWorkoutId}
-                />
+                {/* O esqueleto precisa ser escolhido ANTES do WorkoutList: com
+                    `workouts` ainda undefined ele já decidiu que a lista está
+                    vazia, e o "Crie seu primeiro treino" piscava atrás do
+                    overlay borrado em todo carregamento. */}
+                {isLoading ? (
+                    <WorkoutListSkeleton />
+                ) : (
+                    <WorkoutList
+                        workouts={workouts}
+                        isArchivedView={showArchived}
+                        lastCompletedWorkoutId={lastCompletedWorkoutId}
+                    />
+                )}
             </motion.div>
-
-            <LoadingOverlay isLoading={isLoading} />
         </motion.div>
     );
 };

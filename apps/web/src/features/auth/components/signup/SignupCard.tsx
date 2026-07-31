@@ -4,7 +4,7 @@ import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { ArrowLeft } from "lucide-react";
 import SignupForm from "@/features/auth/components/signup/SignupForm.tsx";
-import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { Spinner } from "@/components/ui/spinner.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
 const SignupCard = () => {
@@ -29,7 +29,7 @@ const SignupCard = () => {
                         Crie uma conta para treinar conosco.
                     </CardDescription>
                     <CardAction>
-                        <Button variant="ghost" size="icon" onClick={handleGoBack}>
+                        <Button variant="ghost" size="icon" className="relative tap-target" aria-label="Voltar" onClick={handleGoBack}>
                             <ArrowLeft/>
                         </Button>
                     </CardAction>
@@ -52,11 +52,13 @@ const SignupCard = () => {
                         className="flex-1 h-12 font-medium tracking-[-0.01em]"
                         disabled={isLoading}
                     >
-                        Criar conta
+                        {/* Cadastro encadeia register + login, então demora mais que
+                            um submit comum — mas o retorno cabe no botão. */}
+                        {isLoading && <Spinner data-icon="inline-start" />}
+                        {isLoading ? "Criando conta..." : "Criar conta"}
                     </Button>
                 </CardFooter>
             </Card>
-            <LoadingOverlay isLoading={isLoading}/>
         </div>
     );
 };

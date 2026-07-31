@@ -3,7 +3,7 @@ import LoginForm from "@/features/auth/components/login/LoginForm.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useLoginLogic } from "@/features/auth/hooks/useLoginLogic.ts";
 import type { FormEvent } from "react";
-import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { Spinner } from "@/components/ui/spinner.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
 const LoginCard = () => {
@@ -44,7 +44,10 @@ const LoginCard = () => {
                         className="w-full h-12 font-medium tracking-[-0.01em]"
                         disabled={isLoading}
                     >
-                        Entrar
+                        {/* Submit, não fetch: os botões já ficam disabled, então o
+                            scrim de tela cheia não acrescentava informação. */}
+                        {isLoading && <Spinner data-icon="inline-start" />}
+                        {isLoading ? "Entrando..." : "Entrar"}
                     </Button>
 
                     <Button
@@ -57,7 +60,6 @@ const LoginCard = () => {
                     </Button>
                 </CardFooter>
             </Card>
-            <LoadingOverlay isLoading={isLoading}/>
         </div>
     );
 };

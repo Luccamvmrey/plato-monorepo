@@ -1,6 +1,6 @@
 import { motion, type Variants } from "framer-motion";
 import { History } from "lucide-react";
-import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { HistorySkeleton } from "../components/history/HistorySkeleton";
 import { Button } from "@/components/ui/button";
 import { WorkoutFilterSelect } from "../components/history/WorkoutFilterSelect";
 import { SessionHistoryCard } from "../components/history/SessionHistoryCard";
@@ -51,8 +51,14 @@ const HistoryPage = () => {
                 />
             </motion.div>
 
+            {isLoading && (
+                <motion.div variants={staggerItem}>
+                    <HistorySkeleton />
+                </motion.div>
+            )}
+
             {/* Lista de sessões */}
-            {!isEmpty && (
+            {!isEmpty && !isLoading && (
                 <motion.div variants={staggerItem} className="flex flex-col">
                     {filteredSessions?.map(session => (
                         <SessionHistoryCard
@@ -90,8 +96,6 @@ const HistoryPage = () => {
                     )}
                 </motion.div>
             )}
-
-            <LoadingOverlay isLoading={isLoading} />
         </motion.div>
     );
 };

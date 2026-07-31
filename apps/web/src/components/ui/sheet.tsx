@@ -67,10 +67,14 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
+          /* z-10: sem isto o header da sheet ficava por cima e o X não recebia
+             clique nenhum — elementFromPoint no centro do botão devolvia o h2 do
+             header. `tap-target` leva o alvo de 28px para 44px; note que ele NÃO
+             declara position, justamente para não derrubar este `absolute`. */
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-3 right-3"
+              className="absolute top-3 right-3 z-10 tap-target"
               size="icon-sm"
             >
               <XIcon

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion, type Variants } from "framer-motion";
 import { useActiveWorkoutLogic } from "@/features/workouts/hooks/useActiveWorkoutLogic.ts";
-import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { ActiveWorkoutSkeleton } from "@/features/workouts/components/active-workout/ActiveWorkoutSkeleton.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { path } from "@/core/constants/path.ts";
 import ActiveWorkoutHeader from "@/features/workouts/components/active-workout/ActiveWorkoutHeader.tsx";
@@ -54,7 +54,7 @@ const ActiveWorkoutPage = () => {
     }, [activeSession, id, isLoading, navigate]);
 
     if (isLoading) {
-        return <LoadingOverlay isLoading={true} />;
+        return <ActiveWorkoutSkeleton />;
     }
 
     if (!activeSession) {

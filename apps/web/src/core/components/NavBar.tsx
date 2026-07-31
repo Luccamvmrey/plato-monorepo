@@ -11,7 +11,8 @@ const NavBar = () => {
     const isKeyboardOpen = useKeyboardOpen();
 
     return (
-        <div
+        <nav
+            aria-label="Navegação principal"
             className={cn(
                 // h-navbar = 92px + env(safe-area-inset-bottom), para a barra não
                 // ficar parcialmente sob o home indicator em PWA standalone.
@@ -43,7 +44,7 @@ const NavBar = () => {
                 slotIcon={UserRound}
                 label="Perfil"
             />
-        </div>
+        </nav>
     );
 };
 
