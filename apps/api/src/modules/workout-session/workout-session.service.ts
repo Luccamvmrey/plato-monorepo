@@ -163,6 +163,67 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
     return result;
 }
 
+/**
+ * Últimas N execuções completas de cada exercício do treino, agrupadas por exerciseId.
+ * Alimenta a prescrição de carga no treino ativo.
+ *
+ * O histórico é escopado ao TREINO, não ao exercício globalmente: se o mesmo
+ * exercício aparece em dois treinos, cada um progride de forma independente.
+ * É o comportamento desejado — volume e frequência diferem por treino — e mantém
+ * tudo numa query só.
+ */
+const getExerciseHistoryByWorkout = async (userId: number, workoutId: number, limit = 4) => {
+    const sessions = await prisma.workoutSession.findMany({
+        where: { userId, workoutId, completedAt: { not: null } },
+        orderBy: { completedAt: "desc" },
+        take: limit,
+        select: {
+            id: true,
+            completedAt: true,
+            sessionSet: {
+                // SessionSet não tem timestamp — setNumber é a única ordem confiável.
+                orderBy: { setNumber: "asc" },
+                select: {
+                    exerciseId:      true,
+                    setNumber:       true,
+                    actualReps:      true,
+                    actualWeight:    true,
+                    equipmentWeight: true,
+                    rpe:             true,
+                }
+            }
+        }
+    });
+
+    // Reagrupa por exercício preservando a ordem das sessões (mais recente primeiro).
+    const history: Record<number, Array<{
+        sessionId: number;
+        completedAt: Date;
+        sets: Array<Omit<(typeof sessions)[number]["sessionSet"][number], "exerciseId">>;
+    }>> = {};
+
+    for (const session of sessions) {
+        for (const { exerciseId, ...set } of session.sessionSet) {
+            if (!history[exerciseId]) history[exerciseId] = [];
+
+            const executions = history[exerciseId];
+            const current = executions[executions.length - 1];
+
+            if (current?.sessionId === session.id) {
+                current.sets.push(set);
+            } else {
+                executions.push({
+                    sessionId:   session.id,
+                    completedAt: session.completedAt!,
+                    sets:        [set],
+                });
+            }
+        }
+    }
+
+    return history;
+}
+
 const listByExerciseId = async (userId: number, exerciseId: number) => {
     return prisma.workoutSession.findMany({
         where: {
@@ -186,4 +247,4 @@ const deleteSession = async (userId: number, workoutSessionId: number) => {
     });
 }
 
-export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, deleteSession };
+export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, getExerciseHistoryByWorkout, deleteSession };

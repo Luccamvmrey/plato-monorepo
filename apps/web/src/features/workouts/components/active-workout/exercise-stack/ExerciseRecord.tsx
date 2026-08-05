@@ -4,7 +4,7 @@ import { GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
-import type { EnrichedExerciseRecord, WorkoutSession } from "@/features/workouts/workout.types.ts";
+import type { EnrichedExerciseRecord, ExerciseHistoryMap } from "@/features/workouts/workout.types.ts";
 import ExerciseHeaderMinimized from "./records/ExerciseHeaderMinimized";
 import ActiveExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/ActiveExerciseCard.tsx";
 import CompletedExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/CompletedExerciseCard.tsx";
@@ -13,7 +13,7 @@ import ExercisePreviewItem from "@/features/workouts/components/active-workout/e
 type ExerciseRecordProps = {
     record: EnrichedExerciseRecord;
     sessionId: number;
-    lastSession?: WorkoutSession | null;
+    history?: ExerciseHistoryMap;
     addExtraSet?: (exerciseId: number) => void;
     onSwapRequest?: () => void;
 };
@@ -50,7 +50,7 @@ const SortablePendingItem = ({
     );
 };
 
-const ExerciseRecord = ({ record, sessionId, lastSession, addExtraSet, onSwapRequest }: ExerciseRecordProps) => {
+const ExerciseRecord = ({ record, sessionId, history, addExtraSet, onSwapRequest }: ExerciseRecordProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     switch (record.status) {
@@ -79,7 +79,7 @@ const ExerciseRecord = ({ record, sessionId, lastSession, addExtraSet, onSwapReq
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 >
-                    <ActiveExerciseCard record={record} sessionId={sessionId} lastSession={lastSession} />
+                    <ActiveExerciseCard record={record} sessionId={sessionId} history={history} />
                 </motion.div>
             );
 

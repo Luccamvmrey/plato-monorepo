@@ -27,7 +27,7 @@ const ActiveWorkoutPage = () => {
     const {
         id,
         activeSession,
-        lastSession,
+        exerciseHistory,
         workout,
         exerciseStack,
         isLoading,
@@ -84,7 +84,7 @@ const ActiveWorkoutPage = () => {
             <DynamicExerciseStack
                 exerciseStack={exerciseStack}
                 session={activeSession}
-                lastSession={lastSession}
+                history={exerciseHistory}
                 setExerciseOrder={setExerciseOrder}
                 addExtraSet={addExtraSet}
             />

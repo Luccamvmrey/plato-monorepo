@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { useWorkoutSession } from "./useWorkoutSession";
 import { useWorkouts } from "./useWorkouts";
 import { useExerciseStack } from "./useExerciseStack";
+import { useExerciseHistory } from "./useExerciseHistory";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
 
 export const useActiveWorkoutLogic = () => {
@@ -18,10 +19,13 @@ export const useActiveWorkoutLogic = () => {
     } = useWorkoutSession();
     const { data: sessionData, isLoading: isLoadingSession } = findActiveSessionQuery;
     const activeSession = sessionData?.activeSession;
-    const lastSession = sessionData?.lastSession;
 
     const { workoutByIdQuery } = useWorkouts(id);
     const { data: workout, isLoading: isLoadingWorkout } = workoutByIdQuery;
+
+    // Um fetch de histórico por sessão, não um por exercício — é o que alimenta a
+    // prescrição de carga de cada card.
+    const { data: exerciseHistory } = useExerciseHistory(activeSession?.workoutId);
 
     const pendingSets = useActiveWorkoutStore((s) => s.activeSession?.pendingSets);
     const sessionExerciseOrder = useActiveWorkoutStore((s) => s.activeSession?.sessionExerciseOrder ?? null);
@@ -72,7 +76,7 @@ export const useActiveWorkoutLogic = () => {
         id,
         navigate,
         activeSession,
-        lastSession,
+        exerciseHistory,
         workout,
         exerciseStack,
         isLoading,

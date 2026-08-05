@@ -67,6 +67,26 @@ const listByExerciseId = async (req: Request, res: Response) => {
     res.json(result);
 }
 
+const HISTORY_LIMIT_DEFAULT = 4;
+const HISTORY_LIMIT_MIN = 1;
+const HISTORY_LIMIT_MAX = 10;
+
+const getExerciseHistory = async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const workoutId = extractId(req);
+
+    // Não há helper de validação de query no projeto — os filtros de listByUserId
+    // também são parseados à mão aqui.
+    const parsedLimit = Number(req.query.limit);
+    const limit = Number.isFinite(parsedLimit)
+        ? Math.min(HISTORY_LIMIT_MAX, Math.max(HISTORY_LIMIT_MIN, Math.trunc(parsedLimit)))
+        : HISTORY_LIMIT_DEFAULT;
+
+    const result = await workoutSessionService.getExerciseHistoryByWorkout(userId, workoutId, limit);
+
+    res.json(result);
+}
+
 const deleteSession = async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const workoutSessionId = extractId(req);
@@ -76,4 +96,4 @@ const deleteSession = async (req: Request, res: Response) => {
     res.status(204).send();
 }
 
-export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, deleteSession };
+export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, getExerciseHistory, deleteSession };

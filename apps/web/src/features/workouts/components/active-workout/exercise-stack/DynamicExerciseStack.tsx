@@ -11,14 +11,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { EnrichedExerciseRecord, WorkoutSession } from "@/features/workouts/workout.types.ts";
+import type { EnrichedExerciseRecord, ExerciseHistoryMap, WorkoutSession } from "@/features/workouts/workout.types.ts";
 import ExerciseRecord from "@/features/workouts/components/active-workout/exercise-stack/ExerciseRecord.tsx";
 import { useAutoTransition } from "@/features/workouts/hooks/useAutoTransition.ts";
 
 type DynamicExerciseStackProps = {
     exerciseStack: EnrichedExerciseRecord[];
     session: WorkoutSession;
-    lastSession?: WorkoutSession | null;
+    history?: ExerciseHistoryMap;
     setExerciseOrder: (order: number[]) => void;
     addExtraSet: (exerciseId: number) => void;
 };
@@ -26,7 +26,7 @@ type DynamicExerciseStackProps = {
 const DynamicExerciseStack = ({
     exerciseStack,
     session,
-    lastSession,
+    history,
     setExerciseOrder,
     addExtraSet,
 }: DynamicExerciseStackProps) => {
@@ -97,7 +97,7 @@ const DynamicExerciseStack = ({
                                 <ExerciseRecord
                                     record={record}
                                     sessionId={session.id}
-                                    lastSession={lastSession}
+                                    history={history}
                                     addExtraSet={addExtraSet}
                                     onSwapRequest={
                                         canSwap && record.status === "PENDING"

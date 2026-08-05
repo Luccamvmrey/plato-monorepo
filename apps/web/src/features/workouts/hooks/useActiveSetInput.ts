@@ -14,63 +14,87 @@ const DEFAULT_RPE = "8";
 // parser ver o valor — "82,5" chegaria aqui como "". Normalizamos na leitura.
 const parseDecimal = (value: string) => Math.max(0, parseFloat(value.replace(",", ".")) || 0);
 
+/** O que preenche os campos do set. `weight` null = ainda não há carga de referência. */
+export type SetSeed = {
+    weight: number | null;
+    equipmentWeight: number | null;
+    reps: number;
+};
+
 type UseActiveSetInputProps = {
+    exerciseId: number;
     setNumber: number;
-    targetReps: number;
-    previousWeight?: number;
-    previousEquipmentWeight?: number;
+    seed: SetSeed;
     onConfirm: (data: SetSubmissionData) => void;
     isPending: boolean;
 };
 
+/** != null e não truthiness: 0 kg (peso corporal, máquina assistida) é carga legítima. */
+const toInputValue = (value: number | null | undefined) => value != null ? value.toString() : "";
+
 export const useActiveSetInput = ({
+    exerciseId,
     setNumber,
-    targetReps,
-    previousWeight,
-    previousEquipmentWeight,
+    seed,
     onConfirm,
     isPending
 }: UseActiveSetInputProps) => {
-    const [weight, setWeight] = useState<string>(previousWeight?.toString() || "");
-    const [reps, setReps] = useState<string>(targetReps.toString());
+    const [weight, setWeight] = useState<string>(toInputValue(seed.weight));
+    const [reps, setReps] = useState<string>(seed.reps.toString());
     const [rpe, setRpe] = useState<string>(DEFAULT_RPE);
-    const [equipmentWeight, setEquipmentWeight] = useState<string>(previousEquipmentWeight?.toString() || "");
+    const [equipmentWeight, setEquipmentWeight] = useState<string>(toInputValue(seed.equipmentWeight));
     const [wasSubmitted, setWasSubmitted] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const weightRef = useRef<HTMLInputElement>(null);
     const repsRef = useRef<HTMLInputElement>(null);
     const equipmentRef = useRef<HTMLInputElement>(null);
-    const prevSetNumberRef = useRef(setNumber);
+    // O par (exercício, set) é a identidade do que está sendo preenchido. Dois refs
+    // porque as duas coisas abaixo têm cadências diferentes: o reset acontece toda
+    // vez que o par muda, a semeadura no máximo uma vez por par.
+    const pairKey = `${exerciseId}:${setNumber}`;
+    const resetPairRef = useRef(pairKey);
+    const seededPairRef = useRef(seed.weight != null ? pairKey : null);
+    // Par em que o usuário já digitou. Histórico que chega tarde não pisa nele.
+    const dirtyPairRef = useRef<string | null>(null);
     // Precisa ser capturado no confirm, não no efeito: os inputs ficam disabled
     // enquanto wasSubmitted é true, e isso já jogou o foco para o <body> antes do
     // efeito de troca de set rodar.
     const shouldRefocusRef = useRef(false);
 
+    // Reset por set. Reps e RPE são específicos do set — herdá-los do anterior é
+    // conveniente na maioria das vezes e silenciosamente errado no resto. A carga
+    // continua sendo herdada de propósito, pela semeadura abaixo.
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (resetPairRef.current === pairKey) return;
+        resetPairRef.current = pairKey;
+
+        /* eslint-disable react-hooks/set-state-in-effect */
         setWasSubmitted(false);
-        if (previousWeight) {
-            setWeight(previousWeight.toString());
-        }
-        if (previousEquipmentWeight) {
-            setEquipmentWeight(previousEquipmentWeight.toString());
-        }
-    }, [setNumber, previousWeight, previousEquipmentWeight]);
-
-    // Reps e RPE são específicos do set — herdá-los do set anterior é conveniente
-    // na maioria das vezes e silenciosamente errado no resto. A carga continua
-    // sendo herdada de propósito (vem de useExerciseSuggestions).
-    // Guardado por ref para só disparar quando o set realmente virou, e não quando
-    // uma das outras deps do efeito acima mudar no meio da digitação.
-    useEffect(() => {
-        if (prevSetNumberRef.current === setNumber) return;
-        prevSetNumberRef.current = setNumber;
-
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setReps(targetReps.toString());
+        setReps(seed.reps.toString());
         setRpe(DEFAULT_RPE);
-    }, [setNumber, targetReps]);
+        /* eslint-enable react-hooks/set-state-in-effect */
+    }, [pairKey, seed.reps]);
+
+    // Semeadura one-shot por par. Antes, o peso era dependência do efeito de reset,
+    // então um valor que chegasse (ou mudasse) no meio da digitação sobrescrevia o
+    // que o usuário já tinha escrito. Marcar o par como semeado cobre a chegada
+    // tardia do histórico sem nunca pisar na digitação; se o histórico vier vazio o
+    // campo simplesmente fica em branco.
+    useEffect(() => {
+        if (seededPairRef.current === pairKey || seed.weight == null) return;
+        if (dirtyPairRef.current === pairKey) {
+            seededPairRef.current = pairKey;
+            return;
+        }
+        seededPairRef.current = pairKey;
+
+        /* eslint-disable react-hooks/set-state-in-effect */
+        setWeight(toInputValue(seed.weight));
+        setReps(seed.reps.toString());
+        setEquipmentWeight(toInputValue(seed.equipmentWeight));
+        /* eslint-enable react-hooks/set-state-in-effect */
+    }, [pairKey, seed.weight, seed.equipmentWeight, seed.reps]);
 
     // Devolve o foco ao campo de carga do set novo. Tem que ser um efeito separado
     // esperando wasSubmitted virar false: enquanto ele é true os inputs estão
@@ -83,6 +107,14 @@ export const useActiveSetInput = ({
         weightRef.current?.focus({ preventScroll: true });
         weightRef.current?.select();
     }, [wasSubmitted]);
+
+    // Toda escrita vinda do usuário marca o par como sujo, para a semeadura tardia
+    // saber que não tem mais nada a preencher ali.
+    const markDirty = () => { dirtyPairRef.current = pairKey; };
+    const handleWeightChange = (value: string) => { markDirty(); setWeight(value); };
+    const handleRepsChange = (value: string) => { markDirty(); setReps(value); };
+    const handleRpeChange = (value: string) => { markDirty(); setRpe(value); };
+    const handleEquipmentWeightChange = (value: string) => { markDirty(); setEquipmentWeight(value); };
 
     const handleConfirm = () => {
         if (isPending || wasSubmitted) return;
@@ -144,10 +176,10 @@ export const useActiveSetInput = ({
             equipmentRef
         },
         actions: {
-            setWeight,
-            setReps,
-            setRpe,
-            setEquipmentWeight,
+            setWeight: handleWeightChange,
+            setReps: handleRepsChange,
+            setRpe: handleRpeChange,
+            setEquipmentWeight: handleEquipmentWeightChange,
             handleConfirm,
             handleFieldKeyDown
         }

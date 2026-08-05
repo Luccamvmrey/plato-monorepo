@@ -54,3 +54,24 @@ export interface SessionSetPayload {
 export interface FinishSessionPayload {
   sets: SessionSetPayload[]
 }
+
+/**
+ * Histórico cru entregue por GET /sessions/workout/:id/exercise-history.
+ * Escopado ao treino: o mesmo exercício em dois treinos progride separadamente.
+ */
+export interface ExerciseExecutionSet {
+  setNumber: number
+  actualReps: number
+  actualWeight: number
+  equipmentWeight: number | null
+  rpe: number
+}
+
+export interface ExerciseExecution {
+  sessionId: number
+  completedAt: string
+  sets: ExerciseExecutionSet[]
+}
+
+/** Cada lista vem do mais recente para o mais antigo. */
+export type ExerciseHistoryMap = Record<number, ExerciseExecution[]>;
