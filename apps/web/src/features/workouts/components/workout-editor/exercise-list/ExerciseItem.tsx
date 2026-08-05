@@ -19,6 +19,40 @@ const handleFieldKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!focusNextField(e.currentTarget)) e.currentTarget.blur();
 };
 
+type TargetFieldProps = {
+    field: "sets" | "reps";
+    suffix: string;
+    label: string;
+    value: number;
+    onChange: (value: number) => void;
+};
+
+/**
+ * Séries e repetições eram dois blocos idênticos de 15 linhas.
+ *
+ * Os dois inputs são os únicos alvos de toque que não podem usar `.tap-target`:
+ * `<input>` é elemento substituído e não renderiza `::after`, então a área tem
+ * que crescer de verdade — `size-11` = 44px, contra os 40 × 32px anteriores.
+ */
+const TargetField = ({ field, suffix, label, value, onChange }: TargetFieldProps) => (
+    <div className="flex items-center gap-1 bg-muted/30 rounded-lg pr-2">
+        <Input
+            type="number"
+            inputMode="numeric"
+            enterKeyHint="next"
+            min={1}
+            placeholder="0"
+            aria-label={label}
+            data-editor-field={field}
+            value={value === 0 ? "" : value}
+            onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+            onKeyDown={handleFieldKeyDown}
+            className="size-11 p-0 border-none bg-transparent text-center focus-visible:ring-0 font-medium tabular-nums"
+        />
+        <span className="text-[10px] font-bold text-muted-foreground/50 uppercase">{suffix}</span>
+    </div>
+);
+
 type ExerciseItemProps = {
     exercise: WorkoutExerciseDraft;
 };
@@ -48,7 +82,7 @@ const ExerciseItem = ({ exercise }: ExerciseItemProps) => {
             <div 
                 {...attributes} 
                 {...listeners} 
-                className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground/50 hover:text-foreground transition-colors touch-none"
+                className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground/50 hover:text-foreground transition-colors touch-none relative tap-target"
             >
                 <GripVertical data-icon="inline" className="size-5" />
             </div>
@@ -58,41 +92,24 @@ const ExerciseItem = ({ exercise }: ExerciseItemProps) => {
             </span>
 
             <div className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-1 bg-muted/30 rounded-lg px-2 py-1">
-                    <Input
-                        type="number"
-                        inputMode="numeric"
-                        enterKeyHint="next"
-                        min={1}
-                        placeholder="0"
-                        aria-label={`Séries — ${exercise.exercise.name}`}
-                        data-editor-field="sets"
-                        value={exercise.targetSets === 0 ? "" : exercise.targetSets}
-                        onChange={(e) => onEditSets(exercise.instanceId, parseInt(e.target.value) || 0)}
-                        onKeyDown={handleFieldKeyDown}
-                        className="w-10 h-8 p-0 border-none bg-transparent text-center focus-visible:ring-0 font-medium tabular-nums"
-                    />
-                    <span className="text-[10px] font-bold text-muted-foreground/50 uppercase">s</span>
-                </div>
+                <TargetField
+                    field="sets"
+                    suffix="s"
+                    label={`Séries — ${exercise.exercise.name}`}
+                    value={exercise.targetSets}
+                    onChange={(next) => onEditSets(exercise.instanceId, next)}
+                />
 
-                <div className="flex items-center gap-1 bg-muted/30 rounded-lg px-2 py-1">
-                    <Input
-                        type="number"
-                        inputMode="numeric"
-                        enterKeyHint="next"
-                        min={1}
-                        placeholder="0"
-                        aria-label={`Repetições — ${exercise.exercise.name}`}
-                        data-editor-field="reps"
-                        value={exercise.targetReps === 0 ? "" : exercise.targetReps}
-                        onChange={(e) => onEditReps(exercise.instanceId, parseInt(e.target.value) || 0)}
-                        onKeyDown={handleFieldKeyDown}
-                        className="w-10 h-8 p-0 border-none bg-transparent text-center focus-visible:ring-0 font-medium tabular-nums"
-                    />
-                    <span className="text-[10px] font-bold text-muted-foreground/50 uppercase">r</span>
-                </div>
+                <TargetField
+                    field="reps"
+                    suffix="r"
+                    label={`Repetições — ${exercise.exercise.name}`}
+                    value={exercise.targetReps}
+                    onChange={(next) => onEditReps(exercise.instanceId, next)}
+                />
+
                 <DeletionAlertDialog onConfirm={() => removeExercise(exercise.instanceId)}>
-                    <Button variant="ghost" size="icon" aria-label={`Remover ${exercise.exercise.name}`} className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                    <Button variant="ghost" size="icon" aria-label={`Remover ${exercise.exercise.name}`} className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 relative tap-target">
                         <Trash2 data-icon="inline" className="size-4"/>
                     </Button>
                 </DeletionAlertDialog>

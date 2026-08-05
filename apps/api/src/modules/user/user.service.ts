@@ -43,9 +43,15 @@ const getProfile = async (userId: number) => {
 
     const lifetimeVolume = sessionSets.reduce((acc, set) => acc + (set.actualWeight * set.actualReps), 0);
 
-    const totalPRs = await prisma.personalRecord.count({
-        where: { userId }
+    // Cada exercício gera um PR de WEIGHT e outro de VOLUME, então contar linhas
+    // dobrava o número. Contamos exercícios distintos em que o usuário tem PR.
+    const prExercises = await prisma.personalRecord.findMany({
+        where: { userId },
+        distinct: ["exerciseId"],
+        select: { exerciseId: true }
     });
+
+    const totalPRs = prExercises.length;
 
     return { ...user, totalSessions, lifetimeVolume, totalPRs };
 }

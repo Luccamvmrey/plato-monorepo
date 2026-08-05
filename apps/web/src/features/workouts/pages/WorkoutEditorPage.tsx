@@ -1,7 +1,7 @@
 import { motion, type Variants } from "framer-motion";
 import { DndContext } from "@dnd-kit/core";
 import NewExerciseSheet from "@/features/workouts/components/workout-editor/exercise-list/new-exercise-sheet/NewExerciseSheet.tsx";
-import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { WorkoutEditorSkeleton } from "@/features/workouts/components/workout-editor/WorkoutEditorSkeleton.tsx";
 import { useWorkoutEditorLogic } from "@/features/workouts/hooks/useWorkoutEditorLogic.ts";
 import { WorkoutEditorForm } from "@/features/workouts/components/workout-editor/components/WorkoutEditorForm.tsx";
 import { WorkoutEditorActions } from "@/features/workouts/components/workout-editor/components/WorkoutEditorActions.tsx";
@@ -27,11 +27,14 @@ const WorkoutEditorPage = () => {
         collisionDetection,
         handleSubmit,
         handleNameBlur,
+        handleNameChange,
         handleDragEnd,
         handleDragStart,
     } = useWorkoutEditorLogic();
 
     const FORM_ID = "workout-editor-form";
+
+    if (isFetching) return <WorkoutEditorSkeleton />;
 
     return (
         <DndContext
@@ -46,7 +49,13 @@ const WorkoutEditorPage = () => {
                 animate="show"
                 className="h-full flex flex-col gap-3 mb-[100px]"
             >
-                <WorkoutEditorForm formId={FORM_ID} onSubmit={handleSubmit} nameError={validationErrors.name} onNameBlur={handleNameBlur} />
+                <WorkoutEditorForm
+                    formId={FORM_ID}
+                    onSubmit={handleSubmit}
+                    nameError={validationErrors.name}
+                    onNameBlur={handleNameBlur}
+                    onNameChange={handleNameChange}
+                />
                 <NewExerciseSheet />
 
                 {validationErrors.exercises && (
@@ -64,14 +73,16 @@ const WorkoutEditorPage = () => {
                     <InlineErrorBanner message={saveError} />
                 )}
 
+                {/* Salvar não bloqueia mais a tela: o próprio botão já vira
+                    "Salvando..." e depois "Salvo!", e fica disabled. O overlay
+                    cobria o editor inteiro durante o POST — era exatamente o
+                    "covers the screen even while saving" do relatório. */}
                 <WorkoutEditorActions
                     formId={FORM_ID}
                     isSaving={isSaving}
                     isSuccess={isSuccess}
                 />
             </motion.div>
-
-            <LoadingOverlay isLoading={isFetching || isSaving} />
         </DndContext>
     );
 };

@@ -16,6 +16,7 @@ import HistoryPage from "@/features/workouts/pages/HistoryPage.tsx";
 import ExerciseAnalyticsPage from "@/features/workouts/pages/ExerciseAnalyticsPage.tsx";
 import UserProfilePage from "@/features/user/pages/UserProfilePage.tsx";
 import ErrorBoundary from "@/core/components/ErrorBoundary";
+import NotFoundPage from "@/core/pages/NotFoundPage.tsx";
 import { SessionRecoveryDialog } from "@/features/workouts/components/active-workout/components/dialogs/SessionRecoveryDialog.tsx";
 
 const queryClient = new QueryClient();
@@ -24,7 +25,7 @@ export function App() {
     useCheckSession();
 
     return (
-        <div className="h-screen w-screen">
+        <div className="min-h-dvh w-screen">
             <QueryClientProvider client={queryClient}>
                 <Switch>
                     <Route path={path.LOGIN} component={LoginPage}/>
@@ -33,31 +34,49 @@ export function App() {
 
                     <Layout>
                         <AuthGuard>
-                            <Route path={path.WORKOUTS}>
-                                <ErrorBoundary><WorkoutListPage /></ErrorBoundary>
-                            </Route>
+                            {/* Switch interno: garante matching exclusivo e habilita o
+                                fallback sem path no fim, que é o 404. */}
+                            <Switch>
+                                <Route path={path.WORKOUTS}>
+                                    <ErrorBoundary><WorkoutListPage /></ErrorBoundary>
+                                </Route>
 
-                            <Route path={path.WORKOUT_EDITOR} component={WorkoutEditorPage}/>
-                            <Route path={`${path.WORKOUT_EDITOR}/:id`} component={WorkoutEditorPage}/>
+                                <Route path={path.WORKOUT_EDITOR}>
+                                    <ErrorBoundary><WorkoutEditorPage /></ErrorBoundary>
+                                </Route>
+                                <Route path={`${path.WORKOUT_EDITOR}/:id`}>
+                                    <ErrorBoundary><WorkoutEditorPage /></ErrorBoundary>
+                                </Route>
 
-                            <Route path={path.ACTIVE_WORKOUT}>
-                                <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
-                            </Route>
-                            <Route path={`${path.ACTIVE_WORKOUT}/:id`}>
-                                <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
-                            </Route>
+                                <Route path={path.ACTIVE_WORKOUT}>
+                                    <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
+                                </Route>
+                                <Route path={`${path.ACTIVE_WORKOUT}/:id`}>
+                                    <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
+                                </Route>
 
-                            <Route path={`${path.WORKOUT_SUMMARY}/:id`} component={WorkoutSummaryPage}/>
+                                <Route path={`${path.WORKOUT_SUMMARY}/:id`}>
+                                    <ErrorBoundary><WorkoutSummaryPage /></ErrorBoundary>
+                                </Route>
 
-                            <Route path={path.HISTORY}>
-                                <ErrorBoundary><HistoryPage /></ErrorBoundary>
-                            </Route>
+                                <Route path={path.HISTORY}>
+                                    <ErrorBoundary><HistoryPage /></ErrorBoundary>
+                                </Route>
 
-                            <Route path={`${path.EXERCISE_ANALYTICS}/:id`} component={ExerciseAnalyticsPage}/>
+                                {/* Function-as-child: esta página recebe `params` por
+                                    prop, então não dá para trocar por children solto. */}
+                                <Route path={`${path.EXERCISE_ANALYTICS}/:id`}>
+                                    {(params) => (
+                                        <ErrorBoundary><ExerciseAnalyticsPage params={params} /></ErrorBoundary>
+                                    )}
+                                </Route>
 
-                            <Route path={path.USER_PROFILE}>
-                                <ErrorBoundary><UserProfilePage /></ErrorBoundary>
-                            </Route>
+                                <Route path={path.USER_PROFILE}>
+                                    <ErrorBoundary><UserProfilePage /></ErrorBoundary>
+                                </Route>
+
+                                <Route component={NotFoundPage}/>
+                            </Switch>
                         </AuthGuard>
                     </Layout>
                 </Switch>

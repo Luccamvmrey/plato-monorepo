@@ -9,10 +9,13 @@ interface InlineErrorBannerProps {
 }
 
 export const InlineErrorBanner = ({ message, actionLabel, onAction, className }: InlineErrorBannerProps) => (
-    <div className={cn(
-        "flex items-start gap-3 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20",
-        className
-    )}>
+    <div
+        role="alert"
+        className={cn(
+            "flex items-start gap-3 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20",
+            className
+        )}
+    >
         <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
         <p className="flex-1 text-[13px] text-destructive">{message}</p>
         {actionLabel && onAction && (

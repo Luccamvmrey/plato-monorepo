@@ -54,12 +54,28 @@ export const useWorkoutEditorLogic = () => {
         })
     );
 
+    const clearNameError = () => {
+        setValidationErrors(prev => {
+            if (!prev.name) return prev;
+            const next = { ...prev };
+            delete next.name;
+            return next;
+        });
+    };
+
     const handleNameBlur = (value: string) => {
         if (!value.trim()) {
             setValidationErrors(prev => ({ ...prev, name: "O nome do treino é obrigatório." }));
         } else {
-            setValidationErrors(prev => { const next = { ...prev }; delete next.name; return next; });
+            clearNameError();
         }
+    };
+
+    // O erro só sumia no blur seguinte, então o campo continuava vermelho enquanto
+    // o usuário corrigia. No change a gente só limpa — nunca acusa —, senão o erro
+    // aparece já na primeira letra apagada.
+    const handleNameChange = (value: string) => {
+        if (value.trim()) clearNameError();
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -136,6 +152,7 @@ export const useWorkoutEditorLogic = () => {
         sensors,
         handleSubmit,
         handleNameBlur,
+        handleNameChange,
         handleDragEnd,
         handleDragStart,
         collisionDetection: closestCenter,

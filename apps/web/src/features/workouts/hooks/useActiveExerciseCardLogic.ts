@@ -3,7 +3,7 @@ import { useSessionSet } from "@/features/workouts/hooks/useSessionSet";
 import { useExerciseSuggestions } from "@/features/workouts/hooks/useExerciseSuggestions";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
 import type { EnrichedExerciseRecord, WorkoutSession } from "@/features/workouts/workout.types";
-import { type SetSubmissionData } from "@/features/workouts/components/active-workout/exercise-stack/records/ActiveSetInputRow";
+import { type SetSubmissionData } from "@/features/workouts/hooks/useActiveSetInput";
 
 export const useActiveExerciseCardLogic = (
     record: EnrichedExerciseRecord,

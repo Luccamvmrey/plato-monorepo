@@ -2,7 +2,7 @@ import { motion, type Variants } from "framer-motion";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useUserStats } from "../hooks/useUserStats";
 import { useStreakData } from "../hooks/useStreakData";
-import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { UserProfileSkeleton } from "../components/UserProfileSkeleton";
 import { IdentityCard } from "../components/IdentityCard";
 import StreakCard from "../components/StreakCard";
 import { PerformanceSnapshots } from "../components/PerformanceSnapshots";
@@ -30,8 +30,6 @@ const UserProfilePage = () => {
 
     const isLoading = profileLoading || statsLoading;
 
-    if (isLoading) return <LoadingOverlay isLoading={true} />;
-
     return (
         <motion.div
             variants={stagger}
@@ -43,6 +41,11 @@ const UserProfilePage = () => {
             <motion.div variants={staggerItem} className="px-4 pt-6 pb-2">
                 <h1 className="text-[22px] font-medium tracking-[-0.03em]">Perfil</h1>
             </motion.div>
+
+            {/* Cada seção já era guardada individualmente, então o gate bloqueante
+                da página só atrasava o header e as configurações — que não
+                dependem de query nenhuma. */}
+            {isLoading && <UserProfileSkeleton />}
 
             {profile && (
                 <motion.div variants={staggerItem}>

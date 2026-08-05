@@ -28,10 +28,18 @@ const SignupForm = ({ formId, onSubmit, errors, onBlur }: SignupFormProps) => {
                         type="text"
                         name="username"
                         placeholder="Seu nome de usuário"
+                        autoComplete="username"
+                        enterKeyHint="next"
+                        aria-invalid={!!errors?.name}
+                        aria-describedby={errors?.name ? "username-error" : undefined}
                         className={cn("h-11 rounded-md", errors?.name && "border-destructive")}
                         onBlur={(e) => onBlur?.('name', e.target.value)}
                     />
-                    {errors?.name && <p className="text-destructive text-[12px] mt-1">{errors.name}</p>}
+                    {errors?.name && (
+                        <p id="username-error" role="alert" className="text-destructive text-[12px] mt-1">
+                            {errors.name}
+                        </p>
+                    )}
                 </Field>
 
                 <Field>
@@ -41,10 +49,19 @@ const SignupForm = ({ formId, onSubmit, errors, onBlur }: SignupFormProps) => {
                         type="email"
                         name="email"
                         placeholder="Seu e-mail"
+                        autoComplete="email"
+                        inputMode="email"
+                        enterKeyHint="next"
+                        aria-invalid={!!errors?.email}
+                        aria-describedby={errors?.email ? "email-error" : undefined}
                         className={cn("h-11 rounded-md", errors?.email && "border-destructive")}
                         onBlur={(e) => onBlur?.('email', e.target.value)}
                     />
-                    {errors?.email && <p className="text-destructive text-[12px] mt-1">{errors.email}</p>}
+                    {errors?.email && (
+                        <p id="email-error" role="alert" className="text-destructive text-[12px] mt-1">
+                            {errors.email}
+                        </p>
+                    )}
                 </Field>
 
                 <Field>
@@ -55,6 +72,10 @@ const SignupForm = ({ formId, onSubmit, errors, onBlur }: SignupFormProps) => {
                             type={showPassword ? "text" : "password"}
                             name="password"
                             placeholder="Sua senha"
+                            autoComplete="new-password"
+                            enterKeyHint="go"
+                            aria-invalid={!!errors?.password}
+                            aria-describedby={errors?.password ? "password-error" : undefined}
                             className={cn("h-11 rounded-md pr-10", errors?.password && "border-destructive")}
                             onChange={(e) => setPassword(e.target.value)}
                             onBlur={(e) => onBlur?.('password', e.target.value)}
@@ -62,7 +83,10 @@ const SignupForm = ({ formId, onSubmit, errors, onBlur }: SignupFormProps) => {
                         <button
                             type="button"
                             onClick={() => setShowPassword(v => !v)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                            aria-pressed={showPassword}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 size-9 flex items-center justify-center
+                                       rounded-md text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -82,16 +106,24 @@ const SignupForm = ({ formId, onSubmit, errors, onBlur }: SignupFormProps) => {
                                     />
                                 ))}
                             </div>
-                            <p className={cn("text-[11px]",
-                                strength === 'weak' && "text-destructive",
-                                strength === 'medium' && "text-amber-600",
-                                strength === 'strong' && "text-success"
-                            )}>
+                            <p
+                                aria-live="polite"
+                                className={cn("text-[11px]",
+                                    strength === 'weak' && "text-destructive",
+                                    strength === 'medium' && "text-amber-600",
+                                    strength === 'strong' && "text-success"
+                                )}
+                            >
+                                <span className="sr-only">Força da senha: </span>
                                 {{ weak: 'Fraca', medium: 'Média', strong: 'Forte' }[strength]}
                             </p>
                         </div>
                     )}
-                    {errors?.password && <p className="text-destructive text-[12px] mt-1">{errors.password}</p>}
+                    {errors?.password && (
+                        <p id="password-error" role="alert" className="text-destructive text-[12px] mt-1">
+                            {errors.password}
+                        </p>
+                    )}
                 </Field>
             </FieldGroup>
         </form>

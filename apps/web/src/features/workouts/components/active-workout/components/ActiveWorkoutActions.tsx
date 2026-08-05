@@ -21,7 +21,10 @@ export const ActiveWorkoutActions = ({
     return (
         <div
             className={cn(
-                "fixed bottom-[92px] inset-x-0 p-4 pb-3 bg-background/95 backdrop-blur-sm border-t border-border flex items-center gap-3",
+                // bottom-navbar em vez de bottom-[92px]: a NavBar tem 92px + safe-area
+                // inset, então o valor cru deixava esta barra por baixo dela num
+                // aparelho com notch.
+                "fixed bottom-navbar inset-x-0 p-4 pb-3 bg-background/95 backdrop-blur-sm border-t border-border flex items-center gap-3",
                 // Finishing/cancelling is never the next action while logging a set,
                 // and this bar sits directly over the RPE selector and confirm button
                 // once the keyboard is up.

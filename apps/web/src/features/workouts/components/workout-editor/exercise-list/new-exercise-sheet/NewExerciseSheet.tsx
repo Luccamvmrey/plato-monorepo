@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/sheet.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Plus } from "lucide-react";
+import { useRef } from "react";
 import { useExercises } from "@/features/workouts/hooks/useExercises.ts";
-import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { Spinner } from "@/components/ui/spinner.tsx";
 import ExerciseSearchBar
     from "@/features/workouts/components/workout-editor/exercise-list/new-exercise-sheet/ExerciseSearchBar.tsx";
 import MuscleGroupFilter
@@ -36,23 +37,35 @@ const NewExerciseSheet = () => {
     } = state;
 
     const {
-        setOpen,
+        handleOpenChange,
         handleSearchChange,
         handleMuscleGroupSelect,
         handleExerciseClick,
         handleAddSelected
     } = actions;
 
+    const contentRef = useRef<HTMLDivElement>(null);
+
     return (
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
                 <Button variant="outline" className="w-full h-14 border-dashed rounded-xl gap-2 font-medium">
                     <Plus data-icon="inline-start" />
                     Novo Exercício
                 </Button>
             </SheetTrigger>
-            <SheetContent 
-                side="bottom" 
+            <SheetContent
+                ref={contentRef}
+                side="bottom"
+                // O FocusScope do Radix foca o primeiro elemento tabbable, que é o campo
+                // de busca — no mobile isso abre o teclado e cobre justamente a lista que
+                // o usuário veio olhar. Focamos o container da sheet no lugar, para o
+                // teclado ficar fechado sem deixar quem usa teclado físico preso fora do
+                // diálogo (Esc continua funcionando).
+                onOpenAutoFocus={(e) => {
+                    e.preventDefault();
+                    contentRef.current?.focus();
+                }}
                 className="h-[90dvh] max-h-[90dvh] p-0 flex flex-col outline-none border-t border-border rounded-t-3xl overflow-hidden"
             >
                 <SheetHeader className="px-6 pt-6 pb-4 space-y-4 border-b border-border/50 shrink-0 bg-background z-10">
@@ -81,11 +94,18 @@ const NewExerciseSheet = () => {
                         onExerciseClick={handleExerciseClick}
                     />
 
-                    <SheetExerciseList
-                        exercises={filteredExercises}
-                        selectedExercises={selectedExercises}
-                        onExerciseClick={handleExerciseClick}
-                    />
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center gap-2 py-12">
+                            <Spinner className="size-5 text-muted-foreground" />
+                            <p className="text-[13px] text-muted-foreground">Carregando exercícios</p>
+                        </div>
+                    ) : (
+                        <SheetExerciseList
+                            exercises={filteredExercises}
+                            selectedExercises={selectedExercises}
+                            onExerciseClick={handleExerciseClick}
+                        />
+                    )}
                 </div>
 
                 <SheetFooter className="p-6 border-t border-border/50 bg-background shrink-0 flex-row items-center justify-between gap-4 mt-auto">
@@ -98,13 +118,12 @@ const NewExerciseSheet = () => {
                         onClick={handleAddSelected}
                         disabled={selectedExercises.length === 0}
                     >
-                        Adicionar {selectedExercises.length > 0 ? selectedExercises.length : ""} 
-                        {selectedExercises.length === 1 ? " exercício" : " exercícios"}
+                        {selectedExercises.length > 0
+                            ? `Adicionar ${selectedExercises.length} ${selectedExercises.length === 1 ? "exercício" : "exercícios"}`
+                            : "Adicionar exercícios"}
                     </Button>
                 </SheetFooter>
             </SheetContent>
-
-            <LoadingOverlay isLoading={isLoading}/>
         </Sheet>
     );
 };

@@ -28,21 +28,31 @@ export const useKeepFocusedFieldVisible = (): void => {
 
             // visualViewport is the only thing that knows about the keyboard on iOS.
             const visibleBottom = window.visualViewport?.height ?? window.innerHeight;
-            const rect = el!.getBoundingClientRect();
 
-            const hiddenBelow = rect.bottom > visibleBottom - EDGE_MARGIN_PX;
-            const hiddenAbove = rect.top < EDGE_MARGIN_PX;
-            if (!hiddenBelow && !hiddenAbove) return;
+            const isVisible = (r: DOMRect) =>
+                r.bottom <= visibleBottom - EDGE_MARGIN_PX && r.top >= EDGE_MARGIN_PX;
 
             // Centring the field alone can push the controls *below* it — the RPE
             // chips and the confirm button — back off-screen. When the field sits in
-            // a group that still fits, bring the whole group in instead.
+            // a group that still fits, the group is the thing to judge and to move:
+            // the focused field being visible is not enough if what the user reaches
+            // for next is under the fold.
             const anchor = el!.closest<HTMLElement>("[data-keyboard-anchor]");
-            if (anchor && anchor.getBoundingClientRect().height <= visibleBottom - EDGE_MARGIN_PX * 2) {
-                anchor.scrollIntoView({ block: "nearest", behavior: "smooth" });
-                return;
+            if (anchor) {
+                const anchorRect = anchor.getBoundingClientRect();
+                const groupFits = anchorRect.height <= visibleBottom - EDGE_MARGIN_PX * 2;
+
+                if (groupFits) {
+                    if (!isVisible(anchorRect)) {
+                        anchor.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                    }
+                    return;
+                }
             }
 
+            // No group, or a group taller than the viewport: fall back to at least
+            // keeping the focused field itself on screen.
+            if (isVisible(el!.getBoundingClientRect())) return;
             el!.scrollIntoView({ block: "center", behavior: "smooth" });
         };
 

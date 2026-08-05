@@ -10,6 +10,105 @@
 > been fixed and re-verified in the browser. Backlog items 1, 2, 4, 5 and part of 6 are done;
 > see §5 for status. Everything else in this report still stands as written.
 >
+> **Update — 2026-07-29, second follow-up pass:** backlog items **3, 6, 7, 8, 11, 16, 17, 19, 20**
+> are now done and verified live at 390 × 844 and 390 × 508, plus the PR double-count from §3.9.
+> Remaining open: **9, 10, 12, 13, 14, 15, 18**. Four corrections to this report came out of that pass:
+>
+> 1. **§3.3 overstated the confirm button.** `.btn-session-confirm` is 52px (`index.css:441-453`),
+>    so it always met the 44px guideline. The RPE chips (40px, now 44px) and the kebab (28px) were real.
+> 2. **§4.6's "5 dead files" was not a clean delete.** `ActiveSetInputRow.tsx` was still imported for
+>    its `SetSubmissionData` *type* by `useActiveExerciseCardLogic.ts:6`. Repointing that one import at
+>    the canonical declaration in `useActiveSetInput.ts:3` freed all five.
+> 3. **§3.3's comma bug needed more than normalising the parse.** On `type="number"` the browser
+>    discards the comma before any handler runs, so `parseFloat(x.replace(",","."))` alone fixes
+>    nothing — the inputs had to become `type="text" inputMode="decimal"` as well.
+> 4. **§3.4's PR count is worse than "counted twice."** It counted *rows*, and `scanForRecords` writes
+>    one WEIGHT + one VOLUME row per exercise. Now counts distinct exercises. Also: **all eight**
+>    muscle-badge families fail AA in light mode (§4.3 named two), and the inactive nav label is
+>    marginal at ~4.2:1 — item 14 is bigger than it looks.
+>
+> Two things the audit's own §2.5 fix did not cover, found by re-measuring:
+>
+> - **`useKeepFocusedFieldVisible` bailed whenever the focused field itself was visible**, which left
+>   the RPE row and confirm button under the fold on a 508px viewport even with the chrome hidden. It
+>   now judges and moves the whole `[data-keyboard-anchor]` group, not just the field. Measured before:
+>   RPE y 551–595, confirm y 611–663 in a 508px viewport. After: 348–392 and 408–460.
+> - **You cannot `focus()` a disabled input.** The set inputs carry `disabled={isPending || wasSubmitted}`,
+>   so refocusing the next set's weight field from the set-change effect silently no-ops — focus lands on
+>   `<body>`, exactly the symptom §3.3 reported. The refocus has to wait for `wasSubmitted` to flip back
+>   to false, in its own effect.
+>
+> **Update — 2026-07-30, third follow-up pass:** items **12, 13, 14** are done, plus the
+> §3.9 emoji streak markers and a `prefers-reduced-motion` guard. Remaining open:
+> **9, 10, 15, 18**.
+>
+> **Update — 2026-07-30, fourth follow-up pass:** the last four backlog items —
+> **9, 10, 15, 18** — are done, plus the §3.1 clear-on-change, the §3.8 empty charts and
+> back-button label, and `<ErrorBoundary>` on the editor/summary/analytics routes.
+> **The backlog is now closed.** Three corrections to this report came out of it:
+>
+> 1. **§3.6 put "Ver Arquivados" in `WorkoutListHeader.tsx:16`.** It is in
+>    `WorkoutListPage.tsx:50-58`. The header's own offender was the "Novo treino"
+>    button (32px, `size="icon"` with no override) — a different element entirely.
+> 2. **§3.2 said the sheet close button reads English "Close".** It already read
+>    **"Fechar"**; a prior pass had localised it. Only the 28px size was still true.
+> 3. **§4.4's "`NewExerciseSheet.tsx:107` mounts its overlay outside the sheet portal"
+>    was stale** — item 13 had already replaced it with an in-sheet `Spinner`.
+>
+> Four things found by measuring rather than reading, none of which the audit named:
+>
+> - **`.tap-target`'s `position: relative` broke the sheet's close button.** Plato's
+>   hand-written utilities live *outside* `@layer`, and unlayered CSS beats every layer
+>   regardless of specificity — so `position: relative` overrode Tailwind's `absolute`
+>   and moved the button to `left: -12px`, off-screen. The class no longer declares
+>   `position`; call sites pass `relative` themselves.
+> - **`overflow-x-auto` clips the 44px pseudo-element.** When one axis is not `visible`,
+>   the other computes to `auto` — so the muscle-chip row and the selected-chip row were
+>   both cutting the `::after` down to the badge's own 20px. Measured: a probe 16px above
+>   a chip missed it. Both rows needed `py-3`.
+> - **The sheet's X close button was unreachable even before any of this** —
+>   `elementFromPoint` at its centre returned the header's `<h2>`. It needed `z-10`.
+> - **`<input>` cannot use `.tap-target` at all.** Replaced elements do not render
+>   `::after`, so the editor's sets/reps fields had to grow for real (`size-11`).
+>
+> One thing worth recording about the picker (item 15): **virtualisation was not needed.**
+> The cost was recomputation, not DOM — the hook re-filtered ~100 rows *and*
+> `SheetExerciseList` re-grouped 14 × N on every keystroke, both unmemoised. `useMemo` +
+> `useDeferredValue` + a `Set` for selection + a `memo`'d row covers it with no new
+> dependency, and keeps the grouped-by-muscle headings that windowing would complicate.
+>
+> **§4.3's light-mode contrast numbers were wrong in both directions.** Measured properly
+> (canvas rasterisation of `oklch()` → sRGB, sanity-checked at 21:1), the real picture was:
+>
+> | Pair | §4.3 said | Measured | Now |
+> |---|---|---|---|
+> | chest / shoulders / triceps badge | fails (3.27) | **3.27 ❌** | 4.67 |
+> | biceps / forearms badge | not mentioned | **3.79 ❌** | 4.66 |
+> | core badge | not mentioned | **3.96 ❌** | 4.61 |
+> | neck badge | not mentioned | **4.44 ❌** | 4.63 |
+> | back / lower-back / traps badge | implied failing | 4.79 ✅ already passed | 4.79 |
+> | quads / hams / glutes / calves badge | implied failing | 5.17 ✅ already passed | 5.17 |
+> | active nav label (`--primary` on bg) | fails (3.8) | **3.80 ❌** | 5.43 |
+> | inactive nav label (`--muted-foreground`) | "marginal" | 5.51 ✅ already passed | 5.51 |
+>
+> So **7 of 14 badge families failed, not "8 WCAG AA failures" spread as described** — and
+> two colour groups the report implicated were already fine. My own batch-2 note claiming
+> "all eight families fail" was equally wrong; it repeated an estimate instead of a measurement.
+>
+> **Two AA failures the audit never found**, both surfaced by sweeping every token pair
+> rather than only the ones named:
+>
+> - **`--primary-foreground` on `--primary` was 3.60:1** — the near-white label on the
+>   primary CTA (`Iniciar`, `Salvar Treino`, the summary button). The main call-to-action
+>   in the app failed AA in light mode. One `--primary` change fixed this *and* the nav
+>   label: L 0.60 → 0.51 gives 5.14:1 and 5.43:1.
+> - **`--success` was 3.58:1 as text and 3.31:1 behind `--success-foreground`** —
+>   `text-success` is real text in three places (password-strength label, export
+>   confirmation, the 10px "último realizado" badge). L 0.60 → 0.515 gives 5.01:1 / 4.64:1.
+>
+> Also worth recording: `--muscle-core-bg` was hue **85** while `--muscle-core` was hue
+> **75**, and `--ring` was commented "segue primary" but had drifted from it.
+>
 > One correction worth recording: hiding the fixed chrome was **not sufficient on its own**.
 > It freed the space but nothing moved the focused field into it, and dropping the bottom
 > padding shortened the scroll range, which pushed the focused field *further* down. A
@@ -128,7 +227,7 @@ Verified live in the running app:
 | **P1** | **The search field is auto-focused on open**, so the keyboard fires immediately and covers the list the user came to browse. (Verified: `activeElement` is the search input on open.) | Radix autofocus + `ExerciseSearchBar.tsx` |
 | **P1** | **No virtualisation.** All **103 rows** mount at once — a 5101px scroll region inside a 451px window (11× the visible area), re-filtered on every keystroke with no `useMemo` or debounce. | `SheetExerciseList.tsx:16-22`, `useNewExerciseSheet.ts:29-34` |
 | **P1** | **Muscle chips and exercise rows are non-focusable `<span>`/`<div>`s** — they appear in the a11y tree as bare `StaticText`. The entire picker is unreachable by keyboard and unusable with a screen reader. | `MuscleGroupFilter.tsx:16-39`, `SheetExerciseList.tsx` |
-| **P2** | Selection chips scroll away with the list (they live *inside* the scroller), so you lose track of what you picked. | `NewExerciseSheet.tsx:78` |
+| **P2** | ✅ **DONE — and the symptom here was wrong.** The claim was that selection chips "scroll away with the list". They never rendered at all: the chip row is `flex gap-2 overflow-x-auto`, and `overflow-x-auto` makes it a scroll container whose *automatic minimum size is 0* rather than content-based. As a flex sibling of the 88-row list inside a `flex flex-col`, it was shrunk to `height: 0` — the chips were in the DOM at 20px, overflowing a zero-height parent. Visible in `05-exercise-sheet-selected-390x844.png`: the band above "PEITO" is empty even with 6 selected. Fixed with `shrink-0`. This one was inferred from the code rather than checked on screen. | `SelectedExercisesList.tsx:14` |
 | **P2** | Zero-result searches render a **completely blank area** — no "nenhum resultado" state. | `SheetExerciseList.tsx:27` |
 | **P2** | "Cancelar" / Esc / overlay-click do not reset sheet state — selections and filters persist into the next open. | `NewExerciseSheet.tsx:47`, `useNewExerciseSheet.ts:41-46` |
 | **P2** | Disabled button label renders **"Adicionar  exercício"** (double space, singular). Verified in the live DOM. | `NewExerciseSheet.tsx:101-102` |
@@ -216,7 +315,7 @@ Cleanest screen in the app; no significant issues found. Card hierarchy, metric 
 
 | Sev | Finding | Where |
 |---|---|---|
-| **P2** | The weekday streak markers are literal **⬜ emoji** (U+2B1C), not styled elements. A hard white square is the highest-contrast thing on the screen, so the eye is drawn to the days you *didn't* train. Emoji also ignore the theme and render differently per platform. Use themed token-coloured elements. | `StreakCard.tsx:25-39` |
+| **P2** | ✅ **DONE** — The weekday streak markers were literal **⬜ emoji** (U+2B1C), not styled elements. A hard white square is the highest-contrast thing on the screen, so the eye is drawn to the days you *didn't* train. Emoji also ignore the theme and render differently per platform. **Wider than reported:** the same 3-state row existed twice with different visual languages — `StreakCard` with emoji, `StreakWidget.tsx:3-7` with dots hard-coded to `bg-orange-400` (outside the token system) — plus a third `🔥` in `StreakBanner.tsx` on raw `orange-*` classes. All three now share one token-driven `StreakDayMarker`. | `StreakCard.tsx:25-39`, `StreakWidget.tsx`, `StreakBanner.tsx` |
 | **P2** | "Excluir conta permanentemente" sits directly below "Encerrar sessão" with no visual separation, though it is confirm-gated. | `GovernanceSettings.tsx` |
 | **P2** | "RECORDES (PRS): 12" for 6 exercises — PRs are counted twice (weight + volume), which reads as inflated. | `useUserStats.ts` |
 
@@ -243,7 +342,14 @@ There is **no 404 route**. `<Layout>` sits inside `<Switch>` as a non-`Route` ch
 - Unnamed icon buttons: exercise delete (`ExerciseItem.tsx:73`), password toggles (`LoginForm.tsx:44`, `SignupForm.tsx:62`), analytics back button.
 - Sets/reps inputs are announced as unnamed `spinbutton "0"` — the *placeholder* is doing the job of a label.
 - No error uses `role="alert"` / `aria-live`, so validation failures are silent for screen-reader users.
-- No `prefers-reduced-motion` guard on any Framer Motion animation.
+- ✅ **DONE** — No `prefers-reduced-motion` guard on any Framer Motion animation. Now
+  `<MotionConfig reducedMotion="user">` at the root of `main.tsx` covers all 17
+  framer-importing files including portalled sheets/dialogs, plus an
+  `@media (prefers-reduced-motion: reduce)` block in `index.css` for the CSS-only
+  animations it can't reach. `animate-spin` is deliberately left running — a frozen
+  spinner reads as a hung app. (`index.css` previously contained **no `@media` query at
+  all**.) The OS flag itself could not be toggled in the audit environment, so the rule
+  is verified as parsed and correctly scoped, not exercised end to end.
 
 ### 4.2 Touch targets
 
@@ -287,24 +393,24 @@ Ordered by impact ÷ effort. The top three are small, surgical changes that remo
 |---|---|---|---|---|
 | 1 | ✅ **DONE** — Raise the summary CTA above the nav bar | Unblocks the end of every workout | **XS** | `WorkoutSummaryPage.tsx` |
 | 2 | ✅ **DONE** — Hide the nav bar while any text input is focused | Recovers 169px mid-set; fixes logging *and* editor at once | **S** | `useKeyboardOpen.ts`, `NavBar.tsx`, `Layout.tsx`, `ActiveWorkoutActions.tsx` |
-| 3 | Add `autoComplete` + `enterKeyHint` to auth fields | Enables password managers / AutoFill | **XS** | `LoginForm.tsx`, `SignupForm.tsx` |
+| 3 | ✅ **DONE** — Add `autoComplete` + `enterKeyHint` to auth fields (plus `aria-label` on the password toggles, `role="alert"` + `aria-invalid`/`aria-describedby` on every field error, `aria-live` on the strength meter) | Enables password managers / AutoFill | **XS** | `LoginForm.tsx`, `SignupForm.tsx`, `InlineErrorBanner.tsx` |
 | 4 | ✅ **DONE** — Intercept Enter in the editor → advance focus instead of submitting | Removes a confusing dead-end | **S** | `focus.ts`, `ExerciseItem.tsx`, `WorkoutInfo.tsx` |
 | 5 | ✅ **DONE** — Send validation to the offending field + `role="alert"` | Errors stop being invisible | **S** | `WorkoutEditorPage.tsx`, `useWorkoutEditorLogic.ts` |
-| 6 | ⚠️ **PARTIAL** — focused field is now scrolled into view on focus/resize (`useKeepFocusedFieldVisible`). Still open: `viewport-fit=cover`, `env(safe-area-inset-*)` padding, and `100vh` → `100dvh` on the auth pages | Systemic keyboard + notch correctness | **M** | `index.html`, `index.css`, `LoginPage.tsx`, `SignupPage.tsx` |
-| 7 | Chain focus weight → reps → confirm in the logging card | Cuts ~7 interactions/set to ~3 | **M** | `ActiveExerciseCard.tsx`, `useActiveSetInput.ts` |
-| 8 | Normalise `,` → `.` in weight input | Prevents silent data loss for pt-BR users | **XS** | `useActiveSetInput.ts` |
-| 9 | Make nav slots, muscle chips and exercise rows real `<button>`s | Restores keyboard + screen-reader access | **S** | `NavBarSlot.tsx`, `MuscleGroupFilter.tsx`, `SheetExerciseList.tsx` |
-| 10 | Raise touch targets to 44px | Fewer mistaps, especially mid-set | **S** | `ExerciseItem.tsx`, `WorkoutListItem.tsx`, `RpeSelector.tsx` |
-| 11 | Seed new exercises with defaults (3 × 10) instead of 0/0 | Removes 12 manual entries per workout | **XS** | `workout-editor.store.ts` |
-| 12 | Make the editor save bar sticky | Always reachable | **S** | `WorkoutEditorPage.tsx` |
-| 13 | Don't autofocus sheet search; add empty state; reset state on close | Keyboard stops hijacking the picker | **S** | `NewExerciseSheet.tsx`, `useNewExerciseSheet.ts` |
-| 14 | Fix light-theme contrast (badges, active nav label) | WCAG AA in light mode | **S** | `index.css` |
-| 15 | Virtualise / `useMemo` + debounce the 103-row exercise list | Smoother search on mid-range phones | **M** | `SheetExerciseList.tsx`, `useNewExerciseSheet.ts` |
-| 16 | Delete the dead grid set-row implementation | Removes a maintenance trap | **XS** | 5 files, §4.6 |
-| 17 | Mount `next-themes` provider or drop it from Sonner | Correct toast theming | **XS** | `sonner.tsx` |
-| 18 | Add skeletons; stop full-screen blocking overlays | Less jarring loads | **M** | `loading-overlay.tsx` + call sites |
-| 19 | Add a 404 route | No more blank shell | **XS** | `App.tsx` |
-| 20 | Log the user in after signup | Removes a pointless retype | **XS** | `useSignupLogic.ts` |
+| 6 | ✅ **DONE** — `viewport-fit=cover` + `mobile-web-app-capable` added; `--safe-bottom` token drives `.h-navbar`/`.pb-navbar`/`.mb-navbar` so the bar height and the space reserved for it can't drift apart; `100vh` → `dvh` on `App.tsx` and `HistoryPage`; auth pages made scrollable. **Also extended `useKeepFocusedFieldVisible`** — see the note below | Systemic keyboard + notch correctness | **M** | `index.html`, `index.css`, `NavBar.tsx`, `Layout.tsx`, `LoginPage.tsx`, `SignupPage.tsx`, `useKeepFocusedFieldVisible.ts` |
+| 7 | ✅ **DONE** — Chain focus weight → reps → (bar) → confirm; refocus the next set's weight after confirming; reset `reps`/`rpe` between sets; RPE chips no longer blur the field; note textarea raised to 16px | Cuts ~7 interactions/set to ~3 | **M** | `ActiveExerciseCard.tsx`, `useActiveSetInput.ts`, `RpeSelector.tsx` |
+| 8 | ✅ **DONE** — Normalise `,` → `.` in weight input **and** switch the inputs to `type="text"` — see the note below | Prevents silent data loss for pt-BR users | **XS** | `ActiveExerciseCard.tsx`, `useActiveSetInput.ts` |
+| 9 | ✅ **DONE** — Nav slots → `<button>` inside `<nav aria-label>` with `aria-current`; muscle chips and selected chips → `<Badge asChild><button aria-pressed>`; exercise rows → `<button aria-pressed>` in a `<ul>/<li>` under an `<h3>` | Restores keyboard + screen-reader access | **S** | `NavBar.tsx`, `NavBarSlot.tsx`, `MuscleGroupFilter.tsx`, `SelectedExercisesList.tsx`, `SheetExerciseList.tsx` |
+| 10 | ✅ **DONE** — `.tap-target` expands the hit area to 44px via `::after` without changing the visual size — see the three gotchas in the note above. `RpeSelector` was already 44px | Fewer mistaps, especially mid-set | **S** | `index.css` + 9 call sites |
+| 11 | ✅ **DONE** — Seed new exercises with defaults (3 × 10) instead of 0/0 | Removes 12 manual entries per workout | **XS** | `workout-editor.store.ts` |
+| 12 | ✅ **DONE** — Make the editor save bar sticky (fixed above the nav bar, hidden while typing, reusing the `ActiveWorkoutActions` idiom) | Always reachable | **S** | `WorkoutEditorActions.tsx`, `index.css` |
+| 13 | ✅ **DONE** — Don't autofocus sheet search; add empty state; reset state on *every* dismissal path; sheet's full-screen overlay replaced by an in-sheet loading state | Keyboard stops hijacking the picker | **S** | `NewExerciseSheet.tsx`, `SheetExerciseList.tsx`, `useNewExerciseSheet.ts` |
+| 14 | ✅ **DONE** — Fix light-theme contrast. Every pair now ≥4.5:1 in **both** themes, measured by canvas rasterisation. See the correction note below — the failure set was different from what §4.3 reported | WCAG AA in light mode | **S** | `index.css` |
+| 15 | ✅ **DONE** — `useMemo` + `useDeferredValue` + `useCallback` in the hook; memoised grouping, a `Set` for selection and a `memo`'d row in the list. **Not virtualised** — see the note above | Smoother search on mid-range phones | **M** | `SheetExerciseList.tsx`, `useNewExerciseSheet.ts` |
+| 16 | ✅ **DONE** — Delete the dead grid set-row implementation | Removes a maintenance trap | **XS** | 5 files, §4.6 |
+| 17 | ✅ **DONE** — Dropped `next-themes` entirely; Sonner now reads the app's `ThemeProvider` and resolves `"system"` itself | Correct toast theming | **XS** | `sonner.tsx`, `package.json` |
+| 18 | ✅ **DONE** — `ui/skeleton.tsx` + 7 page skeletons behind a `PageSkeleton` (`role="status"`) wrapper for the fetch-gated loads; the four mutation-gated sites (list item, login, signup, editor save) moved to button-local state; `loading-overlay.tsx` deleted, it had no consumers left | Less jarring loads | **M** | `loading-overlay.tsx` + 9 call sites |
+| 19 | ✅ **DONE** — Add a 404 route | No more blank shell | **XS** | `App.tsx`, `core/pages/NotFoundPage.tsx` |
+| 20 | ✅ **DONE** — Log the user in after signup (chained login; the API returns no token on register) | Removes a pointless retype | **XS** | `useAuth.ts` |
 
 ---
 

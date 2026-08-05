@@ -8,7 +8,7 @@ import {
 import type { Workout } from "@/features/workouts/workout.types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Archive, Play, SquarePen, Undo2 } from "lucide-react";
-import { LoadingOverlay } from "@/components/ui/loading-overlay.tsx";
+import { Spinner } from "@/components/ui/spinner.tsx";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { useWorkoutListItemLogic } from "@/features/workouts/hooks/useWorkoutListItemLogic.ts";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
@@ -89,12 +89,16 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
             )}
 
             <CardFooter className="flex flex-row items-center justify-between gap-2 bg-transparent pt-2 border-t border-border/50">
-                <div className="flex gap-1">
+                {/* gap-2, não gap-1: com .tap-target cada botão passa a ter 44px de
+                    área de toque sobre 36px visuais, então 4px de gap fazia os dois
+                    alvos se sobreporem — o de cima ganharia os toques do outro. */}
+                <div className="flex gap-2">
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="size-9 text-muted-foreground"
+                        className="size-9 text-muted-foreground relative tap-target"
                         onClick={handleToggleStatus}
+                        disabled={isPending}
                         aria-label={workout.isActive ? "Arquivar treino" : "Reativar treino"}
                     >
                         {workout.isActive ? <Archive data-icon="inline" /> : <Undo2 data-icon="inline" />}
@@ -102,7 +106,7 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="size-9 text-muted-foreground"
+                        className="size-9 text-muted-foreground relative tap-target"
                         onClick={handleEdit}
                         aria-label="Editar treino"
                     >
@@ -113,19 +117,23 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
                 {workout.isActive && (
                     <Button
                         onClick={handleQuickStart}
-                        disabled={isLoading}
+                        disabled={isLoading || isPending}
                         variant={isResumingSession ? "secondary" : "default"}
                         className={cn(
-                            "h-9 px-4 gap-2 font-medium tracking-tight",
+                            "h-9 px-4 gap-2 font-medium tracking-tight relative tap-target",
                             isResumingSession && "border-primary/20 text-primary"
                         )}
                     >
-                        <Play data-icon="inline-start" className={cn(!isResumingSession && "fill-current")} />
+                        {/* Era um LoadingOverlay `fixed inset-0` montado dentro do
+                            card: iniciar a sessão em UM treino borrava o app
+                            inteiro. O retorno pertence ao botão que foi tocado. */}
+                        {isPending
+                            ? <Spinner data-icon="inline-start" />
+                            : <Play data-icon="inline-start" className={cn(!isResumingSession && "fill-current")} />}
                         {isResumingSession ? "Retomar" : "Iniciar"}
                     </Button>
                 )}
             </CardFooter>
-            <LoadingOverlay isLoading={isPending}/>
         </Card>
     );
 };

@@ -11,11 +11,39 @@ const SelectedExercisesList = ({ selectedExercises, onExerciseClick }: SelectedE
     if (selectedExercises.length === 0) return null;
 
     return (
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        // shrink-0 é obrigatório: `overflow-x-auto` faz desta linha um scroll container,
+        // cujo tamanho mínimo automático é 0 (e não o do conteúdo). Como irmã de uma
+        // lista muito mais alta que a viewport dentro de um flex-col, ela era esmagada
+        // para height:0 e os chips ficavam invisíveis — nunca apareceram, nem antes.
+        //
+        // py-3 pelo mesmo motivo, do outro lado: `overflow-x-auto` faz o eixo Y
+        // computar para `auto` também, então esta linha RECORTA. Sem folga
+        // vertical o ::after de 44px do .tap-target era cortado e o alvo
+        // continuava valendo os 20px do badge.
+        <div
+            role="list"
+            aria-label="Exercícios selecionados"
+            className="flex gap-2 overflow-x-auto no-scrollbar shrink-0 py-3"
+        >
             {selectedExercises.map((exercise) => (
-                <Badge key={exercise.id} onClick={() => onExerciseClick(exercise)}>
-                    {exercise.name}
-                    <X/>
+                // asChild: o Badge é um <span>, então o chip de remoção não era
+                // focável nem anunciado — e o X sozinho não dizia o que removia.
+                // overflow-visible libera o ::after de 44px do .tap-target, que o
+                // overflow-hidden do badge recortaria.
+                <Badge
+                    key={exercise.id}
+                    asChild
+                    role="listitem"
+                    className="relative tap-target overflow-visible cursor-pointer"
+                >
+                    <button
+                        type="button"
+                        aria-label={`Remover ${exercise.name}`}
+                        onClick={() => onExerciseClick(exercise)}
+                    >
+                        {exercise.name}
+                        <X aria-hidden="true"/>
+                    </button>
                 </Badge>
             ))}
         </div>

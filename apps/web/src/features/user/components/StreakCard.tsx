@@ -1,4 +1,5 @@
 import type { StreakData } from "../hooks/useStreakData";
+import { StreakDayMarker } from "@/core/components/StreakDayMarker.tsx";
 
 const DAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
@@ -24,13 +25,12 @@ const StreakCard = ({ streak }: Props) => {
 
             <div className="flex justify-between mb-3">
                 {streak.weekDays.map((day) => (
-                    <div key={day.date} className="flex flex-col items-center gap-1">
-                        <span
-                            className="text-[18px] leading-none"
-                            style={day.status === 'rest_used' ? { filter: 'grayscale(1)', opacity: 0.35 } : undefined}
-                        >
-                            {day.status === 'future' ? '⬜' : '🔥'}
-                        </span>
+                    <div key={day.date} className="flex flex-col items-center gap-1.5">
+                        <StreakDayMarker
+                            status={day.status}
+                            size="md"
+                            label={DAY_LABELS[day.dayOfWeek]}
+                        />
                         <span className="text-[10px] text-muted-foreground">
                             {DAY_LABELS[day.dayOfWeek]}
                         </span>
