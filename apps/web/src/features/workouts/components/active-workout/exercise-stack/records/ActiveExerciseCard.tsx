@@ -7,6 +7,7 @@ import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { CompletedSetRow } from "./CompletedSetRow";
 import { PendingSetRow } from "./PendingSetRow";
 import { RpeSelector } from "../../components/RpeSelector";
+import { ProgressionChip } from "../../components/ProgressionChip";
 import { Textarea } from "@/components/ui/textarea";
 import {
     DropdownMenu,
@@ -14,20 +15,22 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { EnrichedExerciseRecord, WorkoutSession } from "@/features/workouts/workout.types.ts";
+import type { EnrichedExerciseRecord, ExerciseHistoryMap, SessionSet } from "@/features/workouts/workout.types.ts";
+import { formatWeightPtBr } from "@/features/workouts/utils/progression.ts";
 import { UNITS } from "@/core/constants/units.ts";
 
 type ActiveExerciseCardProps = {
     record: EnrichedExerciseRecord;
     sessionId: number;
-    lastSession?: WorkoutSession | null;
+    history?: ExerciseHistoryMap;
 };
 
-const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCardProps) => {
+const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardProps) => {
     const {
         showEquipmentWeight,
         toggleEquipmentWeight,
-        suggestions,
+        advice,
+        seed,
         activeSetNumber,
         pendingSetsCount,
         handleSetConfirm,
@@ -36,13 +39,12 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
         toggleNote,
         note,
         setNote,
-    } = useActiveExerciseCardLogic(record, sessionId, lastSession);
+    } = useActiveExerciseCardLogic(record, sessionId, history);
 
     const { state, refs, actions } = useActiveSetInput({
+        exerciseId: record.exerciseId,
         setNumber: activeSetNumber,
-        targetReps: record.targetReps,
-        previousWeight: suggestions.weight,
-        previousEquipmentWeight: suggestions.equipWeight,
+        seed,
         onConfirm: (data) => handleSetConfirm(activeSetNumber, data),
         isPending,
     });
@@ -58,11 +60,28 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
     const doneDots = record.logs.length;
     const totalDots = record.effectiveTargetSets;
 
+    // Meia-casa de incremento é a tolerância: arredondamentos e anilhas diferentes
+    // não devem virar aviso. Avisa e marca, nunca bloqueia — o set grava normalmente.
+    const deviationOf = (value: number): "up" | "down" | undefined => {
+        if (advice.suggestedWeight == null) return undefined;
+        const tolerance = advice.increment / 2;
+        if (value > advice.suggestedWeight + tolerance) return "up";
+        if (value < advice.suggestedWeight - tolerance) return "down";
+        return undefined;
+    };
+
+    const logDeviation = (log: SessionSet) => deviationOf(log.actualWeight);
+
+    const typedWeight = parseFloat(weight.replace(",", "."));
+    const isOverPrescribed = advice.verdict !== "INCREASE"
+        && Number.isFinite(typedWeight)
+        && deviationOf(typedWeight) === "up";
+
     return (
         <motion.div layout className="flex flex-col gap-2">
             <AnimatePresence>
                 {record.logs.map(log => (
-                    <CompletedSetRow key={log.id} log={log} />
+                    <CompletedSetRow key={log.id} log={log} deviation={logDeviation(log)} />
                 ))}
             </AnimatePresence>
 
@@ -81,7 +100,7 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             {record.exercise.name}
                         </span>
                         <div className="flex items-center gap-2">
-                            <span className="text-[12px] text-muted-foreground">Padrão</span>
+                            <ProgressionChip advice={advice} />
                             <MuscleBadge muscle={record.exercise.targetMuscle} />
                         </div>
                     </div>
@@ -118,6 +137,12 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             )}
                         />
                     ))}
+                    {/* A razão divide a linha dos dots em vez de virar banner próprio:
+                        custo vertical zero, e o card não pode crescer sem quebrar o
+                        scroll-into-view com o teclado aberto. */}
+                    <span className="ml-auto text-[11px] text-muted-foreground truncate">
+                        {advice.reason}
+                    </span>
                 </div>
 
                 {/* CARGA + REPS inputs */}
@@ -134,14 +159,23 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                             inputMode="decimal"
                             enterKeyHint="next"
                             aria-label="Carga"
-                            placeholder={suggestions.weight ? `${suggestions.weight}` : "0"}
+                            placeholder={seed.weight != null ? `${seed.weight}` : "0"}
                             value={weight}
                             onChange={(e) => setWeight(e.target.value)}
                             onKeyDown={handleFieldKeyDown("weight")}
                             disabled={isPending || wasSubmitted}
                             className="input-workout"
                         />
-                        <span className="text-[12px] text-muted-foreground text-center">{UNITS.WEIGHT}</span>
+                        {/* Substitui a legenda "kg" em vez de somar uma linha — custo
+                            vertical zero. Avisa e marca o desvio, sem bloquear o registro. */}
+                        <span className={cn(
+                            "text-[12px] text-center",
+                            isOverPrescribed ? "text-destructive" : "text-muted-foreground"
+                        )}>
+                            {isOverPrescribed
+                                ? `acima do prescrito · ${formatWeightPtBr(advice.suggestedWeight!)} ${UNITS.WEIGHT}`
+                                : UNITS.WEIGHT}
+                        </span>
                     </div>
 
                     <div className="flex-1 flex flex-col gap-1">
@@ -236,8 +270,8 @@ const ActiveExerciseCard = ({ record, sessionId, lastSession }: ActiveExerciseCa
                     <PendingSetRow
                         key={`pending-${futureSetNum}`}
                         setNum={futureSetNum}
-                        reps={record.targetReps}
-                        weight={suggestions.weight}
+                        reps={advice.suggestedReps}
+                        weight={advice.suggestedWeight ?? undefined}
                     />
                 );
             })}

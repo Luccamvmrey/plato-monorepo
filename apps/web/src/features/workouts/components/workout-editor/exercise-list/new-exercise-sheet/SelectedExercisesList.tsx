@@ -14,7 +14,10 @@ const SelectedExercisesList = ({ selectedExercises, onExerciseClick }: SelectedE
         // shrink-0 é obrigatório: `overflow-x-auto` faz desta linha um scroll container,
         // cujo tamanho mínimo automático é 0 (e não o do conteúdo). Como irmã de uma
         // lista muito mais alta que a viewport dentro de um flex-col, ela era esmagada
-        // para height:0 e os chips ficavam invisíveis — nunca apareceram, nem antes.
+        // para height:0.
+        //
+        // px-6 porque esta linha vive FORA da área rolável (que tem o padding próprio):
+        // dentro dela os chips ficavam permanentemente acima da posição de rolagem.
         //
         // py-3 pelo mesmo motivo, do outro lado: `overflow-x-auto` faz o eixo Y
         // computar para `auto` também, então esta linha RECORTA. Sem folga
@@ -23,7 +26,7 @@ const SelectedExercisesList = ({ selectedExercises, onExerciseClick }: SelectedE
         <div
             role="list"
             aria-label="Exercícios selecionados"
-            className="flex gap-2 overflow-x-auto no-scrollbar shrink-0 py-3"
+            className="flex gap-2 overflow-x-auto no-scrollbar shrink-0 py-3 px-6 border-b border-border/50 bg-background"
         >
             {selectedExercises.map((exercise) => (
                 // asChild: o Badge é um <span>, então o chip de remoção não era

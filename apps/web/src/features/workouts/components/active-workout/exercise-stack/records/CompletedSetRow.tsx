@@ -8,12 +8,15 @@ type CompletedSetRowProps = {
     log: SessionSet;
     showEquipmentWeight?: boolean;
     variant?: "active" | "summary";
+    /** Desvio em relação à carga prescrita. A comparação é feita no card, que tem o advice. */
+    deviation?: "up" | "down";
 };
 
-export const CompletedSetRow = ({ 
-    log, 
+export const CompletedSetRow = ({
+    log,
     showEquipmentWeight: _showEquipmentWeight,
-    variant = "active"
+    variant = "active",
+    deviation
 }: CompletedSetRowProps) => {
     const isSummary = variant === "summary";
 
@@ -34,6 +37,14 @@ export const CompletedSetRow = ({
                 Set {log.setNumber} {!isSummary && "completo"}
             </span>
             <span className="ml-auto text-[12px] text-success-subtle-fg/70 tabular-nums whitespace-nowrap">
+                {deviation && (
+                    <span
+                        aria-label={deviation === "up" ? "acima do prescrito" : "abaixo do prescrito"}
+                        className="mr-1"
+                    >
+                        {deviation === "up" ? "↑" : "↓"}
+                    </span>
+                )}
                 {log.actualWeight}{UNITS.WEIGHT} · {log.actualReps}{UNITS.REPS} · RPE {log.rpe}
             </span>
         </motion.div>

@@ -95,6 +95,7 @@ const WorkoutCompletePage = () => {
             await queryClient.invalidateQueries({ queryKey: ["sessions"] });
             await queryClient.invalidateQueries({ queryKey: ["activeSession"] });
             await queryClient.invalidateQueries({ queryKey: ["user-streak"] });
+            await queryClient.invalidateQueries({ queryKey: ["exercise-history"] });
             setFinalization({ status: 'success', sessionId, error: null, payload: null });
         } catch {
             setFinalization({

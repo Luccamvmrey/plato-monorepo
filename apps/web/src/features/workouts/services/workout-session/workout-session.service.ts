@@ -1,5 +1,5 @@
 import api from "@/core/api";
-import type { WorkoutSession } from "@/features/workouts/workout.types.ts";
+import type { ExerciseHistoryMap, WorkoutSession } from "@/features/workouts/workout.types.ts";
 
 export interface WorkoutSessionPayload {
     workoutId: number;
@@ -28,6 +28,14 @@ export const WorkoutSessionService = {
 
     getByWorkoutId: async (workoutId: string) => {
         const { data } = await api.get<WorkoutSession[]>(`/sessions/workout/${workoutId}`);
+        return data;
+    },
+
+    getExerciseHistory: async (workoutId: number, limit?: number) => {
+        const { data } = await api.get<ExerciseHistoryMap>(
+            `/sessions/workout/${workoutId}/exercise-history`,
+            { params: { limit } }
+        );
         return data;
     },
 

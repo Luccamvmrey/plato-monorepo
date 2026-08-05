@@ -13,6 +13,7 @@ router.use(authenticate);
 // --- Workout Session Routes ---
 router.get("/", workoutSessionController.listByUserId);
 router.get("/active", workoutSessionController.findActiveSession);
+router.get("/workout/:id/exercise-history", workoutSessionController.getExerciseHistory);
 router.get("/workout/:id", workoutSessionController.listByWorkoutId);
 router.get("/exercise/:id", workoutSessionController.listByExerciseId);
 router.get("/:id", workoutSessionController.listById);

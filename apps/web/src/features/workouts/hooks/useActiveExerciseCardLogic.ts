@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSessionSet } from "@/features/workouts/hooks/useSessionSet";
-import { useExerciseSuggestions } from "@/features/workouts/hooks/useExerciseSuggestions";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
-import type { EnrichedExerciseRecord, WorkoutSession } from "@/features/workouts/workout.types";
+import { getProgressionAdvice } from "@/features/workouts/utils/progression";
+import type { EnrichedExerciseRecord, ExerciseHistoryMap } from "@/features/workouts/workout.types";
 import { type SetSubmissionData } from "@/features/workouts/hooks/useActiveSetInput";
 
 export const useActiveExerciseCardLogic = (
     record: EnrichedExerciseRecord,
     sessionId: number,
-    lastSession?: WorkoutSession | null
+    history?: ExerciseHistoryMap
 ) => {
     const { confirmSet } = useSessionSet();
     const [equipmentWeightVisible, setEquipmentWeightVisible] = useState<boolean | null>(null);
@@ -18,10 +18,31 @@ export const useActiveExerciseCardLogic = (
     const note = exerciseNotes?.[record.exerciseId] ?? "";
     const [noteVisible, setNoteVisible] = useState(() => !!note);
 
-    const { suggestions, activeSetNumber, pendingSetsCount, autoShowEquipmentWeight } = useExerciseSuggestions(
-        record,
-        lastSession,
+    const activeSetNumber = record.logs.length + 1;
+    const pendingSetsCount = Math.max(0, record.effectiveTargetSets - activeSetNumber);
+
+    // A prescrição olha só o histórico e não muda durante a sessão — reavaliá-la ao
+    // vivo trocaria o veredito debaixo do usuário no meio do exercício.
+    const advice = useMemo(
+        () => getProgressionAdvice(history?.[record.exerciseId] ?? [], record.targetReps),
+        [history, record.exerciseId, record.targetReps],
     );
+
+    // O que semeia os inputs NÃO é a prescrição pura: se o usuário já registrou uma
+    // série deste exercício nesta sessão, a próxima nasce com o que ele acabou de
+    // fazer. Re-sugerir um peso que ele acabou de rejeitar seria uma regressão.
+    // Comparações com != null e não truthiness — 0 kg (peso corporal, máquina
+    // assistida) é uma carga legítima.
+    const lastLog = record.logs[record.logs.length - 1];
+    const seed = useMemo(() => ({
+        weight:          lastLog?.actualWeight ?? advice.suggestedWeight,
+        // Quando há set nesta sessão ele manda inteiro, inclusive a ausência de barra
+        // (equipmentWeight null) — cair de volta na prescrição aqui traria a barra de volta.
+        equipmentWeight: lastLog ? (lastLog.equipmentWeight ?? 0) : advice.suggestedEquipmentWeight,
+        reps:            advice.suggestedReps,
+    }), [lastLog, advice]);
+
+    const autoShowEquipmentWeight = (seed.equipmentWeight ?? 0) > 0 || record.logs.some(l => l.equipmentWeight);
 
     // null = follow auto-detection; true/false = explicit user override
     const showEquipmentWeight = equipmentWeightVisible ?? autoShowEquipmentWeight;
@@ -49,7 +70,8 @@ export const useActiveExerciseCardLogic = (
     return {
         showEquipmentWeight,
         toggleEquipmentWeight,
-        suggestions,
+        advice,
+        seed,
         activeSetNumber,
         pendingSetsCount,
         handleSetConfirm,

@@ -80,6 +80,9 @@ export const useWorkoutSession = (workoutId?: string) => {
             await queryClient.invalidateQueries({ queryKey: ["sessions"] });
             await queryClient.invalidateQueries({ queryKey: ["activeSession"] });
             await queryClient.invalidateQueries({ queryKey: ["user-streak"] });
+            // A sessão recém-gravada passa a fazer parte do histórico que prescreve
+            // a carga da próxima. É o único momento em que ele muda.
+            await queryClient.invalidateQueries({ queryKey: ["exercise-history"] });
             setFinalization({ status: 'success', sessionId, error: null, payload: null });
         } catch {
             setFinalization({
