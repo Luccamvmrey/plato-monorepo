@@ -14,14 +14,24 @@ export interface ProgressionAdvice {
     /** Uma linha em pt-BR, com números concretos. */
     reason: string;
     stalledSessions: number;
+    /** De onde veio a prescrição: sessões passadas ou os sets já registrados nesta. */
+    scope: "history" | "session";
 }
 
-interface ExecutionSummary {
+export interface ExecutionSummary {
     workWeight: number;
     minReps: number;
     maxRpe: number;
     equipmentWeight: number;
     setsAtWorkWeight: number;
+}
+
+/** O mínimo que a prescrição precisa saber de um set já registrado. */
+export interface LoggedSet {
+    actualWeight: number;
+    actualReps: number;
+    rpe: number;
+    equipmentWeight?: number | null;
 }
 
 /** A faixa de reps é derivada do plano: [targetReps, targetReps + 2]. Não há config por exercício. */
@@ -40,27 +50,19 @@ export const roundToIncrement = (value: number, increment: number): number => {
 /**
  * Reduz uma execução ao par (carga de trabalho, desempenho nela).
  *
- * A carga de trabalho é o peso mais frequente entre os sets — empate resolve pelo
- * menor, que é a leitura conservadora. Reps e RPE são medidos SÓ nos sets nesse
- * peso: um drop set a 20 kg não deve derrubar a avaliação de uma série a 40 kg.
+ * A carga de trabalho é o set MAIS PESADO da execução — é ele que a progressão
+ * persegue. Rampa (40→45→50), back-off e drop set progridem todos a partir do topo.
+ * A regra anterior era a moda dos pesos com desempate pelo menor, que devolvia o set
+ * mais leve sempre que os pesos não se repetiam — ou seja, em qualquer sessão em
+ * rampa a referência virava a primeira série.
+ *
+ * Reps e RPE são medidos SÓ nos sets no peso de trabalho: um drop set a 20 kg não
+ * deve derrubar a avaliação de uma série a 50 kg.
  */
 export const summarizeExecution = (execution: ExerciseExecution): ExecutionSummary | null => {
     if (!execution.sets.length) return null;
 
-    const frequency = new Map<number, number>();
-    for (const set of execution.sets) {
-        frequency.set(set.actualWeight, (frequency.get(set.actualWeight) ?? 0) + 1);
-    }
-
-    let workWeight = execution.sets[0].actualWeight;
-    let bestCount = 0;
-    for (const [weight, count] of frequency) {
-        if (count > bestCount || (count === bestCount && weight < workWeight)) {
-            workWeight = weight;
-            bestCount = count;
-        }
-    }
-
+    const workWeight = Math.max(...execution.sets.map(set => set.actualWeight));
     const workSets = execution.sets.filter(set => set.actualWeight === workWeight);
 
     return {
@@ -72,27 +74,31 @@ export const summarizeExecution = (execution: ExerciseExecution): ExecutionSumma
     };
 };
 
+/** Incremento plausível quando não há dois pontos no histórico para medir o salto real. */
+export const bandIncrement = (workWeight: number): number => {
+    if (workWeight < 20) return 1;
+    if (workWeight < 60) return 2.5;
+    return 5;
+};
+
 /**
- * O incremento de carga é derivado, não configurado: é o menor salto positivo que
- * o usuário já deu neste exercício. Sem dois pesos distintos no histórico, cai num
- * fallback por faixa de carga (halteres leves sobem de 1 em 1, barra de 5 em 5).
+ * O incremento de carga é derivado, não configurado: é o menor salto positivo entre
+ * as CARGAS DE TRABALHO de sessões diferentes — é essa a escada que o usuário sobe.
+ * Saltos dentro de uma mesma sessão (a rampa 40→45→50) não são incremento de
+ * progressão e falseariam a escala. Sem duas cargas de trabalho distintas, cai no
+ * fallback por faixa.
  */
-export const inferIncrement = (history: ExerciseExecution[], workWeight: number): number => {
-    const weights = [...new Set(
-        history.flatMap(execution => execution.sets.map(set => set.actualWeight))
-    )].sort((a, b) => a - b);
+export const inferIncrement = (summaries: ExecutionSummary[], workWeight: number): number => {
+    const workWeights = [...new Set(summaries.map(summary => summary.workWeight))]
+        .sort((a, b) => a - b);
 
     let smallest = Infinity;
-    for (let i = 1; i < weights.length; i++) {
-        const delta = weights[i] - weights[i - 1];
+    for (let i = 1; i < workWeights.length; i++) {
+        const delta = workWeights[i] - workWeights[i - 1];
         if (delta > 0 && delta < smallest) smallest = delta;
     }
 
-    if (smallest === Infinity) {
-        if (workWeight < 20) return 1;
-        if (workWeight < 60) return 2.5;
-        return 5;
-    }
+    if (smallest === Infinity) return bandIncrement(workWeight);
 
     return Math.min(10, Math.max(1, smallest));
 };
@@ -145,14 +151,15 @@ export const getProgressionAdvice = (
             suggestedEquipmentWeight: 0,
             suggestedReps: repRange.min,
             repRange,
-            increment: inferIncrement(history, 0),
+            increment: bandIncrement(0),
             reason: "Primeira vez neste exercício — registre uma carga de referência.",
             stalledSessions: 0,
+            scope: "history",
         };
     }
 
     const last = summaries[0];
-    const increment = inferIncrement(history, last.workWeight);
+    const increment = inferIncrement(summaries, last.workWeight);
     const stalledSessions = countStall(summaries, last.workWeight);
 
     const base = {
@@ -160,6 +167,7 @@ export const getProgressionAdvice = (
         repRange,
         increment,
         stalledSessions,
+        scope: "history" as const,
     };
     const weightLabel = formatWeightPtBr(last.workWeight);
 
@@ -171,7 +179,7 @@ export const getProgressionAdvice = (
             verdict: "DELOAD",
             suggestedWeight: deloadWeight,
             suggestedReps: repRange.min,
-            reason: `${stalledSessions} sessões travado em ${weightLabel} kg com RPE ${last.maxRpe} — recue para ${formatWeightPtBr(deloadWeight)} kg e reconstrua.`,
+            reason: `${stalledSessions} sessões travado em ${weightLabel} kg a RPE ${last.maxRpe} — recue para ${formatWeightPtBr(deloadWeight)} kg.`,
         };
     }
 
@@ -183,7 +191,7 @@ export const getProgressionAdvice = (
             verdict: "INCREASE",
             suggestedWeight: nextWeight,
             suggestedReps: repRange.min,
-            reason: `Você fechou ${last.setsAtWorkWeight}×${last.minReps} em ${weightLabel} kg com RPE ${last.maxRpe} — suba para ${formatWeightPtBr(nextWeight)} kg.`,
+            reason: `Você fechou ${last.setsAtWorkWeight}×${last.minReps} em ${weightLabel} kg a RPE ${last.maxRpe} — suba para ${formatWeightPtBr(nextWeight)} kg.`,
         };
     }
 
@@ -196,7 +204,7 @@ export const getProgressionAdvice = (
             suggestedReps: repRange.min,
             reason: last.maxRpe >= 10
                 ? `Última execução saiu a RPE ${last.maxRpe} — repita ${weightLabel} kg antes de subir.`
-                : `Você fez ${last.minReps} reps em ${weightLabel} kg, abaixo da faixa de ${repRange.min}-${repRange.max} — repita a carga.`,
+                : `Você fez ${last.minReps} reps em ${weightLabel} kg, abaixo de ${repRange.min} — repita a carga.`,
         };
     }
 
@@ -210,7 +218,109 @@ export const getProgressionAdvice = (
         suggestedWeight: last.workWeight,
         suggestedReps,
         reason: atTopOfRange
-            ? `Faixa fechada em ${weightLabel} kg, mas com RPE ${last.maxRpe} — consolide antes de subir.`
-            : `Mantenha ${weightLabel} kg e busque ${suggestedReps} reps (faltam ${repRange.max - last.minReps} para o topo da faixa).`,
+            ? `Faixa fechada em ${weightLabel} kg, mas a RPE ${last.maxRpe} — consolide antes de subir.`
+            : `Mantenha ${weightLabel} kg e busque ${suggestedReps} reps (topo da faixa: ${repRange.max}).`,
     };
+};
+
+/**
+ * Prescrição para o próximo set, dado o set que acabou de sair.
+ *
+ * Mesma dupla progressão do motor de histórico, aplicada intra-sessão. `previous`
+ * entra só pela faixa de reps e pelo incremento — a carga de referência é a que o
+ * usuário ACABOU de levantar, nunca a que estava prescrita. É o que mantém o card
+ * coerente quando ele registra 50 kg onde o prescrito era 42,5.
+ *
+ * @param setNumber Número (1-based) do set que acabou de ser registrado.
+ */
+export const advanceAdvice = (
+    previous: ProgressionAdvice,
+    set: LoggedSet,
+    setNumber: number,
+): ProgressionAdvice => {
+    const { repRange } = previous;
+    // O incremento de NO_HISTORY foi inferido sem carga nenhuma e vale sempre 1 —
+    // agora que existe um peso real, a faixa dele é que manda.
+    const increment = previous.verdict === "NO_HISTORY"
+        ? bandIncrement(set.actualWeight)
+        : previous.increment;
+
+    const base = {
+        suggestedEquipmentWeight: set.equipmentWeight ?? 0,
+        repRange,
+        increment,
+        stalledSessions: previous.stalledSessions,
+        scope: "session" as const,
+    };
+    const weightLabel = formatWeightPtBr(set.actualWeight);
+    const done = `Set ${setNumber}: ${set.actualReps} reps a RPE ${set.rpe}`;
+
+    // 1. Falhou e saiu caro: recua um incremento para salvar o resto do exercício.
+    if (set.rpe >= 10 && set.actualReps < repRange.min) {
+        const deloadWeight = Math.max(0, roundToIncrement(set.actualWeight - increment, increment));
+        return {
+            ...base,
+            verdict: "DELOAD",
+            suggestedWeight: deloadWeight,
+            suggestedReps: repRange.min,
+            reason: `${done} — recue para ${formatWeightPtBr(deloadWeight)} kg.`,
+        };
+    }
+
+    // 2. Fechou o topo da faixa sem custo de RPE: sobe já no próximo set.
+    if (set.actualReps >= repRange.max && set.rpe <= 8) {
+        const nextWeight = roundToIncrement(set.actualWeight + increment, increment);
+        return {
+            ...base,
+            verdict: "INCREASE",
+            suggestedWeight: nextWeight,
+            suggestedReps: repRange.min,
+            reason: `${done} — suba para ${formatWeightPtBr(nextWeight)} kg.`,
+        };
+    }
+
+    // 3. Veto por RPE, ou abaixo do piso da faixa: mantém a carga e busca o piso.
+    if (set.rpe >= 10 || set.actualReps < repRange.min) {
+        return {
+            ...base,
+            verdict: "REPEAT",
+            suggestedWeight: set.actualWeight,
+            suggestedReps: repRange.min,
+            reason: `${done} — repita ${weightLabel} kg e busque ${repRange.min} reps.`,
+        };
+    }
+
+    // 4. Dentro da faixa: mesma carga, uma rep a mais.
+    const suggestedReps = Math.min(set.actualReps + 1, repRange.max);
+    return {
+        ...base,
+        verdict: "HOLD",
+        suggestedWeight: set.actualWeight,
+        suggestedReps,
+        reason: `${done} — mantenha ${weightLabel} kg e busque ${suggestedReps} reps.`,
+    };
+};
+
+/**
+ * Prescrições encadeadas para um exercício. O índice i é o que estava prescrito para
+ * o set i+1, e o último elemento é a prescrição do set ativo.
+ *
+ * Guardar cada estado intermediário — em vez de só o atual — é o que permite julgar
+ * o desvio de um set concluído contra o que valia NAQUELE set. Comparar tudo contra
+ * a prescrição corrente marcaria como desvio todo set anterior a uma mudança de carga.
+ *
+ * @returns Array de comprimento `sessionSets.length + 1`.
+ */
+export const buildAdviceChain = (
+    history: ExerciseExecution[],
+    targetReps: number,
+    sessionSets: LoggedSet[],
+): ProgressionAdvice[] => {
+    const chain: ProgressionAdvice[] = [getProgressionAdvice(history, targetReps)];
+
+    sessionSets.forEach((set, index) => {
+        chain.push(advanceAdvice(chain[index], set, index + 1));
+    });
+
+    return chain;
 };

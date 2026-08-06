@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import type { SessionSet } from "@/features/workouts/workout.types.ts";
 import { cn } from "@/lib/utils.ts";
 import { UNITS } from "@/core/constants/units.ts";
+import { formatWeightPtBr } from "@/features/workouts/utils/progression.ts";
 
 type CompletedSetRowProps = {
     log: SessionSet;
@@ -45,7 +46,7 @@ export const CompletedSetRow = ({
                         {deviation === "up" ? "↑" : "↓"}
                     </span>
                 )}
-                {log.actualWeight}{UNITS.WEIGHT} · {log.actualReps}{UNITS.REPS} · RPE {log.rpe}
+                {formatWeightPtBr(log.actualWeight)}{UNITS.WEIGHT} · {log.actualReps}{UNITS.REPS} · RPE {log.rpe}
             </span>
         </motion.div>
     );

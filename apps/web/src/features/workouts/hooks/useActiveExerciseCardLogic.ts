@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSessionSet } from "@/features/workouts/hooks/useSessionSet";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
-import { getProgressionAdvice } from "@/features/workouts/utils/progression";
+import { buildAdviceChain } from "@/features/workouts/utils/progression";
 import type { EnrichedExerciseRecord, ExerciseHistoryMap } from "@/features/workouts/workout.types";
 import { type SetSubmissionData } from "@/features/workouts/hooks/useActiveSetInput";
 
@@ -21,26 +21,23 @@ export const useActiveExerciseCardLogic = (
     const activeSetNumber = record.logs.length + 1;
     const pendingSetsCount = Math.max(0, record.effectiveTargetSets - activeSetNumber);
 
-    // A prescrição olha só o histórico e não muda durante a sessão — reavaliá-la ao
-    // vivo trocaria o veredito debaixo do usuário no meio do exercício.
-    const advice = useMemo(
-        () => getProgressionAdvice(history?.[record.exerciseId] ?? [], record.targetReps),
-        [history, record.exerciseId, record.targetReps],
+    // A prescrição é uma cadeia: o histórico dá o ponto de partida e cada set
+    // registrado nesta sessão re-prescreve o seguinte. O índice i é o que valia para
+    // o set i+1 — é isso que permite julgar o desvio de um set concluído contra a
+    // prescrição daquele set, e não contra a corrente.
+    const adviceChain = useMemo(
+        () => buildAdviceChain(history?.[record.exerciseId] ?? [], record.targetReps, record.logs),
+        [history, record.exerciseId, record.targetReps, record.logs],
     );
+    const advice = adviceChain[adviceChain.length - 1];
 
-    // O que semeia os inputs NÃO é a prescrição pura: se o usuário já registrou uma
-    // série deste exercício nesta sessão, a próxima nasce com o que ele acabou de
-    // fazer. Re-sugerir um peso que ele acabou de rejeitar seria uma regressão.
-    // Comparações com != null e não truthiness — 0 kg (peso corporal, máquina
-    // assistida) é uma carga legítima.
-    const lastLog = record.logs[record.logs.length - 1];
+    // A prescrição do set ativo já embute o último set registrado, inclusive a
+    // ausência de barra (equipmentWeight null vira 0) — não há caso especial aqui.
     const seed = useMemo(() => ({
-        weight:          lastLog?.actualWeight ?? advice.suggestedWeight,
-        // Quando há set nesta sessão ele manda inteiro, inclusive a ausência de barra
-        // (equipmentWeight null) — cair de volta na prescrição aqui traria a barra de volta.
-        equipmentWeight: lastLog ? (lastLog.equipmentWeight ?? 0) : advice.suggestedEquipmentWeight,
+        weight:          advice.suggestedWeight,
+        equipmentWeight: advice.suggestedEquipmentWeight,
         reps:            advice.suggestedReps,
-    }), [lastLog, advice]);
+    }), [advice]);
 
     const autoShowEquipmentWeight = (seed.equipmentWeight ?? 0) > 0 || record.logs.some(l => l.equipmentWeight);
 
@@ -71,6 +68,7 @@ export const useActiveExerciseCardLogic = (
         showEquipmentWeight,
         toggleEquipmentWeight,
         advice,
+        adviceChain,
         seed,
         activeSetNumber,
         pendingSetsCount,

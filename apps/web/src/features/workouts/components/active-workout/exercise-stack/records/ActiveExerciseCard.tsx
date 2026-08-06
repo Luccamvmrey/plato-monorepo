@@ -16,7 +16,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { EnrichedExerciseRecord, ExerciseHistoryMap, SessionSet } from "@/features/workouts/workout.types.ts";
-import { formatWeightPtBr } from "@/features/workouts/utils/progression.ts";
+import { formatWeightPtBr, type ProgressionAdvice } from "@/features/workouts/utils/progression.ts";
 import { UNITS } from "@/core/constants/units.ts";
 
 type ActiveExerciseCardProps = {
@@ -30,6 +30,7 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
         showEquipmentWeight,
         toggleEquipmentWeight,
         advice,
+        adviceChain,
         seed,
         activeSetNumber,
         pendingSetsCount,
@@ -62,36 +63,46 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
 
     // Meia-casa de incremento é a tolerância: arredondamentos e anilhas diferentes
     // não devem virar aviso. Avisa e marca, nunca bloqueia — o set grava normalmente.
-    const deviationOf = (value: number): "up" | "down" | undefined => {
-        if (advice.suggestedWeight == null) return undefined;
-        const tolerance = advice.increment / 2;
-        if (value > advice.suggestedWeight + tolerance) return "up";
-        if (value < advice.suggestedWeight - tolerance) return "down";
+    const deviationAgainst = (
+        prescription: ProgressionAdvice,
+        value: number
+    ): "up" | "down" | undefined => {
+        if (prescription.suggestedWeight == null) return undefined;
+        const tolerance = prescription.increment / 2;
+        if (value > prescription.suggestedWeight + tolerance) return "up";
+        if (value < prescription.suggestedWeight - tolerance) return "down";
         return undefined;
     };
 
-    const logDeviation = (log: SessionSet) => deviationOf(log.actualWeight);
+    // Cada set concluído é julgado contra o que estava prescrito PARA ELE. Comparar
+    // tudo contra a prescrição corrente marcaria como desvio todo set anterior a uma
+    // mudança de carga — inclusive a que o próprio set causou.
+    const logDeviation = (log: SessionSet, index: number) =>
+        deviationAgainst(adviceChain[index], log.actualWeight);
 
     const typedWeight = parseFloat(weight.replace(",", "."));
     const isOverPrescribed = advice.verdict !== "INCREASE"
         && Number.isFinite(typedWeight)
-        && deviationOf(typedWeight) === "up";
+        && deviationAgainst(advice, typedWeight) === "up";
 
     return (
         <motion.div layout className="flex flex-col gap-2">
             <AnimatePresence>
-                {record.logs.map(log => (
-                    <CompletedSetRow key={log.id} log={log} deviation={logDeviation(log)} />
+                {record.logs.map((log, index) => (
+                    <CompletedSetRow key={log.id} log={log} deviation={logDeviation(log, index)} />
                 ))}
             </AnimatePresence>
 
             {/* Keeping the whole card on screen — not just the focused input — is what
-                keeps the RPE chips and the confirm button reachable with the keyboard up. */}
+                keeps the RPE chips and the confirm button reachable with the keyboard up.
+                Daí o gap-3 em vez de gap-4: a linha da razão custa ~32px, e passar de
+                visualViewport.height − 32 derruba useKeepFocusedFieldVisible para o
+                fallback que esconde o botão Confirmar. */}
             <motion.div
                 layout
                 ref={containerRef}
                 data-keyboard-anchor
-                className="border-2 border-primary/40 rounded-xl bg-card p-4 flex flex-col gap-4"
+                className="border-2 border-primary/40 rounded-xl bg-card p-4 flex flex-col gap-3"
             >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2">
@@ -122,25 +133,27 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                     </DropdownMenu>
                 </div>
 
-                {/* Progress dots */}
-                <div className="flex items-center gap-2">
-                    {Array.from({ length: totalDots }).map((_, idx) => (
-                        <div
-                            key={idx}
-                            className={cn(
-                                "w-2 h-2 rounded-full transition-colors",
-                                idx < doneDots
-                                    ? "bg-success"
-                                    : idx === doneDots
-                                    ? "bg-primary"
-                                    : "bg-muted"
-                            )}
-                        />
-                    ))}
-                    {/* A razão divide a linha dos dots em vez de virar banner próprio:
-                        custo vertical zero, e o card não pode crescer sem quebrar o
-                        scroll-into-view com o teclado aberto. */}
-                    <span className="ml-auto text-[11px] text-muted-foreground truncate">
+                {/* Progress dots + razão. A razão precisa da largura inteira: dividindo
+                    a linha dos dots ela sobrava com ~45 caracteres e o `truncate` comia
+                    justamente o trecho que carrega a decisão ("— suba para 42,5 kg").
+                    Agrupados num filho só do card para custar um gap, não dois. */}
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                        {Array.from({ length: totalDots }).map((_, idx) => (
+                            <div
+                                key={idx}
+                                className={cn(
+                                    "w-2 h-2 rounded-full transition-colors",
+                                    idx < doneDots
+                                        ? "bg-success"
+                                        : idx === doneDots
+                                        ? "bg-primary"
+                                        : "bg-muted"
+                                )}
+                            />
+                        ))}
+                    </div>
+                    <span className="text-[11px] leading-snug text-muted-foreground line-clamp-2">
                         {advice.reason}
                     </span>
                 </div>
