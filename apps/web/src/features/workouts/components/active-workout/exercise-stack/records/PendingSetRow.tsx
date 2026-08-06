@@ -1,3 +1,6 @@
+import { UNITS } from "@/core/constants/units.ts";
+import { formatWeightPtBr } from "@/features/workouts/utils/progression.ts";
+
 type PendingSetRowProps = {
     setNum: number;
     reps: number;
@@ -11,7 +14,9 @@ export const PendingSetRow = ({ setNum, reps, weight, showEquipmentWeight: _show
             {setNum}
         </span>
         <span className="text-[12px] text-muted-foreground">
-            {weight && weight > 0 ? `${weight} kg` : '—'} · {reps} reps
+            {/* != null e não truthiness: 0 kg (peso corporal, máquina assistida) é
+                carga legítima e virava travessão. */}
+            {weight != null ? `${formatWeightPtBr(weight)} ${UNITS.WEIGHT}` : '—'} · {reps} reps
         </span>
     </div>
 );
