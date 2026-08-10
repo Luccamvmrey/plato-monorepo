@@ -1,0 +1,9 @@
+-- CreateEnum
+CREATE TYPE "LoadType" AS ENUM ('EXTERNAL', 'BODYWEIGHT', 'BODYWEIGHT_LOADED', 'ASSISTED');
+
+-- CreateEnum
+CREATE TYPE "RepUnit" AS ENUM ('REPS', 'SECONDS');
+
+-- AlterTable
+ALTER TABLE "Exercise" ADD COLUMN     "loadType" "LoadType" NOT NULL DEFAULT 'EXTERNAL',
+ADD COLUMN     "repUnit" "RepUnit" NOT NULL DEFAULT 'REPS';

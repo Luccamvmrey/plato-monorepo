@@ -23,12 +23,35 @@ enum MuscleGroup {
   QUADRICEPS
   HAMSTRINGS
   GLUTES
+  ADDUCTORS
   CALVES
 
   // Trunk
   CORE
   LOWER_BACK
   NECK
+}
+
+/// Como interpretar `SessionSet.actualWeight` para este exercício.
+/// Sem isto, uma máquina assistida (número maior = mais fácil) e um agachamento
+/// (número maior = mais difícil) ficam na mesma coluna com escalas invertidas.
+enum LoadType {
+  /// actualWeight É a carga. Default.
+  EXTERNAL
+  /// Carga efetiva = peso corporal. actualWeight deve ser 0.
+  BODYWEIGHT
+  /// Carga efetiva = peso corporal + actualWeight (lastro).
+  BODYWEIGHT_LOADED
+  /// Carga efetiva = peso corporal − actualWeight (assistência).
+  ASSISTED
+}
+
+/// O que `SessionSet.actualReps` mede. Deliberadamente separado de LoadType:
+/// isométrico é sobre a unidade da repetição, não sobre como ler o peso — e sem a
+/// separação uma prancha teria de escolher entre ser isométrica e ser peso corporal.
+enum RepUnit {
+  REPS
+  SECONDS
 }
 
 model User {
@@ -40,6 +63,20 @@ model User {
   workouts       Workout[]
   workoutSession WorkoutSession[]
   personalRecord PersonalRecord[]
+  bodyWeightLog  BodyWeightLog[]
+}
+
+/// Histórico de peso corporal. Necessário para BODYWEIGHT, BODYWEIGHT_LOADED e
+/// ASSISTED: a carga efetiva depende do peso do usuário NA DATA da série.
+model BodyWeightLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  /// kg
+  weight     Float
+  measuredAt DateTime
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, measuredAt])
 }
 
 model Exercise {
@@ -47,6 +84,11 @@ model Exercise {
   name             String            @unique
   targetMuscle     MuscleGroup
   secondaryMuscles MuscleGroup[]
+  /// Genéricos "(Padrão)" que coexistem com versões específicas saem da busca sem
+  /// perder o histórico já registrado sob eles.
+  deprecated       Boolean           @default(false)
+  loadType         LoadType          @default(EXTERNAL)
+  repUnit          RepUnit           @default(REPS)
   workoutExercise  WorkoutExercise[]
   sessionSet       SessionSet[]
   personalRecord   PersonalRecord[]
@@ -96,6 +138,9 @@ model SessionSet {
   equipmentWeight  Float?
   rpe              Int
   userObservation  String?
+  /// Série reconhecidamente inválida (erro de digitação, modalidade trocada).
+  /// Continua no histórico e nas telas, mas fica fora de PR e de progressão.
+  excludedFromRecords Boolean        @default(false)
   exercise         Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }

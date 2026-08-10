@@ -13,6 +13,7 @@ const MUSCLE_GROUPS = [
     "QUADRICEPS",
     "HAMSTRINGS",
     "GLUTES",
+    "ADDUCTORS",
     "CALVES",
 
     "CORE",
@@ -29,3 +30,10 @@ export const createExerciseSchema = z.object({
 export const bulkCreateExerciseSchema = z.object({
     exercises: z.array(createExerciseSchema).min(1),
 });
+
+// Sem este schema o PUT repassava req.body direto ao Prisma, aceitando escrita de
+// relação arbitrária (ex.: `workoutExercise: { deleteMany: {} }`).
+export const updateExerciseSchema = createExerciseSchema.partial();
+
+export type CreateExerciseInput = z.infer<typeof createExerciseSchema>
+export type UpdateExerciseInput = z.infer<typeof updateExerciseSchema>

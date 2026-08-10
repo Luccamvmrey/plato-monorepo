@@ -9,7 +9,12 @@ type CreateExerciseData = {
 };
 
 const getAll = async () => {
-    return prisma.exercise.findMany({ orderBy: { name: "asc" } });
+    // Depreciados saem da busca e do picker; o histórico registrado sob eles continua
+    // intacto e continua sendo lido pelas telas de sessão e analytics.
+    return prisma.exercise.findMany({
+        where: { deprecated: false },
+        orderBy: { name: "asc" }
+    });
 }
 
 const create = async (data: CreateExerciseData) => {
@@ -31,6 +36,20 @@ const update = async (id: number, data: Partial<CreateExerciseData>) => {
 }
 
 const remove = async (id: number) => {
+    // O catálogo é global e as relações são onDelete: Cascade, então apagar um
+    // exercício com histórico destrói séries e recordes de TODOS os usuários.
+    const [sessionSets, workoutExercises] = await Promise.all([
+        prisma.sessionSet.count({ where: { exerciseId: id } }),
+        prisma.workoutExercise.count({ where: { exerciseId: id } }),
+    ]);
+
+    if (sessionSets > 0 || workoutExercises > 0) {
+        throw new AppError(
+            "Exercise is in use and cannot be deleted. Deleting it would cascade into training history.",
+            409
+        );
+    }
+
     return prisma.exercise.delete({ where: { id } });
 }
 
