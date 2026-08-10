@@ -10,8 +10,9 @@
     "dev": "concurrently \"npm run dev -w apps/api\" \"npm run dev -w apps/web\" -c \"blue,green\"",
     "db:sync": "npx prisma db push --schema=./packages/database/prisma/schema.prisma && npm run generate -w packages/database && npm run build -w packages/database",
     "db:studio": "npx prisma studio --schema=./packages/database/prisma/schema.prisma",
-    "clean": "rm -rf node_modules package-lock.json packages/database/dist apps/*/node_modules && npm install",
-    "build": "npm run build --workspaces"
+    "clean": "rm -rf node_modules package-lock.json packages/database/dist packages/shared/dist apps/*/node_modules && npm install",
+    "build": "npm run build --workspaces",
+    "test": "npm run test -w packages/shared"
   },
   "keywords": [],
   "author": "",

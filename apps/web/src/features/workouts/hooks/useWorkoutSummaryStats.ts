@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { MuscleGroup } from "@plato/database/dist/generated/prisma/enums.ts";
 import type { Workout, WorkoutSession } from "@/features/workouts/workout.types.ts";
-import { calculateSetVolume, calculateTotalVolume, calculateSessionDuration } from "@/features/workouts/utils/analytics.ts";
+import { calculateTotalVolume, calculateSessionDuration, externalLoad, setVolume } from "@plato/shared";
 
 export type SummaryStats = {
     totalVolume: number;
@@ -47,8 +47,7 @@ export const useWorkoutSummaryStats = (
             const we = workout.workoutExercise.find(we => we.exerciseId === set.exerciseId);
             const exercise = we?.exercise;
             if (exercise) {
-                const setVolume = calculateSetVolume(set.actualWeight, set.actualReps, set.equipmentWeight || 0);
-                rawVolumeByMuscle[exercise.targetMuscle] = (rawVolumeByMuscle[exercise.targetMuscle] || 0) + setVolume;
+                rawVolumeByMuscle[exercise.targetMuscle] = (rawVolumeByMuscle[exercise.targetMuscle] || 0) + setVolume(set);
             }
         });
 
@@ -82,15 +81,13 @@ export const useWorkoutSummaryStats = (
 
         const currentMaxByExercise: Record<number, number> = {};
         sets.forEach(set => {
-            const total = set.actualWeight + (set.equipmentWeight || 0);
-            currentMaxByExercise[set.exerciseId] = Math.max(currentMaxByExercise[set.exerciseId] || 0, total);
+            currentMaxByExercise[set.exerciseId] = Math.max(currentMaxByExercise[set.exerciseId] || 0, externalLoad(set));
         });
 
         const lastMaxByExercise: Record<number, number> = {};
         if (lastSession) {
             lastSession.sessionSet.forEach(set => {
-                const total = set.actualWeight + (set.equipmentWeight || 0);
-                lastMaxByExercise[set.exerciseId] = Math.max(lastMaxByExercise[set.exerciseId] || 0, total);
+                lastMaxByExercise[set.exerciseId] = Math.max(lastMaxByExercise[set.exerciseId] || 0, externalLoad(set));
             });
         }
 
