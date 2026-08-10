@@ -7,7 +7,8 @@ export const validateBody = (schema: ZodObject<any, any>) =>
             req.body = await schema.parseAsync(req.body);
             next();
         } catch (error) {
-            console.log(req.body)
+            // Não logar req.body aqui: no /auth/login e /auth/register ele carrega a
+            // senha em texto puro, e este é justamente o caminho de erro.
             next(error);
         }
     }

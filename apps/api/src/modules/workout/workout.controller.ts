@@ -20,9 +20,10 @@ const getByUserId = async (req: Request, res: Response) => {
 }
 
 const getById = async (req: Request, res: Response) => {
+    const userId = getUserId(req);
     const workoutId = extractId(req);
 
-    const workout = await workoutService.getById(workoutId);
+    const workout = await workoutService.getById(workoutId, userId);
 
     res.json(workout);
 }

@@ -8,4 +8,8 @@ export const createWorkoutExerciseSchema = z.object({
     observations: z.string().optional(),
 });
 
-export const updateWorkoutExerciseSchema = createWorkoutExerciseSchema.partial()
+// O update de treino é substituição completa (deleteMany + createMany), então cada
+// item precisa vir inteiro — um item parcial não tem como virar linha no banco.
+export const updateWorkoutExerciseSchema = createWorkoutExerciseSchema
+
+export type CreateWorkoutExerciseInput = z.infer<typeof createWorkoutExerciseSchema>

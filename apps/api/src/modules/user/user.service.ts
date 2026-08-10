@@ -1,4 +1,6 @@
 import prisma from "@plato/database";
+import { calculateTotalVolume, setVolume } from "@plato/shared";
+import { UpdateUserInput } from "../auth/auth.schema";
 
 const getAll = async () => {
     return prisma.user.findMany({
@@ -22,8 +24,17 @@ const getById = async (id: number) => {
     });
 }
 
-const update = async (id: number, data: any) => {
-    return prisma.user.update({ where: { id: id }, data });
+const update = async (id: number, data: UpdateUserInput) => {
+    return prisma.user.update({
+        where: { id: id },
+        data,
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            createdAt: true,
+        }
+    });
 }
 
 const getProfile = async (userId: number) => {
@@ -38,10 +49,12 @@ const getProfile = async (userId: number) => {
 
     const sessionSets = await prisma.sessionSet.findMany({
         where: { workoutSession: { userId } },
-        select: { actualWeight: true, actualReps: true }
+        // equipmentWeight entra no select porque o volume soma o peso da barra.
+        // Sem ele, setVolume leria undefined e a barra sumiria em silêncio.
+        select: { actualWeight: true, actualReps: true, equipmentWeight: true }
     });
 
-    const lifetimeVolume = sessionSets.reduce((acc, set) => acc + (set.actualWeight * set.actualReps), 0);
+    const lifetimeVolume = calculateTotalVolume(sessionSets);
 
     // Cada exercício gera um PR de WEIGHT e outro de VOLUME, então contar linhas
     // dobrava o número. Contamos exercícios distintos em que o usuário tem PR.
@@ -86,7 +99,7 @@ const getStats = async (userId: number) => {
                 volume: 0
             };
         }
-        exerciseVolume[set.exerciseId].volume += (set.actualWeight * set.actualReps);
+        exerciseVolume[set.exerciseId].volume += setVolume(set);
     });
 
     const volumeLeaders: Record<string, { name: string, volume: number }> = {};
@@ -115,6 +128,9 @@ const getStats = async (userId: number) => {
 const getExportData = async (userId: number) => {
     return prisma.user.findUnique({
         where: { id: userId },
+        // `include` traz todos os escalares do usuário — sem este omit o hash bcrypt
+        // ia no corpo do export.
+        omit: { password: true },
         include: {
             workouts: {
                 include: { workoutExercise: { include: { exercise: true } } }

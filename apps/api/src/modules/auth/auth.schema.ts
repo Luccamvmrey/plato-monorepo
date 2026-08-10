@@ -11,4 +11,8 @@ export const loginSchema = z.object({
     password: z.string(),
 });
 
-export const updateUserSchema = registerSchema.partial()
+// `password` fica de fora de propósito: o service não passa por hashPassword, então
+// aceitar a senha aqui gravaria texto puro no banco. Troca de senha é fluxo próprio.
+export const updateUserSchema = registerSchema.omit({ password: true }).partial()
+
+export type UpdateUserInput = z.infer<typeof updateUserSchema>

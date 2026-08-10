@@ -1,5 +1,5 @@
 import cors from "cors";
-import express from "express";
+import express, { Request, Response } from "express";
 import * as dotenv from "dotenv";
 import { globalErrorHandler } from "./shared/middleware/errorMiddleware";
 
@@ -29,7 +29,36 @@ app.use("/api/sessions", workoutSessionRoutes);
 app.use("/api/personal-records", personalRecordRoutes);
 
 // --- Health Check ---
-app.get("/health", (_req, res) => res.json({ status: "OK" }));
+// `/health` fica fora do prefixo /api e por isso pode não passar pelo reverse proxy;
+// o alias abaixo garante um health check alcançável de fora.
+const health = (_req: Request, res: Response) => res.json({ status: "OK" });
+
+app.get("/health", health);
+app.get("/api/health", health);
+
+// --- API Index ---
+// Sem esta rota, GET /api caía no finalhandler do Express e devolvia HTML.
+app.get("/api", (_req, res) => res.json({
+    name: "Plato API",
+    version: process.env.npm_package_version ?? "1.0.0",
+    resources: [
+        "/api/auth",
+        "/api/users",
+        "/api/exercises",
+        "/api/workouts",
+        "/api/sessions",
+        "/api/personal-records",
+    ],
+    docs: "docs/plato-api.postman_collection.json",
+}));
+
+// --- 404 ---
+// Precisa vir depois de todas as rotas e antes do error handler. O globalErrorHandler
+// tem 4 argumentos, então o Express nunca o chamaria para rota não encontrada.
+app.use((req, res) => res.status(404).json({
+    status: "fail",
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+}));
 
 // --- Error Middleware ---
 app.use(globalErrorHandler);
