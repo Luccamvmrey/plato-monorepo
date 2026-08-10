@@ -12,6 +12,17 @@ export const formatWeight = (weight: number): string => {
 };
 
 /**
+ * Lê um decimal digitado em pt-BR, onde a vírgula é o separador.
+ *
+ * Os inputs de carga são `type="text" inputMode="decimal"` justamente porque
+ * `type="number"` descarta a vírgula antes de qualquer parser ver o valor — "82,5"
+ * chegaria como "". Normalizar só no parse não resolve nada: não há mais vírgula
+ * para normalizar.
+ */
+export const parseDecimalPtBr = (value: string): number =>
+    Math.max(0, parseFloat(value.replace(",", ".")) || 0);
+
+/**
  * Formats a date using a predefined pattern and pt-BR locale.
  * @param date Date to format
  * @param pattern date-fns pattern

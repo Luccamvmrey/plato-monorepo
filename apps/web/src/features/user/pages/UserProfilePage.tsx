@@ -5,6 +5,7 @@ import { useStreakData } from "../hooks/useStreakData";
 import { UserProfileSkeleton } from "../components/UserProfileSkeleton";
 import { IdentityCard } from "../components/IdentityCard";
 import StreakCard from "../components/StreakCard";
+import { BodyWeightCard } from "../components/BodyWeightCard";
 import { PerformanceSnapshots } from "../components/PerformanceSnapshots";
 import { TrainingDistributionChart } from "../components/TrainingDistributionChart";
 import { GovernanceSettings } from "../components/GovernanceSettings";
@@ -65,6 +66,13 @@ const UserProfilePage = () => {
                     <StreakCard streak={streakData} />
                 </motion.div>
             )}
+
+            {/* Sem gate de dado: o card precisa aparecer justamente quando não há
+                nenhum peso registrado, que é quando o usuário tem de registrar o
+                primeiro. */}
+            <motion.div variants={staggerItem}>
+                <BodyWeightCard />
+            </motion.div>
 
             {stats && (
                 <>
