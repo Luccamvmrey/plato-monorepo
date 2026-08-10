@@ -1,86 +1,58 @@
 import prisma from "@plato/database";
+import { RecordType } from "@plato/database";
+import { summarizeSessionRecords } from "@plato/shared";
+import * as bodyWeightService from "../user/body-weight/body-weight.service";
 
 export const scanForRecords = async (userId: number, workoutSessionId: number) => {
-    // This is intended to be run asynchronously (non-blocking)
+    // Roda fora do caminho crítico (fire-and-forget em finishSession).
     try {
         const session = await prisma.workoutSession.findUnique({
             where: { id: workoutSessionId },
-            include: {
-                sessionSet: {
-                    include: { exercise: true }
-                }
-            }
+            include: { sessionSet: { include: { exercise: true } } }
         });
 
         if (!session) return;
 
-        const exerciseStats: Record<number, { maxWeight: number; maxVolume: number }> = {};
+        // SessionSet não tem timestamp: a data de uma série é a da sessão.
+        const sessionDate = session.completedAt ?? session.startedAt;
+        const resolveBodyWeight = await bodyWeightService.createResolver(userId);
 
-        session.sessionSet.forEach(set => {
-            const exerciseId = set.exerciseId;
-            const volume = set.actualWeight * set.actualReps;
+        const stats = summarizeSessionRecords(session.sessionSet, resolveBodyWeight(sessionDate));
 
-            if (!exerciseStats[exerciseId]) {
-                exerciseStats[exerciseId] = { maxWeight: 0, maxVolume: 0 };
-            }
-
-            if (set.actualWeight > exerciseStats[exerciseId].maxWeight) {
-                exerciseStats[exerciseId].maxWeight = set.actualWeight;
-            }
-
-            if (volume > exerciseStats[exerciseId].maxVolume) {
-                exerciseStats[exerciseId].maxVolume = volume;
-            }
-        });
-
-        for (const [exerciseIdStr, stats] of Object.entries(exerciseStats)) {
+        for (const [exerciseIdStr, exerciseStats] of Object.entries(stats)) {
             const exerciseId = parseInt(exerciseIdStr);
 
-            // Check Weight Record
-            await updateRecordIfBetter(userId, exerciseId, 'WEIGHT', stats.maxWeight);
+            if (exerciseStats.maxLoad !== null) {
+                await updateRecordIfBetter(userId, exerciseId, "WEIGHT", exerciseStats.maxLoad, sessionDate);
+            }
 
-            // Check Volume Record
-            await updateRecordIfBetter(userId, exerciseId, 'VOLUME', stats.maxVolume);
+            if (exerciseStats.sessionVolume !== null) {
+                await updateRecordIfBetter(userId, exerciseId, "VOLUME", exerciseStats.sessionVolume, sessionDate);
+            }
         }
     } catch (error) {
         console.error("Error scanning for personal records:", error);
     }
 }
 
-const updateRecordIfBetter = async (userId: number, exerciseId: number, type: 'WEIGHT' | 'VOLUME', value: number) => {
-    const existingRecord = await prisma.personalRecord.findUnique({
-        where: {
-            userId_exerciseId_type: {
-                userId,
-                exerciseId,
-                type
-            }
-        }
-    });
+const updateRecordIfBetter = async (
+    userId: number,
+    exerciseId: number,
+    type: RecordType,
+    value: number,
+    date: Date
+) => {
+    const where = { userId_exerciseId_type: { userId, exerciseId, type } };
 
-    if (!existingRecord || value > existingRecord.value) {
-        await prisma.personalRecord.upsert({
-            where: {
-                userId_exerciseId_type: {
-                    userId,
-                    exerciseId,
-                    type
-                }
-            },
-            update: {
-                value,
-                date: new Date()
-            },
-            create: {
-                userId,
-                exerciseId,
-                type,
-                value,
-                date: new Date()
-            }
-        });
-        
-        // Log for visibility in dev
-        console.log(`New ${type} PR for Exercise ${exerciseId}: ${value}`);
-    }
+    const existingRecord = await prisma.personalRecord.findUnique({ where });
+
+    if (existingRecord && value <= existingRecord.value) return;
+
+    // `date` é a data da SESSÃO, não a hora do scan. Sem isso, um recálculo do
+    // histórico datava todos os recordes como "hoje".
+    await prisma.personalRecord.upsert({
+        where,
+        update: { value, date },
+        create: { userId, exerciseId, type, value, date }
+    });
 }

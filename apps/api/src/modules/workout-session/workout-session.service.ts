@@ -181,6 +181,10 @@ const getExerciseHistoryByWorkout = async (userId: number, workoutId: number, li
             id: true,
             completedAt: true,
             sessionSet: {
+                // Séries marcadas como inválidas ficam fora da progressão, do mesmo
+                // jeito que ficam fora do PR — senão o motor prescreve a partir de
+                // dado que já reconhecemos como não confiável.
+                where: { excludedFromRecords: false },
                 // SessionSet não tem timestamp — setNumber é a única ordem confiável.
                 orderBy: { setNumber: "asc" },
                 select: {
