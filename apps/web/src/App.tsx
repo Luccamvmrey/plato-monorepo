@@ -8,6 +8,8 @@ import { path } from "@/core/constants/path.ts";
 import SignupPage from "@/features/auth/pages/SignupPage.tsx";
 import WorkoutListPage from "@/features/workouts/pages/WorkoutListPage.tsx";
 import WorkoutEditorPage from "@/features/workouts/pages/WorkoutEditorPage.tsx";
+import ProgramListPage from "@/features/workouts/pages/ProgramListPage.tsx";
+import ProgramEditorPage from "@/features/workouts/pages/ProgramEditorPage.tsx";
 import Layout from "@/core/layout/Layout.tsx";
 import ActiveWorkoutPage from "@/features/workouts/pages/ActiveWorkoutPage.tsx";
 import WorkoutCompletePage from "@/features/workouts/pages/WorkoutCompletePage.tsx";
@@ -46,6 +48,13 @@ export function App() {
                                 </Route>
                                 <Route path={`${path.WORKOUT_EDITOR}/:id`}>
                                     <ErrorBoundary><WorkoutEditorPage /></ErrorBoundary>
+                                </Route>
+
+                                <Route path={path.PROGRAMS}>
+                                    <ErrorBoundary><ProgramListPage /></ErrorBoundary>
+                                </Route>
+                                <Route path={`${path.PROGRAM_EDITOR}/:id`}>
+                                    <ErrorBoundary><ProgramEditorPage /></ErrorBoundary>
                                 </Route>
 
                                 <Route path={path.ACTIVE_WORKOUT}>

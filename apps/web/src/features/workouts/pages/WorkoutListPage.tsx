@@ -1,7 +1,9 @@
 import { motion, type Variants } from "framer-motion";
 import { useState } from "react";
 import { useWorkouts } from "@/features/workouts/hooks/useWorkouts.ts";
+import { useActiveProgram } from "@/features/workouts/hooks/useActiveProgram.ts";
 import { useStreakData } from "@/features/user/hooks/useStreakData";
+import ActiveProgramBanner from "@/features/workouts/components/program/ActiveProgramBanner.tsx";
 import { WorkoutListSkeleton } from "@/features/workouts/components/workout-list/WorkoutListSkeleton.tsx";
 import WorkoutListHeader from "@/features/workouts/components/workout-list/WorkoutListHeader.tsx";
 import WorkoutList from "@/features/workouts/components/workout-list/WorkoutList.tsx";
@@ -26,6 +28,7 @@ const WorkoutListPage = () => {
     const [showArchived, setShowArchived] = useState(false);
     const { userWorkoutsQuery, lastCompletedSessionQuery } = useWorkouts(undefined, !showArchived);
     const { data: streakData } = useStreakData();
+    const { data: activeProgram } = useActiveProgram();
 
     const { data: workouts, isLoading } = userWorkoutsQuery;
     const lastCompletedWorkoutId = lastCompletedSessionQuery.data?.workoutId;
@@ -44,6 +47,13 @@ const WorkoutListPage = () => {
             {streakData && (
                 <motion.div variants={staggerItem}>
                     <StreakWidget streak={streakData} />
+                </motion.div>
+            )}
+
+            {/* Fica fora da visão de arquivados: lá a rotação não diz nada. */}
+            {!showArchived && (
+                <motion.div variants={staggerItem}>
+                    <ActiveProgramBanner />
                 </motion.div>
             )}
 
@@ -70,6 +80,8 @@ const WorkoutListPage = () => {
                         workouts={workouts}
                         isArchivedView={showArchived}
                         lastCompletedWorkoutId={lastCompletedWorkoutId}
+                        cycle={activeProgram?.cycle}
+                        programName={activeProgram?.program.name}
                     />
                 )}
             </motion.div>

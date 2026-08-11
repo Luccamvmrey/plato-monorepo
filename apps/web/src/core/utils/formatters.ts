@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { UNITS } from "@/core/constants/units";
 
@@ -44,4 +44,21 @@ export const formatDateFull = (date: Date | string | number): string => {
  */
 export const formatDateShort = (date: Date | string | number): string => {
     return formatDateCustom(date, "d 'de' MMMM");
+};
+
+/**
+ * Distância em dias de CALENDÁRIO ("hoje", "ontem", "há 12 dias").
+ *
+ * Calendário e não 24h: um treino ontem à noite tem menos de 24h de distância e
+ * ainda assim é "ontem" para quem olha. `null` é "nunca" — nunca "há 0 dias".
+ */
+export const formatDaysAgo = (date: Date | string | null | undefined): string => {
+    if (!date) return "nunca";
+
+    const days = differenceInCalendarDays(new Date(), new Date(date));
+
+    if (days <= 0) return "hoje";
+    if (days === 1) return "ontem";
+
+    return `há ${days} dias`;
 };

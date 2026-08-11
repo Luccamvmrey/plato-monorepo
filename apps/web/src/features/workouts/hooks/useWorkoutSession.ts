@@ -83,6 +83,10 @@ export const useWorkoutSession = (workoutId?: string) => {
             // A sessão recém-gravada passa a fazer parte do histórico que prescreve
             // a carga da próxima. É o único momento em que ele muda.
             await queryClient.invalidateQueries({ queryKey: ["exercise-history"] });
+            // O ponteiro da rotação é DERIVADO da última sessão concluída, então
+            // acabou de mudar. Esta invalidação precisa existir aqui e no
+            // WorkoutCompletePage.handleRetry — as duas listas são o mesmo ciclo.
+            await queryClient.invalidateQueries({ queryKey: ["active-program"] });
             setFinalization({ status: 'success', sessionId, error: null, payload: null });
         } catch {
             setFinalization({
