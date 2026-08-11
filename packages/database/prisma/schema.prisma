@@ -188,6 +188,20 @@ model Workout {
   programWorkout  ProgramWorkout[]
 }
 
+/// Como os exercícios de um grupo se encadeiam. Nos dois casos a execução é a mesma —
+/// uma série de cada, revezando —, e é só isso que a tela de sessão precisa saber.
+///
+/// `ALTERNATING` existiu por uma migration e foi removido: "alternar desenvolvimento e
+/// elevação" e "rosca alternada e martelo - 2 x 2" descrevem o mesmo rodízio que
+/// `SUPERSET` já cobre. Distinção que não muda comportamento é campo para o usuário
+/// preencher errado.
+enum ExerciseGroupType {
+  /// Bi-set / tri-set: emenda um no outro sem descanso entre eles.
+  SUPERSET
+  /// Cadeia contínua até a falha, com pausas curtas.
+  REST_PAUSE
+}
+
 model WorkoutExercise {
   id          Int      @id @default(autoincrement())
   workoutId   Int
@@ -196,6 +210,15 @@ model WorkoutExercise {
   targetSets  Int
   targetReps  Int
   observation String?
+
+  /// Rótulo que correlaciona exercícios CONTÍGUOS do mesmo treino, e deliberadamente
+  /// NÃO uma FK: `workout.service.update` é deleteMany + createMany, então uma tabela
+  /// de grupo seria apagada por cascade a cada save. Um rótulo carregado na linha
+  /// atravessa o replace. Grupo com menos de dois membros contíguos é resíduo e é
+  /// normalizado para null — ver `normalizeExerciseGroups` em `@plato/shared`.
+  groupKey    String?
+  groupType   ExerciseGroupType?
+
   workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
@@ -227,6 +250,12 @@ model SessionExercise {
   targetSets       Int
   targetReps       Int
   observation      String?
+
+  /// Espelha `WorkoutExercise.groupKey`/`groupType`, copiado no início da sessão.
+  /// Sem isto o snapshot perderia o agrupamento e o Histórico voltaria a mentir sobre
+  /// o que foi prescrito — exatamente o problema que este model resolveu.
+  groupKey         String?
+  groupType        ExerciseGroupType?
 
   origin           SessionExerciseOrigin @default(PRESCRIBED)
   /// Aponta para o SessionExercise substituído, na mesma sessão.
