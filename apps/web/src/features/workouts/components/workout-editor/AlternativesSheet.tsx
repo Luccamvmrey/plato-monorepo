@@ -4,40 +4,53 @@ import { Button } from "@/components/ui/button.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { ExerciseService } from "@/features/workouts/services/exercise.service.ts";
-import { useWorkoutEditorStore } from "@/features/workouts/stores/workout-editor.store.ts";
 import { ALTERNATIVE_REASON_LABEL, describeExercise } from "@/features/workouts/utils/movement.ts";
-import type { WorkoutExerciseDraft } from "@/features/workouts/stores/workout-editor.store.ts";
+import type { Exercise } from "@/features/workouts/workout.types.ts";
 
 type AlternativesSheetProps = {
-    draft: WorkoutExerciseDraft | null;
+    /** Exercício a substituir. `null` mantém a sheet fechada. */
+    target: Exercise | null;
     onClose: () => void;
+    /** Quem decide o que fazer com a escolha — o editor troca no rascunho, a sessão chama a API. */
+    onSelect: (exercise: Exercise) => void;
+    isPending?: boolean;
 };
 
-const AlternativesSheet = ({ draft, onClose }: AlternativesSheetProps) => {
-    const replaceExercise = useWorkoutEditorStore((state) => state.replaceExercise);
-
+/**
+ * Recebe o alvo e o `onSelect` por prop em vez de falar com a store do editor: a mesma
+ * sheet serve para trocar um exercício do plano e para trocar dentro da sessão ativa,
+ * que são destinos completamente diferentes para a mesma escolha.
+ */
+const AlternativesSheet = ({ target, onClose, onSelect, isPending }: AlternativesSheetProps) => {
     const { data, isLoading } = useQuery({
-        queryKey: ["exercise-alternatives", draft?.exercise.id],
-        queryFn: () => ExerciseService.getAlternatives(draft!.exercise.id),
-        enabled: !!draft,
+        queryKey: ["exercise-alternatives", target?.id],
+        queryFn: () => ExerciseService.getAlternatives(target!.id),
+        enabled: !!target,
         staleTime: Infinity,
     });
 
     return (
-        <Sheet open={!!draft} onOpenChange={(next) => !next && onClose()}>
-            <SheetContent side="bottom" className="max-h-[85dvh] flex flex-col">
-                <SheetHeader>
+        <Sheet open={!!target} onOpenChange={(next) => !next && onClose()}>
+            {/* `SheetContent` não tem padding próprio (a base só declara gap-4), então
+                quem pagina é cada bloco — mesma estrutura da NewExerciseSheet. */}
+            <SheetContent
+                side="bottom"
+                className="max-h-[85dvh] p-0 gap-0 flex flex-col rounded-t-3xl overflow-hidden"
+            >
+                {/* pr-12 abre espaço para o X de fechar, que é posicionado por cima. */}
+                <SheetHeader className="px-6 pt-6 pb-4 pr-12 shrink-0 border-b border-border/50">
                     <SheetTitle className="text-base">
-                        Alternativas para {draft?.exercise.name}
+                        Alternativas para {target?.name}
                     </SheetTitle>
-                    {draft && (
+                    {target && (
                         <p className="text-xs text-muted-foreground">
-                            {describeExercise(draft.exercise) || "Sem classificação de movimento"}
+                            {describeExercise(target) || "Sem classificação de movimento"}
                         </p>
                     )}
                 </SheetHeader>
 
-                <div className="flex-1 overflow-y-auto flex flex-col gap-2 py-2">
+                {/* pb-8: sem isso a última linha encosta na borda inferior da tela. */}
+                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 pb-8 flex flex-col gap-2">
                     {isLoading && (
                         <div className="flex justify-center py-8">
                             <Spinner />
@@ -72,11 +85,9 @@ const AlternativesSheet = ({ draft, onClose }: AlternativesSheetProps) => {
                             <Button
                                 size="sm"
                                 variant="secondary"
+                                disabled={isPending}
                                 className="h-9 px-3 shrink-0 relative tap-target"
-                                onClick={() => {
-                                    replaceExercise(draft!.instanceId, alternative);
-                                    onClose();
-                                }}
+                                onClick={() => onSelect(alternative)}
                             >
                                 Trocar
                             </Button>

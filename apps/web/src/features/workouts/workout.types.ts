@@ -1,12 +1,15 @@
-import type { 
-    ExerciseModel as PrismaExercise, 
-    WorkoutModel as PrismaWorkout, 
-    WorkoutExerciseModel as PrismaWorkoutExercise, 
-    WorkoutSessionModel as PrismaWorkoutSession, 
-    SessionSetModel as PrismaSessionSet 
+import type {
+    ExerciseModel as PrismaExercise,
+    WorkoutModel as PrismaWorkout,
+    WorkoutExerciseModel as PrismaWorkoutExercise,
+    WorkoutSessionModel as PrismaWorkoutSession,
+    SessionSetModel as PrismaSessionSet,
+    SessionExerciseModel as PrismaSessionExercise
 } from "@plato/database/generated/prisma/models";
 
 export type Exercise = PrismaExercise;
+
+export type SessionExerciseOrigin = PrismaSessionExercise["origin"];
 
 /** Motivo da sugestão, em código. O rótulo vive em `utils/movement.ts`. */
 export type AlternativeReason =
@@ -39,8 +42,17 @@ export interface SessionSet extends PrismaSessionSet {
     exercise?: Exercise;
 }
 
+export interface SessionExercise extends PrismaSessionExercise {
+    exercise: Exercise;
+}
+
 export interface WorkoutSession extends PrismaWorkoutSession {
     sessionSet: SessionSet[];
+    /**
+     * Só vem nos caminhos da sessão ATIVA, e só existe em sessões iniciadas depois do
+     * snapshot. Ausente ou vazio = sessão legada, que a pilha resolve pelo plano vivo.
+     */
+    sessionExercise?: SessionExercise[];
     workout?: Pick<PrismaWorkout, 'name' | 'isActive'>;
 }
 
@@ -48,10 +60,35 @@ export interface WorkoutSessionWithWorkout extends WorkoutSession {
     workout: PrismaWorkout;
 }
 
-export type ExerciseStatus = "COMPLETED" | "ACTIVE" | "PENDING";
+export type ExerciseStatus = "COMPLETED" | "ACTIVE" | "PENDING" | "SKIPPED" | "REPLACED";
 
-export interface EnrichedExerciseRecord extends WorkoutExercise {
+/**
+ * Uma linha da pilha da sessão ativa.
+ *
+ * Deixou de estender `WorkoutExercise` porque a fonte passou a ser o snapshot
+ * (`SessionExercise`) — o plano vivo só é usado em sessão legada. Nenhum consumidor
+ * usava o `id` do WorkoutExercise; a identidade sempre foi `exerciseId`.
+ */
+export interface EnrichedExerciseRecord {
+    /** Identidade estável da linha, para keys de lista. */
+    key: string;
+    /**
+     * `null` em sessão legada. É o que habilita trocar, pular e remover: sem snapshot
+     * não há o que referenciar no servidor.
+     */
+    sessionExerciseId: number | null;
+    exerciseId: number;
     exercise: Exercise;
+    orderIndex: number;
+    targetSets: number;
+    targetReps: number;
+    observation: string | null;
+    origin: SessionExerciseOrigin | null;
+    skipped: boolean;
+    /** Nome do exercício que tomou o lugar deste, quando houve troca. */
+    replacedByName: string | null;
+    /** Nome do exercício que este substituiu. */
+    substitutedForName: string | null;
     logs: SessionSet[];
     status: ExerciseStatus;
     effectiveTargetSets: number;

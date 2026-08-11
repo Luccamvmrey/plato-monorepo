@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useSessionSet } from "@/features/workouts/hooks/useSessionSet";
+import { useSessionExercises } from "@/features/workouts/hooks/useSessionExercises";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
 import { buildAdviceChain } from "@/features/workouts/utils/progression";
-import type { EnrichedExerciseRecord, ExerciseHistoryMap } from "@/features/workouts/workout.types";
+import type { EnrichedExerciseRecord, Exercise, ExerciseHistoryMap } from "@/features/workouts/workout.types";
 import { type SetSubmissionData } from "@/features/workouts/hooks/useActiveSetInput";
 
 export const useActiveExerciseCardLogic = (
@@ -11,7 +12,9 @@ export const useActiveExerciseCardLogic = (
     history?: ExerciseHistoryMap
 ) => {
     const { confirmSet } = useSessionSet();
+    const { substituteExerciseMutation, skipExerciseMutation } = useSessionExercises(sessionId);
     const [equipmentWeightVisible, setEquipmentWeightVisible] = useState<boolean | null>(null);
+    const [alternativesOpen, setAlternativesOpen] = useState(false);
 
     const exerciseNotes = useActiveWorkoutStore((s) => s.activeSession?.exerciseNotes);
     const setExerciseNote = useActiveWorkoutStore((s) => s.setExerciseNote);
@@ -64,7 +67,33 @@ export const useActiveExerciseCardLogic = (
     const toggleNote = () => setNoteVisible(v => !v);
     const setNote = (text: string) => setExerciseNote(record.exerciseId, text);
 
+    // Trocar e pular só existem com snapshot: em sessão legada não há SessionExercise
+    // para referenciar no servidor, e a alternativa seria inventar um id.
+    const canChangePlan = record.sessionExerciseId !== null;
+
+    const handleSubstitute = (exercise: Exercise) => {
+        if (!record.sessionExerciseId) return;
+
+        substituteExerciseMutation.mutate(
+            { sessionExerciseId: record.sessionExerciseId, exerciseId: exercise.id },
+            { onSuccess: () => setAlternativesOpen(false) }
+        );
+    };
+
+    const handleSkip = () => {
+        if (!record.sessionExerciseId) return;
+
+        skipExerciseMutation.mutate({ sessionExerciseId: record.sessionExerciseId, skipped: true });
+    };
+
     return {
+        canChangePlan,
+        alternativesOpen,
+        openAlternatives: () => setAlternativesOpen(true),
+        closeAlternatives: () => setAlternativesOpen(false),
+        handleSubstitute,
+        handleSkip,
+        isChangingPlan: substituteExerciseMutation.isPending || skipExerciseMutation.isPending,
         showEquipmentWeight,
         toggleEquipmentWeight,
         advice,

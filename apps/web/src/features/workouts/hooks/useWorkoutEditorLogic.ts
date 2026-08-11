@@ -8,6 +8,7 @@ import { useSuccessState } from "@/core/hooks/useSuccessState";
 import { focusField } from "@/core/utils/focus";
 import { findRedundantGroups } from "@/features/workouts/utils/movement";
 import type { WorkoutExerciseDraft } from "@/features/workouts/stores/workout-editor.store";
+import type { Exercise } from "@/features/workouts/workout.types";
 
 export const useWorkoutEditorLogic = () => {
     const { id } = useParams();
@@ -22,6 +23,7 @@ export const useWorkoutEditorLogic = () => {
     const exercises = useWorkoutEditorStore(state => state.exercises);
     const reorderExercises = useWorkoutEditorStore(state => state.reorderExercises);
     const loadWorkout = useWorkoutEditorStore(state => state.loadWorkout);
+    const replaceExercise = useWorkoutEditorStore(state => state.replaceExercise);
     const reset = useWorkoutEditorStore(state => state.reset);
 
     const [validationErrors, setValidationErrors] = useState<{ name?: string; exercises?: string }>({});
@@ -148,6 +150,13 @@ export const useWorkoutEditorLogic = () => {
     // Estado derivado dos exercícios do rascunho — nada a persistir, nada a buscar.
     const redundantGroups = useMemo(() => findRedundantGroups(exercises), [exercises]);
 
+    const handleReplaceInspected = (exercise: Exercise) => {
+        if (!inspectedDraft) return;
+
+        replaceExercise(inspectedDraft.instanceId, exercise);
+        setInspectedDraft(null);
+    };
+
     return {
         id,
         isFetching,
@@ -165,5 +174,6 @@ export const useWorkoutEditorLogic = () => {
         redundantGroups,
         inspectedDraft,
         setInspectedDraft,
+        handleReplaceInspected,
     };
 };

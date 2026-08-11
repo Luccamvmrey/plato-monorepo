@@ -15,6 +15,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import AlternativesSheet from "@/features/workouts/components/workout-editor/AlternativesSheet.tsx";
 import type { EnrichedExerciseRecord, ExerciseHistoryMap, SessionSet } from "@/features/workouts/workout.types.ts";
 import { formatWeightPtBr, type ProgressionAdvice } from "@/features/workouts/utils/progression.ts";
 import { UNITS } from "@/core/constants/units.ts";
@@ -40,6 +41,13 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
         toggleNote,
         note,
         setNote,
+        canChangePlan,
+        alternativesOpen,
+        openAlternatives,
+        closeAlternatives,
+        handleSubstitute,
+        handleSkip,
+        isChangingPlan,
     } = useActiveExerciseCardLogic(record, sessionId, history);
 
     const { state, refs, actions } = useActiveSetInput({
@@ -129,6 +137,22 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                             <DropdownMenuItem onSelect={toggleNote}>
                                 {noteVisible ? "Ocultar nota" : "Adicionar nota"}
                             </DropdownMenuItem>
+                            {/* Só com snapshot: sessão legada não tem SessionExercise
+                                para referenciar no servidor. */}
+                            {canChangePlan && (
+                                <>
+                                    <DropdownMenuItem onSelect={openAlternatives} disabled={isChangingPlan}>
+                                        Trocar exercício
+                                    </DropdownMenuItem>
+                                    {/* Pular só faz sentido antes da primeira série —
+                                        o servidor recusa com série registrada. */}
+                                    {record.logs.length === 0 && (
+                                        <DropdownMenuItem onSelect={handleSkip} disabled={isChangingPlan}>
+                                            Pular exercício
+                                        </DropdownMenuItem>
+                                    )}
+                                </>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -288,6 +312,15 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                     />
                 );
             })}
+
+            {/* Mesma sheet do editor de treino: aqui a escolha vira uma chamada de
+                API, lá vira troca no rascunho. */}
+            <AlternativesSheet
+                target={alternativesOpen ? record.exercise : null}
+                onClose={closeAlternatives}
+                onSelect={handleSubstitute}
+                isPending={isChangingPlan}
+            />
         </motion.div>
     );
 };

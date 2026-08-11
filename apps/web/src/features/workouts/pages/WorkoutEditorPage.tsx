@@ -35,6 +35,7 @@ const WorkoutEditorPage = () => {
         redundantGroups,
         inspectedDraft,
         setInspectedDraft,
+        handleReplaceInspected,
     } = useWorkoutEditorLogic();
 
     const FORM_ID = "workout-editor-form";
@@ -64,7 +65,11 @@ const WorkoutEditorPage = () => {
                 <NewExerciseSheet />
 
                 <RedundancyNotice groups={redundantGroups} onInspect={setInspectedDraft} />
-                <AlternativesSheet draft={inspectedDraft} onClose={() => setInspectedDraft(null)} />
+                <AlternativesSheet
+                    target={inspectedDraft?.exercise ?? null}
+                    onClose={() => setInspectedDraft(null)}
+                    onSelect={handleReplaceInspected}
+                />
 
                 {validationErrors.exercises && (
                     <p

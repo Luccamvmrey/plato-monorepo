@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import type { EnrichedExerciseRecord, ExerciseHistoryMap } from "@/features/workouts/workout.types.ts";
 import ExerciseHeaderMinimized from "./records/ExerciseHeaderMinimized";
+import ExerciseHeaderInactive from "./records/ExerciseHeaderInactive";
 import ActiveExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/ActiveExerciseCard.tsx";
 import CompletedExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/CompletedExerciseCard.tsx";
 import ExercisePreviewItem from "@/features/workouts/components/active-workout/exercise-stack/records/ExercisePreviewItem.tsx";
@@ -16,6 +17,8 @@ type ExerciseRecordProps = {
     history?: ExerciseHistoryMap;
     addExtraSet?: (exerciseId: number) => void;
     onSwapRequest?: () => void;
+    onUndoSkip?: () => void;
+    isChangingPlan?: boolean;
 };
 
 const SortablePendingItem = ({
@@ -50,7 +53,15 @@ const SortablePendingItem = ({
     );
 };
 
-const ExerciseRecord = ({ record, sessionId, history, addExtraSet, onSwapRequest }: ExerciseRecordProps) => {
+const ExerciseRecord = ({
+    record,
+    sessionId,
+    history,
+    addExtraSet,
+    onSwapRequest,
+    onUndoSkip,
+    isChangingPlan,
+}: ExerciseRecordProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     switch (record.status) {
@@ -85,6 +96,16 @@ const ExerciseRecord = ({ record, sessionId, history, addExtraSet, onSwapRequest
 
         case "PENDING":
             return <SortablePendingItem record={record} onSwapRequest={onSwapRequest} />;
+
+        case "SKIPPED":
+        case "REPLACED":
+            return (
+                <ExerciseHeaderInactive
+                    record={record}
+                    onUndoSkip={onUndoSkip}
+                    isPending={isChangingPlan}
+                />
+            );
 
         default:
             console.warn(`Status de exercício não mapeado: ${record.status}`);
