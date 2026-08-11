@@ -3,7 +3,9 @@ import { Request, Response } from "express";
 import { extractId, getUserId } from "../../../shared/utils/request";
 
 const create = async (req: Request, res: Response) => {
-    const result = await sessionSetService.create(req.body);
+    const userId = getUserId(req);
+
+    const result = await sessionSetService.create(userId, req.body);
 
     res.status(201).json(result);
 }
