@@ -3,8 +3,6 @@ import { DEVIATION_LABEL, type DeviationKind } from "@/features/workouts/utils/s
 
 type DeviationBadgeProps = {
     kind: DeviationKind;
-    /** Nome do exercício relacionado — o substituído, ou quem entrou no lugar. */
-    relatedName?: string;
     className?: string;
 };
 
@@ -12,8 +10,14 @@ type DeviationBadgeProps = {
  * Marcação neutra, sem cor de alerta: trocar ou pular exercício é decisão legítima do
  * treino, não erro a ser sinalizado. `NOT_DONE` é o único que ganha um tom próprio,
  * porque é o que o usuário provavelmente não escolheu.
+ *
+ * O badge NÃO carrega o nome do exercício relacionado. Ele é `shrink-0` numa linha em
+ * que o nome do exercício é `flex-1 min-w-0 truncate` — ou seja, todo texto que entra
+ * aqui é espaço tirado do nome, e "Substituiu Supino Inclinado com Halteres" chegou a
+ * colapsar o nome para largura zero. Quem precisa do relacionado renderiza numa
+ * segunda linha.
  */
-const DeviationBadge = ({ kind, relatedName, className }: DeviationBadgeProps) => (
+const DeviationBadge = ({ kind, className }: DeviationBadgeProps) => (
     <span
         className={cn(
             "text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-full border shrink-0",
@@ -24,7 +28,6 @@ const DeviationBadge = ({ kind, relatedName, className }: DeviationBadgeProps) =
         )}
     >
         {DEVIATION_LABEL[kind]}
-        {kind === "SUBSTITUTED" && relatedName ? ` ${relatedName}` : ""}
     </span>
 );
 

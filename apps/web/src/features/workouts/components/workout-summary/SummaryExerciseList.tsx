@@ -29,20 +29,26 @@ const SummaryExerciseList = ({ exercises, unexecuted = [] }: Props) => {
                 <div
                     key={ex.id}
                     className={cn(
-                        "flex items-center gap-3 px-4 py-3",
+                        "flex flex-col gap-0.5 px-4 py-3",
                         i < exercises.length - 1 && "border-b border-border"
                     )}
                 >
-                    <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
-                        {ex.name}
-                    </span>
-                    {ex.deviation && (
-                        <DeviationBadge kind={ex.deviation.kind} relatedName={ex.deviation.replacedName} />
+                    <div className="flex items-center gap-3">
+                        <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
+                            {ex.name}
+                        </span>
+                        {ex.deviation && <DeviationBadge kind={ex.deviation.kind} />}
+                        <MuscleBadge muscle={ex.muscleGroup} />
+                        <span className="text-[12px] text-muted-foreground ml-2 flex-shrink-0">
+                            {ex.sets}×{ex.reps}
+                        </span>
+                    </div>
+                    {/* Segunda linha: texto longo aqui não tira largura do nome. */}
+                    {ex.deviation?.replacedName && (
+                        <p className="text-[11px] text-muted-foreground">
+                            no lugar de {ex.deviation.replacedName}
+                        </p>
                     )}
-                    <MuscleBadge muscle={ex.muscleGroup} />
-                    <span className="text-[12px] text-muted-foreground ml-2 flex-shrink-0">
-                        {ex.sets}×{ex.reps}
-                    </span>
                 </div>
             ))}
 
@@ -53,12 +59,19 @@ const SummaryExerciseList = ({ exercises, unexecuted = [] }: Props) => {
                     {unexecuted.map((ex) => (
                         <div
                             key={`${ex.kind}-${ex.exerciseId}`}
-                            className="flex items-center gap-3 px-4 py-3"
+                            className="flex flex-col gap-0.5 px-4 py-3"
                         >
-                            <span className="text-[13px] text-muted-foreground flex-1 min-w-0 truncate">
-                                {ex.name}
-                            </span>
-                            <DeviationBadge kind={ex.kind} relatedName={ex.replacedByName} />
+                            <div className="flex items-center gap-3">
+                                <span className="text-[13px] text-muted-foreground flex-1 min-w-0 truncate">
+                                    {ex.name}
+                                </span>
+                                <DeviationBadge kind={ex.kind} />
+                            </div>
+                            {ex.replacedByName && (
+                                <p className="text-[11px] text-muted-foreground/70">
+                                    por {ex.replacedByName}
+                                </p>
+                            )}
                         </div>
                     ))}
                 </div>
