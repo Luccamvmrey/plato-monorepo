@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "8f3c1a52-6d4e-4b71-9f0a-plato0000001",
     "name": "Plato API",
-    "description": "Documentação da API do Plato (Express 5 + Prisma).\n\n## Autenticação\nTodas as rotas usam Bearer JWT, exceto:\n- `GET /health`\n- `POST /api/auth/register`\n- `POST /api/auth/login`\n- `GET /api/exercises`\n\nO request **Auth / Login** salva automaticamente o token na variável de coleção `token` (script na aba Tests). Rode-o primeiro.\n\n## Variáveis\n| Variável | Descrição |\n| --- | --- |\n| `baseUrl` | Origem do servidor (padrão `http://localhost:8080`) |\n| `token` | JWT preenchido pelo login |\n| `userId`, `exerciseId`, `workoutId`, `sessionId`, `sessionSetId` | IDs usados nos paths |\n\n## Convenções\n- Corpos validados por Zod (`validateBody`); erro de validação retorna 400.\n- `DELETE` e `deleteAccount` retornam `204 No Content`.\n- `POST` de criação retorna `201 Created`.",
+    "description": "Documentação da API do Plato (Express 5 + Prisma).\n\n## Autenticação\nTodas as rotas usam Bearer JWT, exceto:\n- `GET /health`\n- `POST /api/auth/register`\n- `POST /api/auth/login`\n- `GET /api/exercises` (mas `GET /api/exercises/:id/alternatives` **exige token**)\n\nO request **Auth / Login** salva automaticamente o token na variável de coleção `token` (script na aba Tests). Rode-o primeiro.\n\n## Variáveis\n| Variável | Descrição |\n| --- | --- |\n| `baseUrl` | Origem do servidor (padrão `http://localhost:8080`) |\n| `token` | JWT preenchido pelo login |\n| `userId`, `exerciseId`, `workoutId`, `sessionId`, `sessionSetId` | IDs usados nos paths |\n| `programId`, `sessionExerciseId` | IDs dos recursos de programa e do snapshot de sessão |\n\n## Convenções\n- Corpos validados por Zod (`validateBody`); erro de validação retorna 400.\n- `DELETE` e `deleteAccount` retornam `204 No Content`.\n- `POST` de criação retorna `201 Created`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -50,6 +50,21 @@
       "key": "sessionSetId",
       "value": "1",
       "type": "string"
+    },
+    {
+      "key": "programId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "sessionExerciseId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "bodyWeightLogId",
+      "value": "1",
+      "type": "string"
     }
   ],
   "item": [
@@ -66,10 +81,51 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
             },
             "description": "Rota fora do prefixo `/api`. Retorna `{ \"status\": \"OK\" }`."
+          },
+          "response": []
+        },
+        {
+          "name": "Health check (api alias)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Mesmo health check, sob o prefixo /api. Existe porque `/health` fica FORA do prefixo e pode não passar pelo reverse proxy — ao mexer em health check, mexer nos dois."
+          },
+          "response": []
+        },
+        {
+          "name": "API index",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api"
+              ]
+            },
+            "description": "Índice da API: nome, versão e lista de recursos. Existe porque sem ele `GET /api` caía no finalhandler do Express e respondia HTML em vez de JSON."
           },
           "response": []
         }
@@ -103,8 +159,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
             },
             "description": "Cria um usuário. Retorna `201` com o usuário criado.\n\n**Body** (registerSchema):\n- `email` — string, formato de e-mail (obrigatório)\n- `password` — string, mínimo 6 caracteres (obrigatório)\n- `name` — string, mínimo 2 caracteres (obrigatório)"
           },
@@ -154,8 +216,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             },
             "description": "Autentica e retorna `{ token, user }`.\n\nO script da aba **Tests** grava `token` e `userId` nas variáveis da coleção.\n\n**Body** (loginSchema):\n- `email` — string, formato de e-mail (obrigatório)\n- `password` — string (obrigatório)"
           },
@@ -174,8 +242,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
             },
             "description": "Perfil do usuário autenticado (derivado do JWT)."
           },
@@ -188,8 +262,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "stats"
+              ]
             },
             "description": "Estatísticas agregadas do usuário autenticado."
           },
@@ -202,8 +282,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/streak?tz=America/Sao_Paulo",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "streak"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "streak"
+              ],
               "query": [
                 {
                   "key": "tz",
@@ -223,8 +309,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/export",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "export"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "export"
+              ]
             },
             "description": "Exporta todos os dados do usuário autenticado em JSON."
           },
@@ -237,8 +329,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/account",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "account"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "account"
+              ]
             },
             "description": "Apaga a conta do usuário autenticado. Retorna `204 No Content`.\n\n⚠️ Destrutivo e irreversível."
           },
@@ -251,8 +349,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
             },
             "description": "Lista todos os usuários."
           },
@@ -265,8 +368,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}"
+              ],
               "variable": [
                 {
                   "key": "userId",
@@ -300,8 +409,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}"
+              ]
             },
             "description": "Atualiza o próprio usuário. O `:id` precisa ser o do usuário autenticado — id alheio responde `403`.\n\n**Body** (updateUserSchema — todos os campos opcionais):\n- `email` — string, formato de e-mail\n- `name` — string, mínimo 2 caracteres\n\n`password` **não** é aceito aqui: o service não aplica hash, então a senha seria gravada em texto puro. Troca de senha é fluxo próprio."
           },
@@ -314,8 +429,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/body-weight",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "body-weight"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "body-weight"
+              ]
             },
             "description": "Histórico de peso corporal do usuário autenticado, do mais recente para o mais antigo.\n\nAlimenta o cálculo de carga efetiva dos exercícios `BODYWEIGHT`, `BODYWEIGHT_LOADED` e `ASSISTED`. Sem nenhum registro, a carga efetiva desses exercícios fica indefinida (`null`) — nenhum valor é inventado."
           },
@@ -342,8 +463,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users/body-weight",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "body-weight"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "body-weight"
+              ]
             },
             "description": "Registra um peso corporal. Retorna `201`.\n\n**Body** (createBodyWeightSchema):\n- `weight` — número em kg, entre 20 e 400 (obrigatório). A faixa é trava contra erro de digitação, não validação médica.\n- `measuredAt` — data ISO, opcional. Ausente significa agora; data passada registra retroativamente, que é como se corrige histórico."
           },
@@ -355,9 +482,16 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/body-weight/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "body-weight", "1"]
+              "raw": "{{baseUrl}}/api/users/body-weight/{{bodyWeightLogId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "body-weight",
+                "{{bodyWeightLogId}}"
+              ]
             },
             "description": "Remove um registro de peso. Retorna `204`.\n\n`404` se não existir, `403` se pertencer a outro usuário."
           },
@@ -379,8 +513,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/exercises",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "exercises"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exercises"
+              ]
             },
             "description": "Lista todos os exercícios. **Rota pública** — não exige token."
           },
@@ -407,8 +546,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/exercises",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "exercises"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exercises"
+              ]
             },
             "description": "Cria um exercício. Retorna `201`.\n\n**Body** (createExerciseSchema):\n- `name` — string, mínimo 2 caracteres (obrigatório)\n- `targetMuscle` — enum de grupo muscular (obrigatório)\n- `secondaryMuscles` — array de enums, opcional (padrão `[]`)"
           },
@@ -435,8 +579,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/exercises/bulk",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "exercises", "bulk"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exercises",
+                "bulk"
+              ]
             },
             "description": "Cria vários exercícios de uma vez. Retorna `201`.\n\n**Body** (bulkCreateExerciseSchema):\n- `exercises` — array de `createExerciseSchema`, mínimo 1 item (obrigatório)"
           },
@@ -463,8 +613,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/exercises/{{exerciseId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "exercises", "{{exerciseId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exercises",
+                "{{exerciseId}}"
+              ]
             },
             "description": "Atualiza um exercício. Esta rota **não** passa por `validateBody` — o corpo é repassado direto ao service."
           },
@@ -477,10 +633,37 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/exercises/{{exerciseId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "exercises", "{{exerciseId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exercises",
+                "{{exerciseId}}"
+              ]
             },
             "description": "Remove um exercício. Retorna `204 No Content`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get alternatives",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/exercises/{{exerciseId}}/alternatives",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "exercises",
+                "{{exerciseId}}",
+                "alternatives"
+              ]
+            },
+            "description": "Substitutos equivalentes, ranqueados. **Exige token** (ao contrário de `GET /api/exercises`): o desempate usa o histórico do usuário.\n\nA ordem sai do que torna a troca segura para a progressão — padrão de movimento primeiro, porque é ele que garante que as cargas dos dois exercícios sejam comparáveis. \"Mesmo grupo muscular\" é o ÚLTIMO critério, justamente por ser o que confunde composto com isolado.\n\n`reason` por candidato, em ordem de ranking:\n1. `SAME_PATTERN_SAME_EQUIPMENT`\n2. `SAME_PATTERN_OTHER_EQUIPMENT`\n3. `SAME_PATTERN_OTHER_MUSCLE`\n4. `SAME_MUSCLE_OTHER_PATTERN`\n\nO tier 3 é FILTRADO quando o padrão do alvo é `ISOLATION` ou `CORE`: esses são baldes, não direções, e ali \"mesmo padrão\" sugeriria tríceps na polia no lugar de um crucifixo.\n\nEmpate resolve por `recordedSets` (séries que o usuário já fez naquele exercício).\n\nO motivo vem em CÓDIGO, não em texto de interface — a tradução é responsabilidade do cliente."
           },
           "response": []
         }
@@ -511,8 +694,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/workouts",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "workouts"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workouts"
+              ]
             },
             "description": "Cria um plano de treino para o usuário autenticado. Retorna `201`.\n\n**Body** (createWorkoutSchema):\n- `name` — string, mínimo 1 caractere (obrigatório)\n- `description` — string, opcional\n- `exercises` — array não-vazio (obrigatório) de:\n  - `exerciseId` — inteiro positivo (obrigatório)\n  - `orderIndex` — inteiro positivo (obrigatório)\n  - `targetSets` — inteiro positivo (obrigatório)\n  - `targetReps` — inteiro positivo (obrigatório)\n  - `observations` — string, opcional"
           },
@@ -525,8 +713,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/workouts?isActive=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "workouts"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workouts"
+              ],
               "query": [
                 {
                   "key": "isActive",
@@ -546,8 +739,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/workouts/{{workoutId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "workouts", "{{workoutId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workouts",
+                "{{workoutId}}"
+              ]
             },
             "description": "Busca um treino por ID, com seus exercícios."
           },
@@ -574,8 +773,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/workouts/{{workoutId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "workouts", "{{workoutId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workouts",
+                "{{workoutId}}"
+              ]
             },
             "description": "Atualiza um treino.\n\n**Body** (updateWorkoutSchema):\n- `name` — string, opcional\n- `description` — string, opcional\n- `exercises` — array **não-vazio, obrigatório**; cada item tem todos os campos de `createWorkoutExercise` como opcionais."
           },
@@ -588,8 +793,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/workouts/{{workoutId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "workouts", "{{workoutId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workouts",
+                "{{workoutId}}",
+                "status"
+              ]
             },
             "description": "Alterna `isActive` do treino. **Sem body** — o novo valor é derivado do estado atual."
           },
@@ -602,10 +814,211 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/workouts/{{workoutId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "workouts", "{{workoutId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workouts",
+                "{{workoutId}}"
+              ]
             },
             "description": "Remove um treino do usuário autenticado. Retorna `204 No Content`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Programs",
+      "description": "Programa é um conjunto ORDENADO de treinos que rotaciona continuamente (A → B → C → …), deliberadamente não ancorado em dias da semana.\n\nNo máximo um programa ativo por usuário — garantido por índice único parcial no banco, não só pela aplicação.",
+      "item": [
+        {
+          "name": "List programs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/programs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "programs"
+              ]
+            },
+            "description": "Lista os programas do usuário, com os treinos de cada um já incluídos e ordenados. O ativo vem primeiro."
+          },
+          "response": []
+        },
+        {
+          "name": "Get next workout (active program)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/programs/active/next",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "programs",
+                "active",
+                "next"
+              ]
+            },
+            "description": "Treino sugerido do programa ativo. **`204 No Content` quando não há programa ativo** — isso é estado normal, não erro.\n\nA sugestão é DERIVADA, nunca guardada: é o sucessor, na ordem do programa, do último treino do programa concluído. Consequências:\n- sessão ainda aberta não move o ponteiro;\n- sessão avulsa (fora do programa) é ignorada, não reseta o ciclo;\n- treino removido do programa não prende a rotação.\n\n**Resposta:** `program`, `next` (o ProgramWorkout sugerido), `position`, `total`, `lastCompleted` e `cycle[]` — este último com `lastCompletedAt` por treino, incluindo sessões avulsas do mesmo treino."
+          },
+          "response": []
+        },
+        {
+          "name": "Get program by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/programs/{{programId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "programs",
+                "{{programId}}"
+              ]
+            },
+            "description": "Um programa com seus treinos. `403` se não pertencer ao usuário."
+          },
+          "response": []
+        },
+        {
+          "name": "Create program",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rotação A–E\",\n  \"description\": \"Push, Pull, Legs\",\n  \"workoutIds\": [\n    1,\n    2,\n    3\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/programs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "programs"
+              ]
+            },
+            "description": "Cria um programa. Retorna `201`.\n\n**Body** (createProgramSchema):\n- `name` — string, mínimo 1 caractere (obrigatório)\n- `description` — string, opcional\n- `workoutIds` — array não-vazio de inteiros positivos, sem repetição (obrigatório)\n\n**A ordem do array É a ordem da rotação.** `orderIndex` é derivado da posição e nunca enviado pelo cliente — um índice repetido ou com buraco quebraria o cálculo do próximo.\n\n`403` se algum treino não pertencer ao usuário."
+          },
+          "response": []
+        },
+        {
+          "name": "Update program",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rotação A–E\",\n  \"workoutIds\": [\n    3,\n    1,\n    2\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/programs/{{programId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "programs",
+                "{{programId}}"
+              ]
+            },
+            "description": "Substituição COMPLETA da lista de treinos (deleteMany + createMany), no mesmo padrão de `PUT /api/workouts/:id`. Por isso `workoutIds` é obrigatório mesmo quando só se quer renomear: uma lista ausente não teria como significar \"mantenha a que está lá\".\n\n**Body** (updateProgramSchema):\n- `name` — string, opcional\n- `description` — string, opcional\n- `workoutIds` — array não-vazio, sem repetição (obrigatório)"
+          },
+          "response": []
+        },
+        {
+          "name": "Activate program",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/programs/{{programId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "programs",
+                "{{programId}}",
+                "activate"
+              ]
+            },
+            "description": "Ativa este programa e desativa qualquer outro do usuário, numa transação. **Sem body.**\n\nA desativação dos outros acontece ANTES da ativação deste: o índice único parcial é verificado a cada statement, e a ordem inversa estouraria no meio da transação."
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate program",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/programs/{{programId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "programs",
+                "{{programId}}",
+                "deactivate"
+              ]
+            },
+            "description": "Desativa o programa, deixando o usuário sem programa ativo. **Sem body.**\n\nÉ como se arquiva um programa — nunca apagando, para as sessões passadas manterem a referência."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete program",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/programs/{{programId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "programs",
+                "{{programId}}"
+              ]
+            },
+            "description": "Apaga o programa. Retorna `204`.\n\nNenhuma sessão é apagada: `WorkoutSession.programId` vira `null` (SetNull). O histórico não pertence ao programa."
           },
           "response": []
         }
@@ -622,8 +1035,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/sessions?workoutId={{workoutId}}&startDate=2026-01-01&endDate=2026-12-31",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ],
               "query": [
                 {
                   "key": "workoutId",
@@ -653,8 +1071,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/active",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "active"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "active"
+              ]
             },
             "description": "Retorna a sessão em andamento do usuário (ou `null`)."
           },
@@ -667,8 +1091,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/workout/{{workoutId}}/exercise-history?limit=4",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "workout", "{{workoutId}}", "exercise-history"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "workout",
+                "{{workoutId}}",
+                "exercise-history"
+              ],
               "query": [
                 {
                   "key": "limit",
@@ -688,8 +1120,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/workout/{{workoutId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "workout", "{{workoutId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "workout",
+                "{{workoutId}}"
+              ]
             },
             "description": "Lista as sessões de um plano de treino específico."
           },
@@ -702,8 +1141,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/exercise/{{exerciseId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "exercise", "{{exerciseId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "exercise",
+                "{{exerciseId}}"
+              ]
             },
             "description": "Lista as sessões que contêm um exercício específico (histórico de e1RM/volume)."
           },
@@ -716,8 +1162,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{sessionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "{{sessionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}"
+              ]
             },
             "description": "Busca uma sessão por ID, com suas séries."
           },
@@ -760,8 +1212,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
             },
             "description": "Inicia uma sessão de treino. Retorna `201`.\n\n**Body** (createWorkoutSessionSchema):\n- `workoutId` — inteiro positivo (obrigatório)"
           },
@@ -788,8 +1245,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/finish",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "{{sessionId}}", "finish"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "finish"
+              ]
             },
             "description": "Encerra a sessão enviando todas as séries de uma vez.\n\n**Body** (finishSessionSchema):\n- `sets` — array (obrigatório) de:\n  - `workoutSessionId` — inteiro positivo (obrigatório)\n  - `exerciseId` — inteiro positivo (obrigatório)\n  - `setNumber` — inteiro positivo (obrigatório)\n  - `actualReps` — inteiro ≥ 0 (obrigatório)\n  - `actualWeight` — número ≥ 0 (obrigatório)\n  - `equipmentWeight` — número ≥ 0, opcional\n  - `rpe` — número entre 1 e 10 (obrigatório)\n  - `userObservation` — string, opcional"
           },
@@ -802,10 +1266,195 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{sessionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "{{sessionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}"
+              ]
             },
             "description": "Remove uma sessão do usuário autenticado. Retorna `204 No Content`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get exercise history by session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/exercise-history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "exercise-history"
+              ]
+            },
+            "description": "Mesma forma de resposta do histórico por treino, mas resolvido pela SESSÃO — é o que permite escopo diferente por exercício.\n\nO que foi prescrito continua escopado ao TREINO (o mesmo exercício em treinos diferentes progride de forma independente, e isso é deliberado). Só o que entrou fora do plano (`AD_HOC`/`SUBSTITUTED`) e não tem histórico naquele treino cai para o histórico GLOBAL do exercício — sem isso, um exercício adicionado na hora ficaria sem carga de referência.\n\n**Query:** `limit` — 1..10, default 4."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Session Exercises",
+      "description": "`SessionExercise` é o SNAPSHOT da prescrição no momento da sessão, materializado ao iniciá-la.\n\nSem ele, `WorkoutExercise` seria a única fonte do que estava prescrito — e como editar um treino apaga e recria essas linhas, editar um treino reescrevia retroativamente o que sessões antigas pareciam ter prescrito.\n\n**Sessões iniciadas antes de 11/08/2026 não têm snapshot.** Nelas estes endpoints não têm o que referenciar, e a UI não oferece troca, skip nem adição.",
+      "item": [
+        {
+          "name": "List session exercises",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/exercises",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "exercises"
+              ]
+            },
+            "description": "O snapshot da sessão, na ordem, com o exercício incluído. Funciona também em sessão já concluída.\n\nCada linha tem `origin` (`PRESCRIBED` | `SUBSTITUTED` | `AD_HOC`), `skipped` e `substitutedForId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Add ad-hoc exercise",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exerciseId\": 42,\n  \"targetSets\": 3,\n  \"targetReps\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/exercises",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "exercises"
+              ]
+            },
+            "description": "Adiciona à sessão um exercício fora do plano (`origin: AD_HOC`). Retorna `201`.\n\n**Body** (addSessionExerciseSchema):\n- `exerciseId` — inteiro positivo (obrigatório)\n- `targetSets` — inteiro 1..20, opcional (default 3)\n- `targetReps` — inteiro 1..200, opcional (default 10)\n- `observation` — string, opcional\n\n`400` se a sessão já estiver concluída; `404` se o exercício não existir."
+          },
+          "response": []
+        },
+        {
+          "name": "Substitute exercise",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exerciseId\": 13\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/exercises/{{sessionExerciseId}}/substitute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "exercises",
+                "{{sessionExerciseId}}",
+                "substitute"
+              ]
+            },
+            "description": "Troca um exercício da sessão por outro. Retorna `201` com a linha NOVA.\n\n**O substituído não é apagado nem marcado como pulado.** Ele pode já ter séries, e mesmo sem nenhuma, \"eu tinha isto prescrito e troquei\" é diferente de \"eu pulei\". O vínculo é `substitutedForId`.\n\n**O substituto entra no FIM da ordem**, não na posição do original: deslocar os `orderIndex` seguintes colidiria com o índice único, que é checado por statement. Reposicionar para exibição é trabalho do cliente, que tem o vínculo.\n\nA prescrição (`targetSets`/`targetReps`) é herdada do original — trocar o movimento não muda o volume planejado.\n\n**Body:** `exerciseId` — inteiro positivo (obrigatório).\n\n`400` se for o mesmo exercício ou a sessão estiver concluída; `409` se este exercício já tiver sido trocado nesta sessão; `404` se a linha não pertencer à sessão."
+          },
+          "response": []
+        },
+        {
+          "name": "Skip / unskip exercise",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skipped\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/exercises/{{sessionExerciseId}}/skip",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "exercises",
+                "{{sessionExerciseId}}",
+                "skip"
+              ]
+            },
+            "description": "Marca ou desmarca um exercício como deliberadamente pulado.\n\n**Body:** `skipped` — boolean (obrigatório).\n\n`409` ao tentar pular algo que já tem série registrada — o que aconteceu, aconteceu. `400` se a sessão estiver concluída."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove session exercise",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/exercises/{{sessionExerciseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "exercises",
+                "{{sessionExerciseId}}"
+              ]
+            },
+            "description": "Desfaz uma adição ou uma troca. Retorna `204`.\n\n`409` para exercício `PRESCRIBED`: ele é o registro do que o plano mandava, e apagá-lo reescreveria a história da sessão — para não fazer o exercício existe `skipped`.\n\n`409` também se já houver série registrada."
           },
           "response": []
         }
@@ -852,8 +1501,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/sets",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "sets"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "sets"
+              ]
             },
             "description": "Registra uma série.\n\n**Body** (createSessionSetSchema):\n- `workoutSessionId` — inteiro positivo (obrigatório)\n- `exerciseId` — inteiro positivo (obrigatório)\n- `setNumber` — inteiro positivo (obrigatório)\n- `actualReps` — inteiro ≥ 0 (obrigatório)\n- `actualWeight` — número ≥ 0 (obrigatório)\n- `equipmentWeight` — inteiro ≥ 0, opcional\n- `rpe` — inteiro positivo, máximo 10 (obrigatório)"
           },
@@ -880,8 +1535,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/sets/{{sessionSetId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "sessions", "sets", "{{sessionSetId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "sets",
+                "{{sessionSetId}}"
+              ]
             },
             "description": "Atualiza uma série já registrada.\n\n**Body** (updateSessionSetSchema): todos os campos opcionais — `setNumber`, `actualReps`, `actualWeight`, `equipmentWeight`, `rpe`.\n\n`workoutSessionId` e `exerciseId` **não** podem ser alterados (omitidos do schema)."
           },
@@ -900,8 +1562,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/personal-records",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "personal-records"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personal-records"
+              ]
             },
             "description": "Lista todos os PRs do usuário autenticado."
           },
@@ -914,8 +1581,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/personal-records/exercise/{{exerciseId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "personal-records", "exercise", "{{exerciseId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personal-records",
+                "exercise",
+                "{{exerciseId}}"
+              ]
             },
             "description": "PRs de um exercício específico."
           },
