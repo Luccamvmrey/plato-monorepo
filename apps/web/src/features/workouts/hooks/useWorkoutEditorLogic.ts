@@ -117,7 +117,11 @@ export const useWorkoutEditorLogic = () => {
                 exerciseId: ex.exercise.id,
                 targetSets: ex.targetSets,
                 targetReps: ex.targetReps,
-                orderIndex: index + 1
+                orderIndex: index + 1,
+                // A posição do array é a ordem de execução, e é ela que define o
+                // grupo. O servidor renormaliza a partir de `orderIndex`.
+                groupKey: ex.groupKey ?? null,
+                groupType: ex.groupType ?? null,
             }))
         };
 

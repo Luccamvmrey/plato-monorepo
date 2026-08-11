@@ -6,6 +6,7 @@ import type {
     SessionSetModel as PrismaSessionSet,
     SessionExerciseModel as PrismaSessionExercise
 } from "@plato/database/generated/prisma/models";
+import type { GroupMembership } from "@plato/shared";
 
 export type Exercise = PrismaExercise;
 
@@ -89,6 +90,16 @@ export interface EnrichedExerciseRecord {
     replacedByName: string | null;
     /** Nome do exercício que este substituiu. */
     substitutedForName: string | null;
+    /** Agrupamento prescrito, vindo do snapshot. */
+    groupKey: string | null;
+    groupType: string | null;
+    /**
+     * Posição no grupo, recalculada sobre a ordem FINAL da pilha — depois da
+     * reordenação da sessão e do reposicionamento dos substitutos. Se um desses
+     * quebrou a contiguidade, o grupo deixa de existir na tela, que é o correto:
+     * bi-set que não está mais lado a lado não é bi-set.
+     */
+    group: GroupMembership | null;
     logs: SessionSet[];
     status: ExerciseStatus;
     effectiveTargetSets: number;

@@ -8,6 +8,7 @@ import { CompletedSetRow } from "./CompletedSetRow";
 import { PendingSetRow } from "./PendingSetRow";
 import { RpeSelector } from "../../components/RpeSelector";
 import { ProgressionChip } from "../../components/ProgressionChip";
+import SessionGroupBadge from "../../components/SessionGroupBadge";
 import { Textarea } from "@/components/ui/textarea";
 import {
     DropdownMenu,
@@ -118,9 +119,10 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                         <span className="text-base font-medium tracking-[-0.02em] text-foreground">
                             {record.exercise.name}
                         </span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center flex-wrap gap-2">
                             <ProgressionChip advice={advice} />
                             <MuscleBadge muscle={record.exercise.targetMuscle} />
+                            <SessionGroupBadge group={record.group} />
                         </div>
                     </div>
 

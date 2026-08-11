@@ -25,6 +25,21 @@ export const EQUIPMENT_LABEL: Record<string, string> = {
     KETTLEBELL: "Kettlebell",
 };
 
+/**
+ * Rótulos de agrupamento. Curtos de propósito: aparecem num chip dentro do card do
+ * exercício, numa linha que já divide 390px com nome, séries e repetições.
+ */
+export const GROUP_TYPE_LABEL: Record<string, string> = {
+    SUPERSET:   "Bi-set",
+    REST_PAUSE: "Rest-pause",
+};
+
+/** O que o tipo significa na execução — vai no `aria-label` e no title do chip. */
+export const GROUP_TYPE_DESCRIPTION: Record<string, string> = {
+    SUPERSET:   "Uma série de cada, revezando, sem descanso entre eles",
+    REST_PAUSE: "Uma série de cada, em cadeia contínua, com pausas curtas",
+};
+
 export const ALTERNATIVE_REASON_LABEL: Record<string, string> = {
     SAME_PATTERN_SAME_EQUIPMENT:  "Mesmo padrão, mesmo equipamento",
     SAME_PATTERN_OTHER_EQUIPMENT: "Mesmo padrão, outro equipamento",

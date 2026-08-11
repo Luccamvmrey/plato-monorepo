@@ -6,9 +6,10 @@ import type {
     Workout,
     WorkoutSession,
 } from "@/features/workouts/workout.types.ts";
+import { buildGroupMembership, findActiveExerciseIndex } from "@plato/shared";
 
 /** O que a pilha precisa saber sobre uma linha antes de calcular status e ordem. */
-type StackSeed = Omit<EnrichedExerciseRecord, "logs" | "status" | "effectiveTargetSets"> & {
+type StackSeed = Omit<EnrichedExerciseRecord, "logs" | "status" | "effectiveTargetSets" | "group"> & {
     /** id do SessionExercise que este substituiu — só existe com snapshot. */
     substitutedForId: number | null;
 };
@@ -80,6 +81,8 @@ export const buildExerciseStack = ({
                 observation:        planned.observation,
                 origin:             null,
                 skipped:            false,
+                groupKey:           planned.groupKey,
+                groupType:          planned.groupType,
                 replacedByName:     null,
                 substitutedForName: null,
                 substitutedForId:   null,
@@ -97,6 +100,8 @@ export const buildExerciseStack = ({
                 observation:        entry.observation,
                 origin:             entry.origin,
                 skipped:            entry.skipped,
+                groupKey:           entry.groupKey,
+                groupType:          entry.groupType,
                 replacedByName:     replacedByName.get(entry.id) ?? null,
                 substitutedForName: entry.substitutedForId !== null
                     ? nameBySessionExerciseId.get(entry.substitutedForId) ?? null
@@ -136,12 +141,33 @@ export const buildExerciseStack = ({
         if (!positioned.includes(seed)) positioned.push(seed);
     }
 
-    let foundActive = false;
+    // Recalculado sobre a ordem FINAL: reordenar a sessão ou reposicionar um
+    // substituto pode ter separado dois membros que estavam lado a lado no plano.
+    const groupMembership = buildGroupMembership(positioned);
 
-    return positioned.map((seed): EnrichedExerciseRecord => {
+    // Uma passada só para medir, antes de decidir de quem é a vez: dentro de um grupo
+    // o próximo depende de QUANTAS séries cada membro já tem, então não dá para
+    // resolver o status enquanto se percorre a lista.
+    const measured = positioned.map((seed) => {
         const effectiveTargetSets = seed.targetSets + (extraSets[seed.exerciseId] ?? 0);
         const logs = allLogs.filter((log) => log.exerciseId === seed.exerciseId);
-        const isCompleted = logs.length >= effectiveTargetSets;
+
+        return { logs, effectiveTargetSets, isCompleted: logs.length >= effectiveTargetSets };
+    });
+
+    const activeIndex = findActiveExerciseIndex(
+        positioned.map((seed, index) => ({
+            groupKey: seed.groupKey,
+            groupType: seed.groupType,
+            completedSets: measured[index].logs.length,
+            eligible: !seed.skipped
+                && seed.replacedByName === null
+                && !measured[index].isCompleted,
+        }))
+    );
+
+    return positioned.map((seed, index): EnrichedExerciseRecord => {
+        const { logs, effectiveTargetSets, isCompleted } = measured[index];
 
         let status: ExerciseStatus;
 
@@ -152,13 +178,12 @@ export const buildExerciseStack = ({
             status = "COMPLETED";
         } else if (seed.replacedByName !== null) {
             status = "REPLACED";
-        } else if (!foundActive) {
+        } else if (index === activeIndex) {
             status = "ACTIVE";
-            foundActive = true;
         } else {
             status = "PENDING";
         }
 
-        return { ...seed, logs, status, effectiveTargetSets };
+        return { ...seed, logs, status, effectiveTargetSets, group: groupMembership[index] };
     });
 };
