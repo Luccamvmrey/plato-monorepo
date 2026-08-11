@@ -21,9 +21,18 @@ const create = async (userId: number, payload: any) => {
         throw new AppError("Cannot add sets to a complete workout session", 400);
     }
 
+    // Liga a série ao snapshot da prescrição, quando a sessão tem um. O outro caminho
+    // de escrita (`finishSession`) faz o mesmo — se só ele ligasse, uma série gravada
+    // por aqui pareceria "fora do plano" numa sessão em que ela estava prescrita.
+    const sessionExercise = await prisma.sessionExercise.findFirst({
+        where:   { workoutSessionId: payload.workoutSessionId, exerciseId: payload.exerciseId },
+        orderBy: { orderIndex: "asc" },
+        select:  { id: true },
+    });
+
     // O envelopamento estrutural obrigatório exigido pelo Prisma
     return prisma.sessionSet.create({
-        data: payload
+        data: { ...payload, sessionExerciseId: sessionExercise?.id ?? null }
     });
 }
 

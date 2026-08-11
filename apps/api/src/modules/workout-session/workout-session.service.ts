@@ -10,6 +10,20 @@ const SESSION_INCLUDE = {
     }
 } as const;
 
+/**
+ * Só os caminhos da sessão ATIVA carregam o snapshot. `listByUserId` e
+ * `listByWorkoutId` alimentam Histórico e Resumo, que já trazem todas as séries de
+ * todas as sessões — somar o snapshot ali engordaria a lista inteira para uma
+ * informação que aquelas telas ainda não usam.
+ */
+const ACTIVE_SESSION_INCLUDE = {
+    ...SESSION_INCLUDE,
+    sessionExercise: {
+        orderBy: { orderIndex: "asc" },
+        include: { exercise: true }
+    }
+} as const;
+
 const SESSION_WITH_WORKOUT_INCLUDE = {
     workout: true,
     ...SESSION_INCLUDE
@@ -47,11 +61,39 @@ const create = async (userId: number, data: any) => {
     // ponteiro de rotação errado depois.
     const programId = await findActiveProgramIdForWorkout(userId, data.workoutId);
 
+    // Snapshot da prescrição. É o que separa "o usuário pulou este exercício" de "o
+    // treino foi editado depois da sessão" — hoje as duas coisas são indistinguíveis
+    // porque `workout.service.update` apaga e recria as WorkoutExercise.
+    const planned = await prisma.workoutExercise.findMany({
+        where: { workoutId: data.workoutId },
+        // Secundário por id para a ordem ser determinística mesmo se o cliente tiver
+        // mandado orderIndex repetido.
+        orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
+        select: {
+            exerciseId:  true,
+            targetSets:  true,
+            targetReps:  true,
+            observation: true,
+        }
+    });
+
     const newSession = await prisma.workoutSession.create({
         data: {
             user: { connect: { id: userId } },
             workout: { connect: { id: data.workoutId } },
-            ...(programId !== null ? { program: { connect: { id: programId } } } : {})
+            ...(programId !== null ? { program: { connect: { id: programId } } } : {}),
+            sessionExercise: {
+                // orderIndex derivado da POSIÇÃO, não copiado do plano: o do plano vem
+                // do cliente e um valor repetido violaria @@unique([workoutSessionId,
+                // orderIndex]) — o que faria falhar o início do treino, não o snapshot.
+                create: planned.map((exercise, index) => ({
+                    exerciseId:  exercise.exerciseId,
+                    orderIndex:  index + 1,
+                    targetSets:  exercise.targetSets,
+                    targetReps:  exercise.targetReps,
+                    observation: exercise.observation,
+                }))
+            }
         }
     });
 
@@ -89,14 +131,14 @@ const listByWorkoutId = async (userId: number, workoutId: number) => {
 const listById = async (userId: number, workoutSessionId: number) => {
     return prisma.workoutSession.findUnique({
         where: { id: workoutSessionId, userId },
-        include: SESSION_INCLUDE
+        include: ACTIVE_SESSION_INCLUDE
     });
 }
 
 const findActiveSession = async (userId: number) => {
     const activeSession = await prisma.workoutSession.findFirst({
         where: { userId, completedAt: null },
-        include: SESSION_INCLUDE
+        include: ACTIVE_SESSION_INCLUDE
     });
 
     if (!activeSession) return null;
@@ -141,10 +183,30 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
 
     const result = await prisma.$transaction(async (tx) => {
         if (body.sets.length > 0) {
+            const snapshot = await tx.sessionExercise.findMany({
+                where:   { workoutSessionId },
+                orderBy: { orderIndex: "asc" },
+                select:  { id: true, exerciseId: true },
+            });
+
+            // Um exercício não se repete dentro de um treino (verificado: zero casos
+            // em produção), e a própria tela de sessão agrupa as séries por
+            // exerciseId — então um plano com repetição já estaria quebrado antes
+            // daqui. Se aparecer, a primeira posição vence, de forma determinística.
+            const sessionExerciseByExercise = new Map<number, number>();
+            for (const row of snapshot) {
+                if (!sessionExerciseByExercise.has(row.exerciseId)) {
+                    sessionExerciseByExercise.set(row.exerciseId, row.id);
+                }
+            }
+
             await tx.sessionSet.createMany({
                 data: body.sets.map((set) => ({
                     workoutSessionId,
                     exerciseId:      set.exerciseId,
+                    // null aqui significa coisas diferentes conforme a sessão tenha ou
+                    // não snapshot: sessão legada vs. série fora do plano.
+                    sessionExerciseId: sessionExerciseByExercise.get(set.exerciseId) ?? null,
                     setNumber:       set.setNumber,
                     actualReps:      set.actualReps,
                     actualWeight:    set.actualWeight,
@@ -235,6 +297,99 @@ const getExerciseHistoryByWorkout = async (userId: number, workoutId: number, li
     return history;
 }
 
+/**
+ * Mesmas execuções de `getExerciseHistoryByWorkout`, mas SEM escopo de treino.
+ * Existe só para o exercício que entrou na sessão fora do plano: como ele não
+ * pertence ao treino, o histórico escopado devolveria vazio e o card ficaria sem
+ * carga de referência.
+ */
+const getGlobalExerciseHistory = async (userId: number, exerciseIds: number[], limit = 4) => {
+    if (exerciseIds.length === 0) return {};
+
+    const sessions = await prisma.workoutSession.findMany({
+        where: {
+            userId,
+            completedAt: { not: null },
+            sessionSet: { some: { exerciseId: { in: exerciseIds }, excludedFromRecords: false } },
+        },
+        orderBy: { completedAt: "desc" },
+        // Teto grosseiro: o corte fino é por exercício, em memória, logo abaixo.
+        take: limit * exerciseIds.length,
+        select: {
+            id: true,
+            completedAt: true,
+            sessionSet: {
+                where:   { exerciseId: { in: exerciseIds }, excludedFromRecords: false },
+                orderBy: { setNumber: "asc" },
+                select: {
+                    exerciseId:      true,
+                    setNumber:       true,
+                    actualReps:      true,
+                    actualWeight:    true,
+                    equipmentWeight: true,
+                    rpe:             true,
+                }
+            }
+        }
+    });
+
+    const history: Record<number, Array<{
+        sessionId: number;
+        completedAt: Date;
+        sets: Array<Omit<(typeof sessions)[number]["sessionSet"][number], "exerciseId">>;
+    }>> = {};
+
+    for (const session of sessions) {
+        for (const { exerciseId, ...set } of session.sessionSet) {
+            if (!history[exerciseId]) history[exerciseId] = [];
+
+            const executions = history[exerciseId];
+            const current = executions[executions.length - 1];
+
+            if (current?.sessionId === session.id) {
+                current.sets.push(set);
+            } else if (executions.length < limit) {
+                executions.push({ sessionId: session.id, completedAt: session.completedAt!, sets: [set] });
+            }
+        }
+    }
+
+    return history;
+};
+
+/**
+ * O histórico que alimenta a prescrição de UMA sessão, resolvendo cada exercício pelo
+ * escopo certo.
+ *
+ * O escopo por treino é decisão deliberada e continua valendo para o que foi
+ * prescrito: o mesmo exercício em dois treinos progride de forma independente. O que
+ * muda aqui é só o exercício que entrou fora do plano — para ele, o escopo por treino
+ * não tem o que dizer, e o global é a única referência que existe.
+ */
+const getExerciseHistoryForSession = async (userId: number, workoutSessionId: number, limit = 4) => {
+    const session = await prisma.workoutSession.findUnique({
+        where: { id: workoutSessionId },
+        select: {
+            id: true,
+            userId: true,
+            workoutId: true,
+            sessionExercise: { select: { exerciseId: true, origin: true } },
+        }
+    });
+
+    ensureOwnership(session, userId, "This workout session does not belong to the user");
+
+    const history = await getExerciseHistoryByWorkout(userId, session!.workoutId, limit);
+
+    const offPlan = session!.sessionExercise
+        .filter((entry) => entry.origin !== "PRESCRIBED" && !history[entry.exerciseId])
+        .map((entry) => entry.exerciseId);
+
+    if (offPlan.length === 0) return history;
+
+    return { ...history, ...(await getGlobalExerciseHistory(userId, offPlan, limit)) };
+};
+
 const listByExerciseId = async (userId: number, exerciseId: number) => {
     return prisma.workoutSession.findMany({
         where: {
@@ -258,4 +413,4 @@ const deleteSession = async (userId: number, workoutSessionId: number) => {
     });
 }
 
-export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, getExerciseHistoryByWorkout, deleteSession };
+export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, getExerciseHistoryByWorkout, getExerciseHistoryForSession, deleteSession };

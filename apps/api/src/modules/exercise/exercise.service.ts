@@ -38,12 +38,16 @@ const update = async (id: number, data: Partial<CreateExerciseData>) => {
 const remove = async (id: number) => {
     // O catálogo é global e as relações são onDelete: Cascade, então apagar um
     // exercício com histórico destrói séries e recordes de TODOS os usuários.
-    const [sessionSets, workoutExercises] = await Promise.all([
+    // SessionExercise entra na conta porque um exercício pode estar no snapshot de uma
+    // sessão sem ter nenhuma série (prescrito e não executado). A FK dele é Restrict,
+    // então sem esta checagem o delete falharia com erro cru do banco em vez de 409.
+    const [sessionSets, workoutExercises, sessionExercises] = await Promise.all([
         prisma.sessionSet.count({ where: { exerciseId: id } }),
         prisma.workoutExercise.count({ where: { exerciseId: id } }),
+        prisma.sessionExercise.count({ where: { exerciseId: id } }),
     ]);
 
-    if (sessionSets > 0 || workoutExercises > 0) {
+    if (sessionSets > 0 || workoutExercises > 0 || sessionExercises > 0) {
         throw new AppError(
             "Exercise is in use and cannot be deleted. Deleting it would cascade into training history.",
             409
