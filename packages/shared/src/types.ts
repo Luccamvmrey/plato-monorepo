@@ -29,6 +29,28 @@ export interface ExerciseScopedSet {
 export interface TrainingSet extends VolumeSet, RpeSet, ExerciseScopedSet {}
 
 /**
+ * O que basta para contar séries planejadas de um exercício.
+ *
+ * `targetMuscle` é `string`, não o enum `MuscleGroup`: este pacote não depende do
+ * Prisma nem do web, e a soma não interpreta o valor — só agrupa por ele.
+ */
+export interface PlannedExercise {
+    targetSets: number;
+    targetMuscle: string;
+}
+
+/**
+ * Treino para fins de volume planejado. `id` só precisa ser estável dentro do
+ * conjunto que está sendo somado — o rascunho do editor usa o id do treino em edição,
+ * ou um sentinela para treino ainda não salvo.
+ */
+export interface PlannedWorkout {
+    id: number;
+    name: string;
+    exercises: PlannedExercise[];
+}
+
+/**
  * Sessão para fins de resumo. As datas chegam como `Date` no backend (Prisma) e
  * como `string` no frontend (JSON), então os dois são aceitos.
  */
