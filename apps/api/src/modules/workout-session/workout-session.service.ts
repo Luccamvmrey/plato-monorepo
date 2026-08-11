@@ -2,6 +2,7 @@ import prisma from "@plato/database";
 import { AppError } from "../../shared/error/AppError";
 import { ensureOwnership } from "../../shared/utils/auth";
 import { scanForRecords } from "./personal-record.service";
+import { findActiveProgramIdForWorkout } from "../program/program.service";
 
 const SESSION_INCLUDE = {
     sessionSet: {
@@ -41,10 +42,16 @@ const create = async (userId: number, data: any) => {
         include: SESSION_INCLUDE
     });
 
+    // A sessão é carimbada com o programa ativo que contém este treino, se houver.
+    // O cliente não manda nada: qualquer campo que ele pudesse mentir aqui viraria
+    // ponteiro de rotação errado depois.
+    const programId = await findActiveProgramIdForWorkout(userId, data.workoutId);
+
     const newSession = await prisma.workoutSession.create({
         data: {
             user: { connect: { id: userId } },
-            workout: { connect: { id: data.workoutId } }
+            workout: { connect: { id: data.workoutId } },
+            ...(programId !== null ? { program: { connect: { id: programId } } } : {})
         }
     });
 

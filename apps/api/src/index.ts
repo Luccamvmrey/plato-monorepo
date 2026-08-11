@@ -10,6 +10,7 @@ import exerciseRoutes from "./modules/exercise/exercise.routes";
 import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/user/user.routes";
 import workoutRoutes from "./modules/workout/workout.routes";
+import programRoutes from "./modules/program/program.routes";
 import workoutSessionRoutes from "./modules/workout-session/workout-session.routes";
 import personalRecordRoutes from "./modules/workout-session/personal-record.routes";
 
@@ -25,6 +26,7 @@ app.use("/api/exercises", exerciseRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/workouts", workoutRoutes);
+app.use("/api/programs", programRoutes);
 app.use("/api/sessions", workoutSessionRoutes);
 app.use("/api/personal-records", personalRecordRoutes);
 
@@ -46,6 +48,7 @@ app.get("/api", (_req, res) => res.json({
         "/api/users",
         "/api/exercises",
         "/api/workouts",
+        "/api/programs",
         "/api/sessions",
         "/api/personal-records",
     ],
