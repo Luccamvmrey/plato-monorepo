@@ -4,6 +4,7 @@ import { WorkoutSessionService } from "@/features/workouts/services/workout-sess
 import { useWorkouts } from "@/features/workouts/hooks/useWorkouts";
 import { useLocation } from "wouter";
 import type { WorkoutSession } from "../workout.types";
+import { externalLoad, setVolume } from "@plato/shared";
 
 const computeSessionPrs = (sessions: WorkoutSession[]): Map<number, Set<number>> => {
     const result = new Map<number, Set<number>>();
@@ -22,8 +23,10 @@ const computeSessionPrs = (sessions: WorkoutSession[]): Map<number, Set<number>>
 
         for (const set of session.sessionSet) {
             const exId = set.exerciseId;
-            sessionBestWeight[exId] = Math.max(sessionBestWeight[exId] ?? 0, set.actualWeight);
-            sessionTotalVolume[exId] = (sessionTotalVolume[exId] ?? 0) + set.actualWeight * set.actualReps;
+            // externalLoad/setVolume incluem o peso da barra; antes esta era a única
+            // tela do frontend que o ignorava.
+            sessionBestWeight[exId] = Math.max(sessionBestWeight[exId] ?? 0, externalLoad(set));
+            sessionTotalVolume[exId] = (sessionTotalVolume[exId] ?? 0) + setVolume(set);
         }
 
         for (const exId of Object.keys(sessionBestWeight).map(Number)) {

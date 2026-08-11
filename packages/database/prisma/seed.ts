@@ -360,6 +360,9 @@ async function main() {
     for (const ex of exercises) {
         const exercise = await prisma.exercise.upsert({
             where: { name: ex.name },
+            // NÃO adicionar loadType, repUnit ou deprecated neste update. Eles são
+            // classificados por `classify-catalog.ts` a partir de decisão humana, e
+            // reescrevê-los aqui reverteria a classificação a cada seed.
             update: {
                 targetMuscle: ex.targetMuscle,
                 secondaryMuscles: ex.secondaryMuscles,

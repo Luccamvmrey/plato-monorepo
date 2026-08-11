@@ -23,12 +23,71 @@ enum MuscleGroup {
   QUADRICEPS
   HAMSTRINGS
   GLUTES
+  ADDUCTORS
   CALVES
 
   // Trunk
   CORE
   LOWER_BACK
   NECK
+}
+
+/// Como interpretar `SessionSet.actualWeight` para este exercício.
+/// Sem isto, uma máquina assistida (número maior = mais fácil) e um agachamento
+/// (número maior = mais difícil) ficam na mesma coluna com escalas invertidas.
+enum LoadType {
+  /// actualWeight É a carga. Default.
+  EXTERNAL
+  /// Carga efetiva = peso corporal. actualWeight deve ser 0.
+  BODYWEIGHT
+  /// Carga efetiva = peso corporal + actualWeight (lastro).
+  BODYWEIGHT_LOADED
+  /// Carga efetiva = peso corporal − actualWeight (assistência).
+  ASSISTED
+}
+
+/// O padrão de movimento — o eixo da EQUIVALÊNCIA entre exercícios.
+///
+/// `targetMuscle` sozinho não serve para sugerir substituto: Supino Inclinado, Dips e
+/// Peck Deck são todos CHEST, mas um composto e um isolado não são intercambiáveis, e
+/// trocar um pelo outro insere na mesma série histórica dois números que não se
+/// comparam — o motor de progressão passa a prescrever a partir de dado incomparável.
+///
+/// `ISOLATION` é deliberadamente um balde, não uma direção: para exercício
+/// monoarticular o critério de equivalência JÁ é o músculo alvo (Rosca Direta ↔ Rosca
+/// Martelo), e o que precisa ser evitado é justamente cruzar isolado com composto.
+enum MovementPattern {
+  HORIZONTAL_PUSH
+  VERTICAL_PUSH
+  HORIZONTAL_PULL
+  VERTICAL_PULL
+  SQUAT
+  HIP_HINGE
+  LUNGE
+  ISOLATION
+  CARRY
+  CORE
+}
+
+/// O equipamento — o eixo da DISPONIBILIDADE. É o motivo real pelo qual se troca de
+/// exercício na academia: o aparelho está ocupado.
+enum Equipment {
+  BARBELL
+  DUMBBELL
+  MACHINE
+  CABLE
+  SMITH
+  BODYWEIGHT
+  EZ_BAR
+  KETTLEBELL
+}
+
+/// O que `SessionSet.actualReps` mede. Deliberadamente separado de LoadType:
+/// isométrico é sobre a unidade da repetição, não sobre como ler o peso — e sem a
+/// separação uma prancha teria de escolher entre ser isométrica e ser peso corporal.
+enum RepUnit {
+  REPS
+  SECONDS
 }
 
 model User {
@@ -40,6 +99,58 @@ model User {
   workouts       Workout[]
   workoutSession WorkoutSession[]
   personalRecord PersonalRecord[]
+  bodyWeightLog  BodyWeightLog[]
+  program        Program[]
+}
+
+/// Um conjunto ordenado de treinos (A → B → C …) que rotaciona continuamente.
+/// Deliberadamente NÃO ancorado em dias da semana: a cadência real do usuário varia
+/// entre 2 e 5 sessões por semana, e um programa preso ao calendário o deixaria
+/// permanentemente "atrasado".
+model Program {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  name        String
+  description String?
+  /// No máximo um ativo por usuário. Prisma não expressa índice único parcial, então
+  /// a garantia mora numa migration SQL manual (`program_one_active_per_user`).
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programWorkout ProgramWorkout[]
+  workoutSession WorkoutSession[]
+
+  @@index([userId])
+}
+
+model ProgramWorkout {
+  id         Int @id @default(autoincrement())
+  programId  Int
+  workoutId  Int
+  orderIndex Int
+
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  /// Restrict, não Cascade: apagar um treino não pode desmanchar o programa por baixo
+  /// das sessões que já apontam para ele.
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Restrict)
+
+  @@unique([programId, orderIndex])
+  @@unique([programId, workoutId])
+  @@index([workoutId])
+}
+
+/// Histórico de peso corporal. Necessário para BODYWEIGHT, BODYWEIGHT_LOADED e
+/// ASSISTED: a carga efetiva depende do peso do usuário NA DATA da série.
+model BodyWeightLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  /// kg
+  weight     Float
+  measuredAt DateTime
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, measuredAt])
 }
 
 model Exercise {
@@ -47,8 +158,21 @@ model Exercise {
   name             String            @unique
   targetMuscle     MuscleGroup
   secondaryMuscles MuscleGroup[]
+  /// Genéricos "(Padrão)" que coexistem com versões específicas saem da busca sem
+  /// perder o histórico já registrado sob eles.
+  deprecated       Boolean           @default(false)
+  loadType         LoadType          @default(EXTERNAL)
+  repUnit          RepUnit           @default(REPS)
+  /// Nuláveis e sem default de propósito: "ainda não classificado" precisa ser
+  /// representável. Um default (ISOLATION, MACHINE) seria uma afirmação falsa gravada
+  /// no banco, e a sugestão de substituto passaria a mentir com confiança.
+  /// Os genéricos "(Padrão)" ficam com `equipment` null por definição — o padrão de
+  /// movimento deles é conhecido, o equipamento não.
+  movementPattern  MovementPattern?
+  equipment        Equipment?
   workoutExercise  WorkoutExercise[]
   sessionSet       SessionSet[]
+  sessionExercise  SessionExercise[]
   personalRecord   PersonalRecord[]
 }
 
@@ -61,6 +185,21 @@ model Workout {
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   workoutExercise WorkoutExercise[]
   workoutSession  WorkoutSession[]
+  programWorkout  ProgramWorkout[]
+}
+
+/// Como os exercícios de um grupo se encadeiam. Nos dois casos a execução é a mesma —
+/// uma série de cada, revezando —, e é só isso que a tela de sessão precisa saber.
+///
+/// `ALTERNATING` existiu por uma migration e foi removido: "alternar desenvolvimento e
+/// elevação" e "rosca alternada e martelo - 2 x 2" descrevem o mesmo rodízio que
+/// `SUPERSET` já cobre. Distinção que não muda comportamento é campo para o usuário
+/// preencher errado.
+enum ExerciseGroupType {
+  /// Bi-set / tri-set: emenda um no outro sem descanso entre eles.
+  SUPERSET
+  /// Cadeia contínua até a falha, com pausas curtas.
+  REST_PAUSE
 }
 
 model WorkoutExercise {
@@ -71,33 +210,116 @@ model WorkoutExercise {
   targetSets  Int
   targetReps  Int
   observation String?
+
+  /// Rótulo que correlaciona exercícios CONTÍGUOS do mesmo treino, e deliberadamente
+  /// NÃO uma FK: `workout.service.update` é deleteMany + createMany, então uma tabela
+  /// de grupo seria apagada por cascade a cada save. Um rótulo carregado na linha
+  /// atravessa o replace. Grupo com menos de dois membros contíguos é resíduo e é
+  /// normalizado para null — ver `normalizeExerciseGroups` em `@plato/shared`.
+  groupKey    String?
+  groupType   ExerciseGroupType?
+
   workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+/// De onde veio um exercício da sessão. Hoje só `PRESCRIBED` é escrito — os outros
+/// dois existem desde já para não precisar de segunda migration numa tabela que a
+/// essa altura já terá dados.
+enum SessionExerciseOrigin {
+  /// Veio do WorkoutExercise vigente no início da sessão.
+  PRESCRIBED
+  /// Troca de um prescrito, decidida durante a sessão.
+  SUBSTITUTED
+  /// Adicionado na hora, fora do plano.
+  AD_HOC
+}
+
+/// Snapshot da prescrição no MOMENTO da sessão.
+///
+/// Sem ele, `WorkoutExercise` é a única fonte do que estava prescrito — e como
+/// `workout.service.update` é deleteMany + createMany, editar um treino reescreve
+/// retroativamente o que sessões antigas parecem ter prescrito. Medido antes desta
+/// tabela existir: 46 pares (sessão, exercício prescrito sem série) em 33 das 82
+/// sessões, sem nenhuma forma de distinguir "pulou" de "o plano mudou depois".
+model SessionExercise {
+  id               Int     @id @default(autoincrement())
+  workoutSessionId Int
+  exerciseId       Int
+  orderIndex       Int
+  targetSets       Int
+  targetReps       Int
+  observation      String?
+
+  /// Espelha `WorkoutExercise.groupKey`/`groupType`, copiado no início da sessão.
+  /// Sem isto o snapshot perderia o agrupamento e o Histórico voltaria a mentir sobre
+  /// o que foi prescrito — exatamente o problema que este model resolveu.
+  groupKey         String?
+  groupType        ExerciseGroupType?
+
+  origin           SessionExerciseOrigin @default(PRESCRIBED)
+  /// Aponta para o SessionExercise substituído, na mesma sessão.
+  substitutedForId Int?
+  /// Prescrito e deliberadamente não executado. Distinto de "sem séries".
+  skipped          Boolean               @default(false)
+
+  workoutSession WorkoutSession    @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  /// Restrict, não Cascade: apagar um exercício do catálogo não pode desmanchar o
+  /// registro do que foi prescrito. `exercise.service.remove` checa antes e devolve 409.
+  exercise       Exercise          @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  substitutedFor SessionExercise?  @relation("Substitution", fields: [substitutedForId], references: [id], onDelete: SetNull)
+  substitutedBy  SessionExercise[] @relation("Substitution")
+  sessionSet     SessionSet[]
+
+  @@unique([workoutSessionId, orderIndex])
+  @@index([workoutSessionId])
+  @@index([exerciseId])
 }
 
 model WorkoutSession {
   id          Int          @id @default(autoincrement())
   userId      Int
   workoutId   Int
+  /// Preenchido no início da sessão quando o treino pertence ao programa ativo.
+  /// Nulável para sempre: sessão avulsa é um caso legítimo, e as 82 sessões
+  /// anteriores ao model Program não são backfilladas.
+  programId   Int?
   startedAt   DateTime     @default(now())
   completedAt DateTime?
   workout     Workout      @relation(fields: [workoutId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  program     Program?     @relation(fields: [programId], references: [id], onDelete: SetNull)
   sessionSet  SessionSet[]
+  sessionExercise SessionExercise[]
+
+  @@index([userId, programId, completedAt])
 }
 
 model SessionSet {
   id               Int            @id @default(autoincrement())
   workoutSessionId Int
+  /// Continua canônico e obrigatório, deliberadamente denormalizado em relação a
+  /// `sessionExercise.exerciseId`. Trocar a chave para `sessionExerciseId` exigiria
+  /// backfillar 1112 séries com prescrição inventada e revisar os 39 arquivos que
+  /// leem `exerciseId` — nenhuma query existente precisou mudar por causa do snapshot.
   exerciseId       Int
+  /// Nulável PARA SEMPRE. Duas leituras distintas de `null`:
+  /// - a sessão não tem nenhum SessionExercise → sessão legada, anterior ao snapshot;
+  /// - a sessão tem SessionExercise mas esta série não casa com nenhum → série fora
+  ///   do plano (só possível quando a UI de adição ad-hoc existir).
+  sessionExerciseId Int?
   setNumber        Int
   actualReps       Int
   actualWeight     Float
   equipmentWeight  Float?
   rpe              Int
   userObservation  String?
+  /// Série reconhecidamente inválida (erro de digitação, modalidade trocada).
+  /// Continua no histórico e nas telas, mas fica fora de PR e de progressão.
+  excludedFromRecords Boolean        @default(false)
   exercise         Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sessionExercise  SessionExercise? @relation(fields: [sessionExerciseId], references: [id], onDelete: SetNull)
 }
 
 enum RecordType {

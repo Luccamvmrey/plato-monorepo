@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@plato/database": "1.0.0",
+    "@plato/shared": "1.0.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",

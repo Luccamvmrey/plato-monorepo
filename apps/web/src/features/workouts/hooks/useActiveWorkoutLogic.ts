@@ -24,8 +24,9 @@ export const useActiveWorkoutLogic = () => {
     const { data: workout, isLoading: isLoadingWorkout } = workoutByIdQuery;
 
     // Um fetch de histórico por sessão, não um por exercício — é o que alimenta a
-    // prescrição de carga de cada card.
-    const { data: exerciseHistory } = useExerciseHistory(activeSession?.workoutId);
+    // prescrição de carga de cada card. Escopado à SESSÃO e não ao treino, para o
+    // exercício adicionado fora do plano também ter carga de referência.
+    const { data: exerciseHistory } = useExerciseHistory(activeSession?.id);
 
     const pendingSets = useActiveWorkoutStore((s) => s.activeSession?.pendingSets);
     const sessionExerciseOrder = useActiveWorkoutStore((s) => s.activeSession?.sessionExerciseOrder ?? null);
@@ -41,9 +42,13 @@ export const useActiveWorkoutLogic = () => {
         exerciseExtraSets,
     );
 
+    // "Não sobrou nada a fazer", e não "está tudo COMPLETED": um exercício trocado ou
+    // pulado está RESOLVIDO — o usuário decidiu sobre ele. Exigir COMPLETED de todos
+    // fazia o botão de finalizar parecer desabilitado para sempre depois de uma troca.
+    // Escrito pela negativa para não precisar de manutenção a cada status novo.
     const isAllCompleted = useMemo(() => {
         if (!exerciseStack.length) return false;
-        return exerciseStack.every(ex => ex.status === "COMPLETED");
+        return !exerciseStack.some(ex => ex.status === "ACTIVE" || ex.status === "PENDING");
     }, [exerciseStack]);
 
     const handleFinishClick = () => {

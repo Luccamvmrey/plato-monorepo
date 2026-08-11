@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from "react";
+import { parseDecimalPtBr } from "@/core/utils/formatters";
 
 export type SetSubmissionData = {
     actualWeight: number;
@@ -9,10 +10,8 @@ export type SetSubmissionData = {
 
 const DEFAULT_RPE = "8";
 
-// O app é pt-BR, onde a vírgula é o separador decimal. Os inputs de carga são
-// type="text" justamente porque type="number" descarta a vírgula antes de qualquer
-// parser ver o valor — "82,5" chegaria aqui como "". Normalizamos na leitura.
-const parseDecimal = (value: string) => Math.max(0, parseFloat(value.replace(",", ".")) || 0);
+// Compartilhado com o card de peso corporal: mesma armadilha da vírgula.
+const parseDecimal = parseDecimalPtBr;
 
 /** O que preenche os campos do set. `weight` null = ainda não há carga de referência. */
 export type SetSeed = {

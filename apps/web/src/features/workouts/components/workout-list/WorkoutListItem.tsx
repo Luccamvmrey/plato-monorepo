@@ -6,8 +6,10 @@ import {
     CardTitle
 } from "@/components/ui/card";
 import type { Workout } from "@/features/workouts/workout.types.ts";
+import type { ProgramCycleEntry } from "@/features/workouts/program.types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Archive, Play, SquarePen, Undo2 } from "lucide-react";
+import { formatDaysAgo } from "@/core/utils/formatters.ts";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { useWorkoutListItemLogic } from "@/features/workouts/hooks/useWorkoutListItemLogic.ts";
@@ -17,9 +19,12 @@ import { cn } from "@/lib/utils.ts";
 type WorkoutListItemProps = {
     workout: Workout;
     isLastDone?: boolean;
+    /** Posição deste treino no ciclo do programa ativo, quando ele pertence a um. */
+    cycleEntry?: ProgramCycleEntry;
+    cycleTotal?: number;
 };
 
-const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
+const WorkoutListItem = ({ workout, isLastDone, cycleEntry, cycleTotal }: WorkoutListItemProps) => {
     const {
         handleEdit,
         handleQuickStart,
@@ -33,9 +38,14 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
 
     const inlineError = conflictError ?? createError;
 
+    const isNext = cycleEntry?.isNext ?? false;
+
     return (
         <Card className={cn(
-            "relative overflow-hidden bg-card shadow-none transition-all"
+            "relative overflow-hidden bg-card shadow-none transition-all",
+            // O destaque é a borda, não o fundo: o card já carrega a lista de
+            // exercícios, e um fundo tingido brigaria com os badges de músculo.
+            isNext && "border-primary/40"
         )}>
             <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-4">
@@ -43,13 +53,28 @@ const WorkoutListItem = ({ workout, isLastDone }: WorkoutListItemProps) => {
                         <CardTitle className="text-lg font-medium tracking-tight">
                             {workout.name}
                         </CardTitle>
+                        {cycleEntry && (
+                            <p className="text-xs text-muted-foreground tabular-nums">
+                                {cycleEntry.position}
+                                {cycleTotal ? ` de ${cycleTotal}` : ""}
+                                {" · "}
+                                {formatDaysAgo(cycleEntry.lastCompletedAt)}
+                            </p>
+                        )}
                         {workout.description && (
                             <p className="text-xs text-muted-foreground line-clamp-1">
                                 {workout.description}
                             </p>
                         )}
                     </div>
-                    {isLastDone && (
+                    {isNext && (
+                        <span className="text-[10px] font-medium uppercase tracking-wider text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 shrink-0">
+                            Próximo
+                        </span>
+                    )}
+                    {/* "Último Realizado" e "Próximo" só coincidem em programa de um
+                        treino só; nesse caso "Próximo" é a informação acionável. */}
+                    {isLastDone && !isNext && (
                         <span className="text-[10px] font-medium uppercase tracking-wider text-success px-2 py-0.5 rounded-full bg-success/10 border border-success/20">
                             Último Realizado
                         </span>

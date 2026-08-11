@@ -20,6 +20,7 @@ const muscleClassMap: Record<MuscleGroup, string> = {
     QUADRICEPS:  "badge-quadriceps",
     HAMSTRINGS:  "badge-hamstrings",
     GLUTES:      "badge-glutes",
+    ADDUCTORS:   "badge-adductors",
     CALVES:      "badge-calves",
     CORE:        "badge-core",
     NECK:        "badge-neck",

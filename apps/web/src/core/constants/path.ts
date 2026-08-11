@@ -3,6 +3,8 @@ export const path = {
     SIGNUP: "/signup",
     WORKOUTS: "/workouts",
     WORKOUT_EDITOR: "/workout-editor",
+    PROGRAMS: "/programs",
+    PROGRAM_EDITOR: "/program-editor",
     ACTIVE_WORKOUT: "/active-workout",
     WORKOUT_COMPLETE: "/workout-complete",
     WORKOUT_SUMMARY: "/workout-summary",

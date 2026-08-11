@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { MuscleGroup } from "@plato/database/dist/generated/prisma/enums.ts";
 import type { Workout, WorkoutSession } from "@/features/workouts/workout.types.ts";
-import { calculateSetVolume, calculateTotalVolume, calculateSessionDuration } from "@/features/workouts/utils/analytics.ts";
+import { calculateTotalVolume, calculateSessionDuration, externalLoad, setVolume } from "@plato/shared";
+import { buildSessionDeviations, type ExerciseDeviation, type UnexecutedExercise } from "@/features/workouts/utils/session-deviation.ts";
 
 export type SummaryStats = {
     totalVolume: number;
@@ -13,6 +14,7 @@ export type SummaryStats = {
         muscleGroup: MuscleGroup;
         sets: number;
         reps: number;
+        deviation?: ExerciseDeviation;
     }[];
     volumeByGroup: {
         group: MuscleGroup;
@@ -25,6 +27,8 @@ export type SummaryStats = {
         previousMax: number | null;
         newMax: number;
     }[];
+    /** Prescrito que não gerou série: pulado, trocado ou simplesmente não feito. */
+    unexecuted: UnexecutedExercise[];
 };
 
 export const useWorkoutSummaryStats = (
@@ -44,11 +48,13 @@ export const useWorkoutSummaryStats = (
 
         const rawVolumeByMuscle: Partial<Record<MuscleGroup, number>> = {};
         sets.forEach(set => {
-            const we = workout.workoutExercise.find(we => we.exerciseId === set.exerciseId);
-            const exercise = we?.exercise;
+            // O exercício sai da PRÓPRIA série, não de uma busca no plano do treino.
+            // Procurar em `workout.workoutExercise` descartava em silêncio o volume de
+            // qualquer exercício fora do plano — o adicionado durante a sessão, e
+            // também o que foi removido do treino depois que a sessão aconteceu.
+            const exercise = set.exercise;
             if (exercise) {
-                const setVolume = calculateSetVolume(set.actualWeight, set.actualReps, set.equipmentWeight || 0);
-                rawVolumeByMuscle[exercise.targetMuscle] = (rawVolumeByMuscle[exercise.targetMuscle] || 0) + setVolume;
+                rawVolumeByMuscle[exercise.targetMuscle] = (rawVolumeByMuscle[exercise.targetMuscle] || 0) + setVolume(set);
             }
         });
 
@@ -66,31 +72,41 @@ export const useWorkoutSummaryStats = (
             setsByExercise[set.exerciseId].push(set);
         });
 
-        const completedExercises = workout.workoutExercise
-            .filter(we => setsByExercise[we.exerciseId])
-            .map(we => {
-                const exSets = setsByExercise[we.exerciseId];
+        const deviations = buildSessionDeviations(workoutSession);
+
+        // Derivado das SÉRIES, não do plano do treino: partindo do plano, um exercício
+        // adicionado durante a sessão nunca aparecia no resumo, mesmo com séries
+        // registradas — e o mesmo valia para um exercício removido do treino depois.
+        // A ordem do plano é preservada onde ela existe; o que está fora dele vai para
+        // o fim, que é onde ele de fato entrou na sessão.
+        const planOrder = new Map(workout.workoutExercise.map((we, index) => [we.exerciseId, index]));
+
+        const completedExercises = Object.entries(setsByExercise)
+            .map(([exId, exSets]) => {
+                const exerciseId = parseInt(exId);
+                const exercise = exSets.find(set => set.exercise)?.exercise;
                 const lastSet = exSets[exSets.length - 1];
+
                 return {
-                    id: we.exerciseId,
-                    name: we.exercise?.name || "Exercício",
-                    muscleGroup: we.exercise!.targetMuscle,
+                    id: exerciseId,
+                    name: exercise?.name || "Exercício",
+                    muscleGroup: exercise!.targetMuscle,
                     sets: exSets.length,
                     reps: lastSet.actualReps,
+                    deviation: deviations.byExerciseId.get(exerciseId),
                 };
-            });
+            })
+            .sort((a, b) => (planOrder.get(a.id) ?? Infinity) - (planOrder.get(b.id) ?? Infinity));
 
         const currentMaxByExercise: Record<number, number> = {};
         sets.forEach(set => {
-            const total = set.actualWeight + (set.equipmentWeight || 0);
-            currentMaxByExercise[set.exerciseId] = Math.max(currentMaxByExercise[set.exerciseId] || 0, total);
+            currentMaxByExercise[set.exerciseId] = Math.max(currentMaxByExercise[set.exerciseId] || 0, externalLoad(set));
         });
 
         const lastMaxByExercise: Record<number, number> = {};
         if (lastSession) {
             lastSession.sessionSet.forEach(set => {
-                const total = set.actualWeight + (set.equipmentWeight || 0);
-                lastMaxByExercise[set.exerciseId] = Math.max(lastMaxByExercise[set.exerciseId] || 0, total);
+                lastMaxByExercise[set.exerciseId] = Math.max(lastMaxByExercise[set.exerciseId] || 0, externalLoad(set));
             });
         }
 
@@ -99,12 +115,22 @@ export const useWorkoutSummaryStats = (
             const exerciseId = parseInt(exId);
             const previousMax = lastMaxByExercise[exerciseId] ?? 0;
             if (newMax > previousMax) {
+                // Mesmo motivo do resto: o nome sai da série, senão um PR num
+                // exercício fora do plano aparecia como "Exercício".
                 const exerciseName =
-                    workout.workoutExercise.find(we => we.exerciseId === exerciseId)?.exercise?.name || "Exercício";
+                    setsByExercise[exerciseId]?.find(set => set.exercise)?.exercise?.name || "Exercício";
                 newPRs.push({ exerciseId, exerciseName, previousMax: lastMaxByExercise[exerciseId] ?? null, newMax });
             }
         });
 
-        return { totalVolume, duration, totalSets, completedExercises, volumeByGroup, newPRs };
+        return {
+            totalVolume,
+            duration,
+            totalSets,
+            completedExercises,
+            volumeByGroup,
+            newPRs,
+            unexecuted: deviations.unexecuted,
+        };
     }, [workoutSession, workout, lastSession]);
 };

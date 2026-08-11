@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import type { WorkoutSession } from "@/features/workouts/workout.types";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
+import DeviationBadge from "@/features/workouts/components/DeviationBadge";
 import { cn } from "@/lib/utils";
 import { useSessionHistoryCardLogic } from "@/features/workouts/hooks/useSessionHistoryCardLogic";
 import { formatDateFull } from "@/core/utils/formatters";
@@ -24,6 +25,7 @@ export const SessionHistoryCard = ({ session, sessionPrMap, navigate }: SessionH
         totalSets,
         exerciseCount,
         exercises,
+        unexecuted,
         handleExerciseClick,
     } = useSessionHistoryCardLogic(session, sessionPrMap, navigate);
 
@@ -102,10 +104,18 @@ export const SessionHistoryCard = ({ session, sessionPrMap, navigate }: SessionH
                         <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
                             {ex.name}
                         </span>
+                        {ex.deviation && <DeviationBadge kind={ex.deviation.kind} />}
                         {ex.muscleGroup && <MuscleBadge muscle={ex.muscleGroup} />}
                         {ex.hasPr && <span className="badge-pr">PR</span>}
                         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 ml-1" />
                     </div>
+                    {/* Segunda linha, junto da nota: aqui o texto pode ser longo sem
+                        disputar largura com o nome do exercício. */}
+                    {ex.deviation?.replacedName && (
+                        <p className="text-[11px] text-muted-foreground">
+                            no lugar de {ex.deviation.replacedName}
+                        </p>
+                    )}
                     {ex.note && (
                         <p className="text-[11px] text-muted-foreground italic pl-0">
                             {ex.note}
@@ -113,6 +123,29 @@ export const SessionHistoryCard = ({ session, sessionPrMap, navigate }: SessionH
                     )}
                 </button>
             ))}
+
+            {/* Prescrito e não executado. Não é clicável: não há análise a abrir sobre
+                um exercício sem série. Só existe em sessão com snapshot — antes dele,
+                uma lista derivada de sessionSet não tinha como saber que existiu. */}
+            {unexecuted.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-border flex flex-col gap-2">
+                    {unexecuted.map((ex) => (
+                        <div key={`${ex.kind}-${ex.exerciseId}`} className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[13px] text-muted-foreground flex-1 min-w-0 truncate">
+                                    {ex.name}
+                                </span>
+                                <DeviationBadge kind={ex.kind} />
+                            </div>
+                            {ex.replacedByName && (
+                                <p className="text-[11px] text-muted-foreground/70">
+                                    por {ex.replacedByName}
+                                </p>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

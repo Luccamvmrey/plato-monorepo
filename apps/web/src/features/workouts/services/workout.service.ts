@@ -1,4 +1,5 @@
 import api from "@/core/api";
+import type { ExerciseGroupTypeValue } from "@plato/shared";
 import type { GetUserWorkoutsResponse, Workout } from "@/features/workouts/workout.types.ts";
 
 export interface WorkoutPayload {
@@ -9,6 +10,8 @@ export interface WorkoutPayload {
         targetSets: number;
         targetReps: number;
         orderIndex: number;
+        groupKey?: string | null;
+        groupType?: ExerciseGroupTypeValue | null;
     }[];
 }
 

@@ -6,6 +6,10 @@ import { useWorkoutEditorLogic } from "@/features/workouts/hooks/useWorkoutEdito
 import { WorkoutEditorForm } from "@/features/workouts/components/workout-editor/components/WorkoutEditorForm.tsx";
 import { WorkoutEditorActions } from "@/features/workouts/components/workout-editor/components/WorkoutEditorActions.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
+import RedundancyNotice from "@/features/workouts/components/workout-editor/RedundancyNotice.tsx";
+import AlternativesSheet from "@/features/workouts/components/workout-editor/AlternativesSheet.tsx";
+import PlannedVolumePanel from "@/features/workouts/components/workout-editor/PlannedVolumePanel.tsx";
+import { usePlannedVolume } from "@/features/workouts/hooks/usePlannedVolume.ts";
 
 const enterAnimation: Variants = {
     hidden: { opacity: 0, y: 10 },
@@ -18,6 +22,7 @@ const enterAnimation: Variants = {
 
 const WorkoutEditorPage = () => {
     const {
+        id,
         isFetching,
         isSaving,
         isSuccess,
@@ -30,7 +35,13 @@ const WorkoutEditorPage = () => {
         handleNameChange,
         handleDragEnd,
         handleDragStart,
+        redundantGroups,
+        inspectedDraft,
+        setInspectedDraft,
+        handleReplaceInspected,
     } = useWorkoutEditorLogic();
+
+    const plannedVolume = usePlannedVolume(id);
 
     const FORM_ID = "workout-editor-form";
 
@@ -57,6 +68,19 @@ const WorkoutEditorPage = () => {
                     onNameChange={handleNameChange}
                 />
                 <NewExerciseSheet />
+
+                <RedundancyNotice groups={redundantGroups} onInspect={setInspectedDraft} />
+                <PlannedVolumePanel
+                    rows={plannedVolume.rows}
+                    cycleLength={plannedVolume.cycleLength}
+                    sessionsPerWeek={plannedVolume.sessionsPerWeek}
+                    draftIsAddition={plannedVolume.draftIsAddition}
+                />
+                <AlternativesSheet
+                    target={inspectedDraft?.exercise ?? null}
+                    onClose={() => setInspectedDraft(null)}
+                    onSelect={handleReplaceInspected}
+                />
 
                 {validationErrors.exercises && (
                     <p

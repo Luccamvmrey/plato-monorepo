@@ -1,9 +1,18 @@
 import { Request, Response } from "express";
 import * as exerciseService from "./exercise.service";
-import { extractId } from "../../shared/utils/request";
+import { extractId, getUserId } from "../../shared/utils/request";
 
 const list = async (req: Request, res: Response) => {
     const result = await exerciseService.getAll();
+    res.json(result);
+}
+
+const alternatives = async (req: Request, res: Response) => {
+    const userId = getUserId(req);
+    const exerciseId = extractId(req);
+
+    const result = await exerciseService.getAlternatives(userId, exerciseId);
+
     res.json(result);
 }
 
@@ -29,4 +38,4 @@ const bulkCreate = async (req: Request, res: Response) => {
     res.status(201).json(result);
 }
 
-export { list, create, bulkCreate, update, remove };
+export { list, alternatives, create, bulkCreate, update, remove };

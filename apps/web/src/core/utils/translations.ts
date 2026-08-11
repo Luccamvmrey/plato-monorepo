@@ -11,6 +11,7 @@ export const muscleGroupTranslation: Record<MuscleGroup, string> = {
     QUADRICEPS: "Quadríceps",
     HAMSTRINGS: "Posterior de Coxa",
     GLUTES: "Glúteos",
+    ADDUCTORS: "Adutores",
     CALVES: "Panturrilhas",
     CORE: "Abdômen",
     LOWER_BACK: "Lombar",

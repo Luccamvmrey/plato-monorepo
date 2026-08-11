@@ -12,3 +12,6 @@ export const updateWorkoutSchema = z.object({
     description: z.string().optional(),
     exercises: z.array(updateWorkoutExerciseSchema).nonempty("At least one exercise is required"),
 });
+
+export type CreateWorkoutInput = z.infer<typeof createWorkoutSchema>
+export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>

@@ -107,6 +107,8 @@
   --muscle-hamstrings-bg:    oklch(0.96 0.04 22);
   --muscle-glutes:           oklch(0.52 0.17 22);
   --muscle-glutes-bg:        oklch(0.96 0.04 22);
+  --muscle-adductors:        oklch(0.52 0.17 22);
+  --muscle-adductors-bg:     oklch(0.96 0.04 22);
   --muscle-calves:           oklch(0.52 0.17 22);
   --muscle-calves-bg:        oklch(0.96 0.04 22);
 
@@ -216,6 +218,8 @@
   --muscle-hamstrings-bg:    oklch(0.17 0.06 22);
   --muscle-glutes:           oklch(0.68 0.18 22);
   --muscle-glutes-bg:        oklch(0.17 0.06 22);
+  --muscle-adductors:        oklch(0.68 0.18 22);
+  --muscle-adductors-bg:     oklch(0.17 0.06 22);
   --muscle-calves:           oklch(0.68 0.18 22);
   --muscle-calves-bg:        oklch(0.17 0.06 22);
 
@@ -318,6 +322,8 @@
   --color-muscle-hamstrings-bg:   var(--muscle-hamstrings-bg);
   --color-muscle-glutes:          var(--muscle-glutes);
   --color-muscle-glutes-bg:       var(--muscle-glutes-bg);
+  --color-muscle-adductors:       var(--muscle-adductors);
+  --color-muscle-adductors-bg:    var(--muscle-adductors-bg);
   --color-muscle-calves:          var(--muscle-calves);
   --color-muscle-calves-bg:       var(--muscle-calves-bg);
   --color-muscle-core:            var(--muscle-core);
@@ -390,6 +396,7 @@
 .badge-quadriceps  { background: var(--muscle-quadriceps-bg);  color: var(--muscle-quadriceps); }
 .badge-hamstrings  { background: var(--muscle-hamstrings-bg);  color: var(--muscle-hamstrings); }
 .badge-glutes      { background: var(--muscle-glutes-bg);      color: var(--muscle-glutes); }
+.badge-adductors   { background: var(--muscle-adductors-bg);   color: var(--muscle-adductors); }
 .badge-calves      { background: var(--muscle-calves-bg);      color: var(--muscle-calves); }
 
 /* Trunk — Âmbar / Violeta */

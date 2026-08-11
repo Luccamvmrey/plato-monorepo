@@ -2,10 +2,13 @@ import { useLocation, useParams } from "wouter";
 import { useWorkouts } from "./useWorkouts";
 import { useWorkoutEditorStore } from "@/features/workouts/stores/workout-editor.store";
 import { useSensor, useSensors, type DragEndEvent, closestCenter, TouchSensor, MouseSensor } from "@dnd-kit/core";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { path } from "@/core/constants/path";
 import { useSuccessState } from "@/core/hooks/useSuccessState";
 import { focusField } from "@/core/utils/focus";
+import { findRedundantGroups } from "@/features/workouts/utils/movement";
+import type { WorkoutExerciseDraft } from "@/features/workouts/stores/workout-editor.store";
+import type { Exercise } from "@/features/workouts/workout.types";
 
 export const useWorkoutEditorLogic = () => {
     const { id } = useParams();
@@ -20,9 +23,11 @@ export const useWorkoutEditorLogic = () => {
     const exercises = useWorkoutEditorStore(state => state.exercises);
     const reorderExercises = useWorkoutEditorStore(state => state.reorderExercises);
     const loadWorkout = useWorkoutEditorStore(state => state.loadWorkout);
+    const replaceExercise = useWorkoutEditorStore(state => state.replaceExercise);
     const reset = useWorkoutEditorStore(state => state.reset);
 
     const [validationErrors, setValidationErrors] = useState<{ name?: string; exercises?: string }>({});
+    const [inspectedDraft, setInspectedDraft] = useState<WorkoutExerciseDraft | null>(null);
     const { isSuccess, trigger: triggerSuccess } = useSuccessState();
 
     const saveError = (updateWorkoutMutation.isError || createWorkoutMutation.isError)
@@ -112,7 +117,11 @@ export const useWorkoutEditorLogic = () => {
                 exerciseId: ex.exercise.id,
                 targetSets: ex.targetSets,
                 targetReps: ex.targetReps,
-                orderIndex: index + 1
+                orderIndex: index + 1,
+                // A posição do array é a ordem de execução, e é ela que define o
+                // grupo. O servidor renormaliza a partir de `orderIndex`.
+                groupKey: ex.groupKey ?? null,
+                groupType: ex.groupType ?? null,
             }))
         };
 
@@ -142,6 +151,16 @@ export const useWorkoutEditorLogic = () => {
         if (window.navigator?.vibrate) window.navigator.vibrate(75);
     };
 
+    // Estado derivado dos exercícios do rascunho — nada a persistir, nada a buscar.
+    const redundantGroups = useMemo(() => findRedundantGroups(exercises), [exercises]);
+
+    const handleReplaceInspected = (exercise: Exercise) => {
+        if (!inspectedDraft) return;
+
+        replaceExercise(inspectedDraft.instanceId, exercise);
+        setInspectedDraft(null);
+    };
+
     return {
         id,
         isFetching,
@@ -156,5 +175,9 @@ export const useWorkoutEditorLogic = () => {
         handleDragEnd,
         handleDragStart,
         collisionDetection: closestCenter,
+        redundantGroups,
+        inspectedDraft,
+        setInspectedDraft,
+        handleReplaceInspected,
     };
 };

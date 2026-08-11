@@ -14,6 +14,8 @@ import {
 import type { EnrichedExerciseRecord, ExerciseHistoryMap, WorkoutSession } from "@/features/workouts/workout.types.ts";
 import ExerciseRecord from "@/features/workouts/components/active-workout/exercise-stack/ExerciseRecord.tsx";
 import { useAutoTransition } from "@/features/workouts/hooks/useAutoTransition.ts";
+import { useSessionExercises } from "@/features/workouts/hooks/useSessionExercises.ts";
+import ExercisePickerSheet from "@/features/workouts/components/active-workout/exercise-stack/ExercisePickerSheet.tsx";
 
 type DynamicExerciseStackProps = {
     exerciseStack: EnrichedExerciseRecord[];
@@ -32,7 +34,10 @@ const DynamicExerciseStack = ({
 }: DynamicExerciseStackProps) => {
     useAutoTransition(exerciseStack);
 
+    const { addExerciseMutation, skipExerciseMutation, isMutating } = useSessionExercises(session.id);
     const [swapCandidateId, setSwapCandidateId] = useState<number | null>(null);
+
+    const hasSnapshot = exerciseStack.some((record) => record.sessionExerciseId !== null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -92,13 +97,25 @@ const DynamicExerciseStack = ({
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
                 <SortableContext items={pendingIds} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-3">
+                        {/* A chave é `record.key` (id do SessionExercise) e não o
+                            exerciseId: com adição ad-hoc o mesmo exercício pode
+                            aparecer duas vezes na pilha. */}
                         {exerciseStack.map((record) => (
-                            <div key={`${record.exerciseId}-${record.status}`} id={`exercise-${record.exerciseId}`}>
+                            <div key={record.key} id={`exercise-${record.exerciseId}`}>
                                 <ExerciseRecord
                                     record={record}
                                     sessionId={session.id}
                                     history={history}
                                     addExtraSet={addExtraSet}
+                                    isChangingPlan={isMutating}
+                                    onUndoSkip={
+                                        record.sessionExerciseId !== null
+                                            ? () => skipExerciseMutation.mutate({
+                                                sessionExerciseId: record.sessionExerciseId!,
+                                                skipped: false,
+                                            })
+                                            : undefined
+                                    }
                                     onSwapRequest={
                                         canSwap && record.status === "PENDING"
                                             ? () => setSwapCandidateId(record.exerciseId)
@@ -110,6 +127,17 @@ const DynamicExerciseStack = ({
                     </div>
                 </SortableContext>
             </DndContext>
+
+            {/* Adicionar exercício depende do snapshot; em sessão legada não há onde
+                pendurar a linha nova. */}
+            {hasSnapshot && (
+                <ExercisePickerSheet
+                    title="Adicionar à sessão"
+                    triggerLabel="Adicionar exercício"
+                    isPending={isMutating}
+                    onSelect={(exercise) => addExerciseMutation.mutate(exercise.id)}
+                />
+            )}
 
             <AlertDialog open={!!swapCandidateId} onOpenChange={() => setSwapCandidateId(null)}>
                 <AlertDialogContent>

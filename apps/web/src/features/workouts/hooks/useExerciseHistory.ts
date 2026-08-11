@@ -1,22 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
-import { WorkoutSessionService } from "@/features/workouts/services/workout-session/workout-session.service";
+import { SessionExerciseService } from "@/features/workouts/services/workout-session/session-exercise.service.ts";
 
 /**
- * Histórico recente de TODOS os exercícios do treino, num único fetch por sessão.
+ * Histórico recente de todos os exercícios DA SESSÃO, num único fetch.
  *
  * Um fetch por exercício reintroduziria a corrida que quebrava o prefill (o input
  * inicializava antes do dado chegar); buscar o mapa inteiro no início da sessão
  * elimina isso na raiz.
  *
- * staleTime: Infinity é deliberado — nada dentro da sessão ativa altera sessões já
- * concluídas, e um refetch no meio do treino trocaria a prescrição debaixo do
- * usuário. A invalidação acontece só ao finalizar a sessão.
+ * Passou a ser resolvido pela sessão e não pelo treino porque o exercício adicionado
+ * fora do plano não pertence ao treino: o escopo por treino devolveria vazio para ele,
+ * e o card nasceria sem carga de referência. Para o que foi prescrito, o servidor
+ * mantém o escopo por treino — a decisão de que o mesmo exercício progride separado em
+ * treinos diferentes continua valendo.
+ *
+ * staleTime: Infinity é deliberado — nada dentro da sessão altera sessões já
+ * concluídas, e um refetch no meio do treino trocaria a prescrição debaixo do usuário.
+ * A invalidação acontece ao finalizar e ao mudar o plano da sessão (trocar/adicionar).
  */
-export const useExerciseHistory = (workoutId?: number) => {
+export const useExerciseHistory = (sessionId?: number) => {
     return useQuery({
-        queryKey: ["exercise-history", workoutId],
-        queryFn: () => WorkoutSessionService.getExerciseHistory(workoutId!),
-        enabled: !!workoutId,
+        queryKey: ["session-exercise-history", sessionId],
+        queryFn: () => SessionExerciseService.getExerciseHistory(sessionId!),
+        enabled: !!sessionId,
         staleTime: Infinity,
     });
 };
