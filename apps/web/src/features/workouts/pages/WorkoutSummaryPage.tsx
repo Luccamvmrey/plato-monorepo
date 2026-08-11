@@ -69,7 +69,7 @@ const WorkoutSummaryPage = () => {
             <SummaryPRBanner newPRs={stats.newPRs} />
             {streakData && <StreakBanner streak={streakData} />}
             <SummaryMetricsGrid metrics={metrics} />
-            <SummaryExerciseList exercises={stats.completedExercises} />
+            <SummaryExerciseList exercises={stats.completedExercises} unexecuted={stats.unexecuted} />
             <SummaryVolumeChart volumeByGroup={stats.volumeByGroup} />
 
             {/* Sits above the NavBar rather than sharing `bottom-0` with it —

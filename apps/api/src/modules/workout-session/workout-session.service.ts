@@ -4,20 +4,23 @@ import { ensureOwnership } from "../../shared/utils/auth";
 import { scanForRecords } from "./personal-record.service";
 import { findActiveProgramIdForWorkout } from "../program/program.service";
 
+/**
+ * O snapshot entra em TODOS os caminhos de leitura de sessão, inclusive os que
+ * alimentam Histórico e Resumo.
+ *
+ * Ele foi restrito à sessão ativa quando ninguém mais o consumia; a partir dos badges
+ * de origem, aquelas telas passaram a depender dele — e não só para marcar o que foi
+ * trocado: um exercício prescrito e NÃO executado não tem série nenhuma, então sem o
+ * snapshot ele simplesmente não existe para uma lista derivada de `sessionSet`. Era
+ * exatamente essa a pergunta que não tinha resposta antes.
+ *
+ * O custo é pequeno perto do que já vai no mesmo payload: a lista de histórico já
+ * carrega todas as séries de todas as sessões, cada uma com o exercício completo.
+ */
 const SESSION_INCLUDE = {
     sessionSet: {
         include: { exercise: true }
-    }
-} as const;
-
-/**
- * Só os caminhos da sessão ATIVA carregam o snapshot. `listByUserId` e
- * `listByWorkoutId` alimentam Histórico e Resumo, que já trazem todas as séries de
- * todas as sessões — somar o snapshot ali engordaria a lista inteira para uma
- * informação que aquelas telas ainda não usam.
- */
-const ACTIVE_SESSION_INCLUDE = {
-    ...SESSION_INCLUDE,
+    },
     sessionExercise: {
         orderBy: { orderIndex: "asc" },
         include: { exercise: true }
@@ -131,14 +134,14 @@ const listByWorkoutId = async (userId: number, workoutId: number) => {
 const listById = async (userId: number, workoutSessionId: number) => {
     return prisma.workoutSession.findUnique({
         where: { id: workoutSessionId, userId },
-        include: ACTIVE_SESSION_INCLUDE
+        include: SESSION_INCLUDE
     });
 }
 
 const findActiveSession = async (userId: number) => {
     const activeSession = await prisma.workoutSession.findFirst({
         where: { userId, completedAt: null },
-        include: ACTIVE_SESSION_INCLUDE
+        include: SESSION_INCLUDE
     });
 
     if (!activeSession) return null;

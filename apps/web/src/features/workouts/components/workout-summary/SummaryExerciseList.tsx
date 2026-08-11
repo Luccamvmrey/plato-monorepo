@@ -1,5 +1,6 @@
 import { motion, type Variants } from "framer-motion";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
+import DeviationBadge from "@/features/workouts/components/DeviationBadge";
 import { cn } from "@/lib/utils";
 import type { SummaryStats } from "@/features/workouts/hooks/useWorkoutSummaryStats";
 
@@ -8,10 +9,13 @@ const staggerItem: Variants = {
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 380, damping: 28 } },
 };
 
-type Props = { exercises: SummaryStats["completedExercises"] };
+type Props = {
+    exercises: SummaryStats["completedExercises"];
+    unexecuted?: SummaryStats["unexecuted"];
+};
 
-const SummaryExerciseList = ({ exercises }: Props) => {
-    if (exercises.length === 0) return null;
+const SummaryExerciseList = ({ exercises, unexecuted = [] }: Props) => {
+    if (exercises.length === 0 && unexecuted.length === 0) return null;
 
     return (
         <motion.div
@@ -32,12 +36,33 @@ const SummaryExerciseList = ({ exercises }: Props) => {
                     <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
                         {ex.name}
                     </span>
+                    {ex.deviation && (
+                        <DeviationBadge kind={ex.deviation.kind} relatedName={ex.deviation.replacedName} />
+                    )}
                     <MuscleBadge muscle={ex.muscleGroup} />
                     <span className="text-[12px] text-muted-foreground ml-2 flex-shrink-0">
                         {ex.sets}×{ex.reps}
                     </span>
                 </div>
             ))}
+
+            {/* Prescrito e não executado. Só aparece em sessão com snapshot — é a
+                informação que nenhuma lista derivada de séries conseguia ter. */}
+            {unexecuted.length > 0 && (
+                <div className="border-t border-border">
+                    {unexecuted.map((ex) => (
+                        <div
+                            key={`${ex.kind}-${ex.exerciseId}`}
+                            className="flex items-center gap-3 px-4 py-3"
+                        >
+                            <span className="text-[13px] text-muted-foreground flex-1 min-w-0 truncate">
+                                {ex.name}
+                            </span>
+                            <DeviationBadge kind={ex.kind} relatedName={ex.replacedByName} />
+                        </div>
+                    ))}
+                </div>
+            )}
         </motion.div>
     );
 };

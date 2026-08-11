@@ -1,4 +1,5 @@
 import { calculateSessionSummary } from "@/features/workouts/utils/analytics";
+import { buildSessionDeviations } from "@/features/workouts/utils/session-deviation";
 import type { WorkoutSession } from "@/features/workouts/workout.types";
 import type { MuscleGroup } from "@plato/database/generated/prisma/enums";
 import { path } from "@/core/constants/path";
@@ -20,6 +21,8 @@ export const useSessionHistoryCardLogic = (
 
     const prExercises = sessionPrMap.get(session.id);
 
+    const deviations = buildSessionDeviations(session);
+
     const exercises = uniqueExerciseIds.map(exId => {
         const set = session.sessionSet.find((s) => s.exerciseId === exId);
         const exercise = set?.exercise;
@@ -30,6 +33,7 @@ export const useSessionHistoryCardLogic = (
             muscleGroup: exercise?.targetMuscle as MuscleGroup | undefined,
             hasPr: prExercises?.has(exId) ?? false,
             note: rawNote ?? undefined,
+            deviation: deviations.byExerciseId.get(exId),
         };
     });
 
@@ -47,6 +51,7 @@ export const useSessionHistoryCardLogic = (
         totalSets,
         exerciseCount,
         exercises,
+        unexecuted: deviations.unexecuted,
         handleExerciseClick,
     };
 };

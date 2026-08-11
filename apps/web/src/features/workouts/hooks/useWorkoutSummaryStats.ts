@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { MuscleGroup } from "@plato/database/dist/generated/prisma/enums.ts";
 import type { Workout, WorkoutSession } from "@/features/workouts/workout.types.ts";
 import { calculateTotalVolume, calculateSessionDuration, externalLoad, setVolume } from "@plato/shared";
+import { buildSessionDeviations, type ExerciseDeviation, type UnexecutedExercise } from "@/features/workouts/utils/session-deviation.ts";
 
 export type SummaryStats = {
     totalVolume: number;
@@ -13,6 +14,7 @@ export type SummaryStats = {
         muscleGroup: MuscleGroup;
         sets: number;
         reps: number;
+        deviation?: ExerciseDeviation;
     }[];
     volumeByGroup: {
         group: MuscleGroup;
@@ -25,6 +27,8 @@ export type SummaryStats = {
         previousMax: number | null;
         newMax: number;
     }[];
+    /** Prescrito que não gerou série: pulado, trocado ou simplesmente não feito. */
+    unexecuted: UnexecutedExercise[];
 };
 
 export const useWorkoutSummaryStats = (
@@ -68,6 +72,8 @@ export const useWorkoutSummaryStats = (
             setsByExercise[set.exerciseId].push(set);
         });
 
+        const deviations = buildSessionDeviations(workoutSession);
+
         // Derivado das SÉRIES, não do plano do treino: partindo do plano, um exercício
         // adicionado durante a sessão nunca aparecia no resumo, mesmo com séries
         // registradas — e o mesmo valia para um exercício removido do treino depois.
@@ -87,6 +93,7 @@ export const useWorkoutSummaryStats = (
                     muscleGroup: exercise!.targetMuscle,
                     sets: exSets.length,
                     reps: lastSet.actualReps,
+                    deviation: deviations.byExerciseId.get(exerciseId),
                 };
             })
             .sort((a, b) => (planOrder.get(a.id) ?? Infinity) - (planOrder.get(b.id) ?? Infinity));
@@ -123,6 +130,7 @@ export const useWorkoutSummaryStats = (
             completedExercises,
             volumeByGroup,
             newPRs,
+            unexecuted: deviations.unexecuted,
         };
     }, [workoutSession, workout, lastSession]);
 };
