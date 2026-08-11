@@ -136,6 +136,11 @@ const substitute = async (
             targetSets:       original.targetSets,
             targetReps:       original.targetReps,
             observation:      original.observation,
+            // `groupKey` NÃO é herdado, de propósito. O substituto vai para `max + 1`
+            // e o grupo é definido por contiguidade — herdar a chave criaria um
+            // membro solto no fim da lista, que é exatamente a chave órfã que
+            // `normalizeExerciseGroups` existe para impedir. O original continua no
+            // grupo: o snapshot registra o que foi PRESCRITO, e prescrito ele foi.
             origin:           "SUBSTITUTED",
             substitutedForId: original.id,
         },

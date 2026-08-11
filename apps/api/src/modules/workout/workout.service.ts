@@ -1,4 +1,5 @@
 import prisma from "@plato/database";
+import { normalizeExerciseGroups } from "@plato/shared";
 import { ensureOwnership } from "../../shared/utils/auth";
 import { CreateWorkoutInput, UpdateWorkoutInput } from "./workout.schema";
 import { CreateWorkoutExerciseInput } from "./workout-exercise/workout-exercise.schema";
@@ -17,7 +18,24 @@ const toWorkoutExerciseRow = (ex: CreateWorkoutExerciseInput) => ({
     targetSets: ex.targetSets,
     targetReps: ex.targetReps,
     observation: ex.observations ?? null,
+    groupKey: ex.groupKey ?? null,
+    groupType: ex.groupType ?? null,
 });
+
+/**
+ * Linhas prontas para gravar, com os grupos já normalizados.
+ *
+ * Ordena por `orderIndex` antes de normalizar porque grupo é definido por
+ * contiguidade na ordem de execução, e nada obriga o cliente a mandar o array
+ * ordenado. O editor já normaliza ao vivo, mas o contrato é público — um payload com
+ * `groupKey` órfão gravaria um bi-set de um exercício só.
+ */
+const toWorkoutExerciseRows = (exercises: readonly CreateWorkoutExerciseInput[]) =>
+    normalizeExerciseGroups(
+        [...exercises]
+            .sort((a, b) => a.orderIndex - b.orderIndex)
+            .map(toWorkoutExerciseRow)
+    );
 
 const create = async (userId: number, data: CreateWorkoutInput) => {
     const { exercises, ...workoutData } = data;
@@ -27,7 +45,7 @@ const create = async (userId: number, data: CreateWorkoutInput) => {
             ...workoutData,
             user: { connect: { id: userId } },
             workoutExercise: {
-                create: exercises.map(toWorkoutExerciseRow)
+                create: toWorkoutExerciseRows(exercises)
             }
         },
         include: WORKOUT_INCLUDE
@@ -77,7 +95,7 @@ const update = async (userId: number, workoutId: number, data: UpdateWorkoutInpu
         await tx.workoutExercise.deleteMany({ where: { workoutId } });
         await tx.workout.update({ where: { id: workoutId }, data: workoutData });
         await tx.workoutExercise.createMany({
-            data: exercises.map(ex => ({ workoutId, ...toWorkoutExerciseRow(ex) }))
+            data: toWorkoutExerciseRows(exercises).map(row => ({ workoutId, ...row }))
         })
     });
 

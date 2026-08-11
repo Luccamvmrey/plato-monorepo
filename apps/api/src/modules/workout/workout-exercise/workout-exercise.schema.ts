@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EXERCISE_GROUP_TYPES } from "@plato/shared";
 
 export const createWorkoutExerciseSchema = z.object({
     exerciseId: z.number().int().positive("Exercise ID is required"),
@@ -6,6 +7,11 @@ export const createWorkoutExerciseSchema = z.object({
     targetSets: z.number().int().positive("Sets must be a positive integer"),
     targetReps: z.number().int().positive("Reps must be a positive integer"),
     observations: z.string().optional(),
+    /// Rótulo de agrupamento. `nullish` e não `optional`: desagrupar é mandar null
+    /// explicitamente, e o update é substituição completa — ausente e null precisam
+    /// significar a mesma coisa aqui, mas o cliente manda null e o contrato aceita.
+    groupKey: z.string().min(1).nullish(),
+    groupType: z.enum(EXERCISE_GROUP_TYPES).nullish(),
 });
 
 // O update de treino é substituição completa (deleteMany + createMany), então cada

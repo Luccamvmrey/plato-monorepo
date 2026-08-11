@@ -77,6 +77,8 @@ const create = async (userId: number, data: any) => {
             targetSets:  true,
             targetReps:  true,
             observation: true,
+            groupKey:    true,
+            groupType:   true,
         }
     });
 
@@ -89,12 +91,17 @@ const create = async (userId: number, data: any) => {
                 // orderIndex derivado da POSIÇÃO, não copiado do plano: o do plano vem
                 // do cliente e um valor repetido violaria @@unique([workoutSessionId,
                 // orderIndex]) — o que faria falhar o início do treino, não o snapshot.
+                // `groupKey` é copiado como está. A ordem do snapshot é a mesma do
+                // plano, então a contiguidade que define o grupo se preserva; e o
+                // plano já foi normalizado na escrita, então não há chave órfã aqui.
                 create: planned.map((exercise, index) => ({
                     exerciseId:  exercise.exerciseId,
                     orderIndex:  index + 1,
                     targetSets:  exercise.targetSets,
                     targetReps:  exercise.targetReps,
                     observation: exercise.observation,
+                    groupKey:    exercise.groupKey,
+                    groupType:   exercise.groupType,
                 }))
             }
         }
