@@ -39,6 +39,7 @@ interface WorkoutEditorActions {
     // Exercise List
     addExercises: (exercises: Exercise[]) => void;
     removeExercise: (instanceId: string) => void;
+    replaceExercise: (instanceId: string, exercise: Exercise) => void;
     updateExerciseField: (instanceId: string, field: "targetSets" | "targetReps", value: number) => void;
 
     loadWorkout: (workout: Workout) => void;
@@ -76,6 +77,14 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
                 const resynced = filtered.map((ex, idx) => ({ ...ex, orderIndex: idx + 1 }));
                 return { exercises: resynced };
             }),
+
+            // Troca o exercício preservando séries, repetições e posição: quem
+            // substitui quer o mesmo lugar na prescrição, com outro movimento.
+            replaceExercise: (instanceId, exercise) => set((state) => ({
+                exercises: state.exercises.map((ex) =>
+                    ex.instanceId === instanceId ? { ...ex, exercise } : ex
+                )
+            })),
 
             updateExerciseField: (instanceId, field, value) => set((state) => ({
                 exercises: state.exercises.map((ex) =>

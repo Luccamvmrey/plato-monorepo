@@ -8,6 +8,25 @@ import type {
 
 export type Exercise = PrismaExercise;
 
+/** Motivo da sugestão, em código. O rótulo vive em `utils/movement.ts`. */
+export type AlternativeReason =
+    | "SAME_PATTERN_SAME_EQUIPMENT"
+    | "SAME_PATTERN_OTHER_EQUIPMENT"
+    | "SAME_PATTERN_OTHER_MUSCLE"
+    | "SAME_MUSCLE_OTHER_PATTERN";
+
+export interface ExerciseAlternative extends Exercise {
+    reason: AlternativeReason;
+    /** Séries que o usuário já registrou neste exercício. Desempata o ranking. */
+    recordedSets: number;
+}
+
+/** Resposta de `GET /exercises/:id/alternatives`. */
+export interface ExerciseAlternatives {
+    target: Exercise;
+    alternatives: ExerciseAlternative[];
+}
+
 export interface WorkoutExercise extends PrismaWorkoutExercise {
     exercise?: Exercise;
 }

@@ -6,6 +6,8 @@ import { useWorkoutEditorLogic } from "@/features/workouts/hooks/useWorkoutEdito
 import { WorkoutEditorForm } from "@/features/workouts/components/workout-editor/components/WorkoutEditorForm.tsx";
 import { WorkoutEditorActions } from "@/features/workouts/components/workout-editor/components/WorkoutEditorActions.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
+import RedundancyNotice from "@/features/workouts/components/workout-editor/RedundancyNotice.tsx";
+import AlternativesSheet from "@/features/workouts/components/workout-editor/AlternativesSheet.tsx";
 
 const enterAnimation: Variants = {
     hidden: { opacity: 0, y: 10 },
@@ -30,6 +32,9 @@ const WorkoutEditorPage = () => {
         handleNameChange,
         handleDragEnd,
         handleDragStart,
+        redundantGroups,
+        inspectedDraft,
+        setInspectedDraft,
     } = useWorkoutEditorLogic();
 
     const FORM_ID = "workout-editor-form";
@@ -57,6 +62,9 @@ const WorkoutEditorPage = () => {
                     onNameChange={handleNameChange}
                 />
                 <NewExerciseSheet />
+
+                <RedundancyNotice groups={redundantGroups} onInspect={setInspectedDraft} />
+                <AlternativesSheet draft={inspectedDraft} onClose={() => setInspectedDraft(null)} />
 
                 {validationErrors.exercises && (
                     <p

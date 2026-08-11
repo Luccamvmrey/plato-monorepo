@@ -7,6 +7,8 @@ import { createExerciseSchema, bulkCreateExerciseSchema, updateExerciseSchema } 
 const router = Router();
 
 router.get("/", exerciseController.list);
+// Autenticada, ao contrário do catálogo: o desempate usa o histórico do usuário.
+router.get("/:id/alternatives", authenticate, exerciseController.alternatives);
 router.post("/", authenticate, validateBody(createExerciseSchema), exerciseController.create);
 router.post("/bulk", authenticate, validateBody(bulkCreateExerciseSchema), exerciseController.bulkCreate);
 router.put("/:id", authenticate, validateBody(updateExerciseSchema), exerciseController.update);
