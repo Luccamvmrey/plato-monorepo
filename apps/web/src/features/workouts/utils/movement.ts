@@ -40,6 +40,23 @@ export const GROUP_TYPE_DESCRIPTION: Record<string, string> = {
     REST_PAUSE: "Uma série de cada, em cadeia contínua, com pausas curtas",
 };
 
+/**
+ * Rótulo do campo de carga na sessão ativa, por `LoadType`. `EXTERNAL` fica de fora —
+ * mantém "Carga" como já é hoje, sem mudança visual pro caso comum.
+ */
+export const LOAD_TYPE_LABEL: Record<string, string> = {
+    BODYWEIGHT:        "Carga extra",
+    BODYWEIGHT_LOADED: "Carga extra",
+    ASSISTED:          "Assistência",
+};
+
+/** Legenda que explica o que o número significa — evita registrar peso corporal como carga. */
+export const LOAD_TYPE_HINT: Record<string, string> = {
+    BODYWEIGHT:        "opcional · peso corporal já conta sozinho",
+    BODYWEIGHT_LOADED: "além do peso corporal, ex.: cinto",
+    ASSISTED:          "quanto menor, mais difícil",
+};
+
 export const ALTERNATIVE_REASON_LABEL: Record<string, string> = {
     SAME_PATTERN_SAME_EQUIPMENT:  "Mesmo padrão, mesmo equipamento",
     SAME_PATTERN_OTHER_EQUIPMENT: "Mesmo padrão, outro equipamento",
