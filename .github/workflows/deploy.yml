@@ -19,6 +19,11 @@ jobs:
             cd /var/www/plato
             git pull
             npm install
-            npm run build
+            npm run db:sync -w packages/database
+            npm run build -w packages/shared
             cp -r packages/database/generated packages/database/dist/
+            npm run build -w apps/api
+            npm run build -w apps/web
+            npm run build -w apps/mcp
             pm2 restart plato-api
+            pm2 restart plato-mcp
