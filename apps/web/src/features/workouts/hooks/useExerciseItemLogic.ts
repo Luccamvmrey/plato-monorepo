@@ -7,7 +7,6 @@ export const useExerciseItemLogic = (exercise: WorkoutExerciseDraft) => {
     const removeExercise = useWorkoutEditorStore(state => state.removeExercise);
     const groupWithNext = useWorkoutEditorStore(state => state.groupWithNext);
     const ungroup = useWorkoutEditorStore(state => state.ungroup);
-    const setGroupType = useWorkoutEditorStore(state => state.setGroupType);
 
     const onEditSets = (instanceId: string, sets: number) => {
         updateExerciseField(instanceId, "targetSets", sets);
@@ -37,7 +36,6 @@ export const useExerciseItemLogic = (exercise: WorkoutExerciseDraft) => {
         removeExercise,
         groupWithNext,
         ungroup,
-        setGroupType,
         attributes,
         listeners,
         setNodeRef,

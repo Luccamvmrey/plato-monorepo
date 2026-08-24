@@ -70,7 +70,6 @@ const ExerciseItem = ({ exercise, membership, canGroupWithNext }: ExerciseItemPr
         removeExercise,
         groupWithNext,
         ungroup,
-        setGroupType,
         attributes,
         listeners,
         setNodeRef,
@@ -113,7 +112,6 @@ const ExerciseItem = ({ exercise, membership, canGroupWithNext }: ExerciseItemPr
                 <ExerciseGroupChip
                     groupType={membership.groupType}
                     size={membership.size}
-                    onCycleType={(next) => setGroupType(exercise.instanceId, next)}
                     onUngroup={() => ungroup(exercise.instanceId)}
                 />
             )}

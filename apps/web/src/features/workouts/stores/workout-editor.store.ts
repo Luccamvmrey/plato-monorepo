@@ -58,7 +58,6 @@ interface WorkoutEditorActions {
     // Grouping
     groupWithNext: (instanceId: string) => void;
     ungroup: (instanceId: string) => void;
-    setGroupType: (instanceId: string, groupType: ExerciseGroupTypeValue) => void;
 
     // Lifecycle
     reset: () => void;
@@ -191,17 +190,6 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
                             ? { ...ex, groupKey: null, groupType: null }
                             : ex
                     )),
-                };
-            }),
-
-            setGroupType: (instanceId, groupType) => set((state) => {
-                const target = state.exercises.find(ex => ex.instanceId === instanceId);
-                if (!target?.groupKey) return state;
-
-                return {
-                    exercises: state.exercises.map((ex) =>
-                        ex.groupKey === target.groupKey ? { ...ex, groupType } : ex
-                    ),
                 };
             }),
 

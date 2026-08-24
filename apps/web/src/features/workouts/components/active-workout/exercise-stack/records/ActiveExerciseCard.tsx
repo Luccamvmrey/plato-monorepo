@@ -19,6 +19,7 @@ import {
 import AlternativesSheet from "@/features/workouts/components/workout-editor/AlternativesSheet.tsx";
 import type { EnrichedExerciseRecord, ExerciseHistoryMap, SessionSet } from "@/features/workouts/workout.types.ts";
 import { formatWeightPtBr, type ProgressionAdvice } from "@/features/workouts/utils/progression.ts";
+import { LOAD_TYPE_HINT, LOAD_TYPE_LABEL } from "@/features/workouts/utils/movement.ts";
 import { UNITS } from "@/core/constants/units.ts";
 
 type ActiveExerciseCardProps = {
@@ -188,7 +189,7 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                 <div className="flex gap-3">
                     <div className="flex-1 flex flex-col gap-1">
                         <span className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground text-center">
-                            Carga
+                            {LOAD_TYPE_LABEL[record.exercise.loadType] ?? "Carga"}
                         </span>
                         {/* type="text" e não "number": com "number" o browser descarta a
                             vírgula decimal do teclado pt-BR e "82,5" chega como "". */}
@@ -197,7 +198,7 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                             type="text"
                             inputMode="decimal"
                             enterKeyHint="next"
-                            aria-label="Carga"
+                            aria-label={LOAD_TYPE_LABEL[record.exercise.loadType] ?? "Carga"}
                             placeholder={seed.weight != null ? `${seed.weight}` : "0"}
                             value={weight}
                             onChange={(e) => setWeight(e.target.value)}
@@ -206,14 +207,19 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                             className="input-workout"
                         />
                         {/* Substitui a legenda "kg" em vez de somar uma linha — custo
-                            vertical zero. Avisa e marca o desvio, sem bloquear o registro. */}
+                            vertical zero. Avisa e marca o desvio, sem bloquear o registro.
+                            Para peso corporal/assistido, a legenda também explica o que o
+                            número significa — sem isso dá pra confundir carga extra com o
+                            peso corporal inteiro (ex.: Dips). */}
                         <span className={cn(
                             "text-[12px] text-center",
                             isOverPrescribed ? "text-destructive" : "text-muted-foreground"
                         )}>
                             {isOverPrescribed
                                 ? `acima do prescrito · ${formatWeightPtBr(advice.suggestedWeight!)} ${UNITS.WEIGHT}`
-                                : UNITS.WEIGHT}
+                                : LOAD_TYPE_HINT[record.exercise.loadType]
+                                    ? `${UNITS.WEIGHT} · ${LOAD_TYPE_HINT[record.exercise.loadType]}`
+                                    : UNITS.WEIGHT}
                         </span>
                     </div>
 
