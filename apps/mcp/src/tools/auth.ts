@@ -1,33 +1,41 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod/v4";
-import bcrypt from "bcrypt";
-import { prisma } from "@plato/database";
+import { revokeAllSessions, revokeToken } from "../oauth/store.js";
 
-export function registerAuthTools(server: McpServer, setUserId: (id: number) => void) {
+export function registerAuthTools(server: McpServer, requireAuth: () => number) {
     server.registerTool(
-        "login",
+        "logout",
         {
-            title: "Login",
-            description: "Authenticate with the Plato app. Required before any other tool.",
+            title: "Logout",
+            description:
+                "Sign out of the Plato app by revoking the current OAuth session. After this, every tool call fails until the user reconnects (re-authenticates) the connector.",
             inputSchema: z.object({
-                email: z.string().describe("User email"),
-                password: z.string().describe("User password"),
+                all_devices: z
+                    .boolean()
+                    .optional()
+                    .describe("Also revoke every other OAuth session of this user (other clients/devices). Default false."),
             }),
         },
-        async ({ email, password }) => {
-            const user = await prisma.user.findUnique({ where: { email } });
+        async ({ all_devices }, ctx) => {
+            const userId = requireAuth();
+            const token = ctx.http?.authInfo?.token;
 
-            if (!user || !(await bcrypt.compare(password, user.password))) {
+            if (!token) {
                 return {
-                    content: [{ type: "text" as const, text: "Invalid credentials." }],
+                    content: [{ type: "text" as const, text: "No OAuth session on this connection." }],
                     isError: true,
                 };
             }
 
-            setUserId(user.id);
+            const revoked = all_devices ? await revokeAllSessions(userId) : await revokeToken(token);
 
             return {
-                content: [{ type: "text" as const, text: `Logged in as ${user.name} (id: ${user.id}).` }],
+                content: [
+                    {
+                        type: "text" as const,
+                        text: `Logged out (${revoked} session${revoked === 1 ? "" : "s"} revoked). Reconnect the Plato connector to sign in again.`,
+                    },
+                ],
             };
         }
     );

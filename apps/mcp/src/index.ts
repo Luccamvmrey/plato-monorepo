@@ -1,59 +1,64 @@
 import { createServer } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { randomUUID } from "node:crypto";
+import type { AuthInfo } from "@modelcontextprotocol/server";
+import { bearerAuthChallengeResponse, verifyBearerToken } from "@modelcontextprotocol/server";
 import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
 import { buildServer, isInitializeRequest } from "./server.js";
+import { readBody, sendJson, sendWebResponse } from "./http.js";
+import { MCP_PATH, PORT, RESOURCE_METADATA_URL } from "./oauth/config.js";
+import { handleOAuthRoute } from "./oauth/routes.js";
+import { tokenVerifier, userIdOf } from "./oauth/store.js";
 
-const PORT = parseInt(process.env.PORT ?? "3001", 10);
-const MCP_SECRET = process.env.MCP_SECRET;
+// Cada sessão MCP pertence ao usuário que a abriu; o token é revalidado a cada request.
+const sessions = new Map<string, { transport: NodeStreamableHTTPServerTransport; userId: number }>();
 
-const sessions = new Map<string, NodeStreamableHTTPServerTransport>();
+const bearerOptions = { verifier: tokenVerifier, resourceMetadataUrl: RESOURCE_METADATA_URL };
 
-const httpServer = createServer(async (req, res) => {
-    if (MCP_SECRET) {
-        const auth = req.headers["authorization"];
-        if (auth !== `Bearer ${MCP_SECRET}`) {
-            res.writeHead(401, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: "Unauthorized" }));
-            return;
-        }
-    }
+const jsonRpcError = (res: ServerResponse, status: number, code: number, message: string) =>
+    sendJson(res, status, { jsonrpc: "2.0", error: { code, message }, id: null });
 
-    if (req.url !== "/mcp") {
-        res.writeHead(404);
-        res.end();
-        return;
-    }
-
+async function handleMcp(req: IncomingMessage & { auth?: AuthInfo }, res: ServerResponse) {
     if (req.method === "GET" && !req.headers["mcp-session-id"]) {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: "ok" }));
+        sendJson(res, 200, { status: "ok" });
         return;
     }
+
+    let auth: AuthInfo;
+    try {
+        auth = await verifyBearerToken(req.headers["authorization"], bearerOptions);
+    } catch (error) {
+        await sendWebResponse(res, bearerAuthChallengeResponse(error, bearerOptions));
+        return;
+    }
+    req.auth = auth;
+    const userId = userIdOf(auth);
 
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
+    const session = sessionId ? sessions.get(sessionId) : undefined;
 
-    if (sessionId && sessions.has(sessionId)) {
-        await sessions.get(sessionId)!.handleRequest(req, res);
+    // Sessão de outro usuário (ex.: logout e login com outra conta) é tratada como
+    // inexistente, o que faz o cliente reinicializar com o usuário novo.
+    if (session && session.userId === userId) {
+        await session.transport.handleRequest(req, res);
         return;
     }
 
     if (!sessionId && req.method === "POST") {
-        let body = "";
-        for await (const chunk of req) body += chunk;
-        const parsed = JSON.parse(body);
+        const parsed: unknown = JSON.parse(await readBody(req));
 
         if (isInitializeRequest(parsed)) {
             const transport = new NodeStreamableHTTPServerTransport({
                 sessionIdGenerator: () => randomUUID(),
                 onsessioninitialized: (id) => {
-                    sessions.set(id, transport);
+                    sessions.set(id, { transport, userId });
                 },
             });
             transport.onclose = () => {
                 if (transport.sessionId) sessions.delete(transport.sessionId);
             };
 
-            const server = buildServer();
+            const server = buildServer(userId);
             await server.connect(transport);
             await transport.handleRequest(req, res, parsed);
             return;
@@ -61,13 +66,31 @@ const httpServer = createServer(async (req, res) => {
     }
 
     if (sessionId) {
-        res.writeHead(404, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ jsonrpc: "2.0", error: { code: -32001, message: "Session not found" }, id: null }));
+        jsonRpcError(res, 404, -32001, "Session not found");
         return;
     }
 
-    res.writeHead(400, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ jsonrpc: "2.0", error: { code: -32000, message: "Bad Request: Session ID required" }, id: null }));
+    jsonRpcError(res, 400, -32000, "Bad Request: Session ID required");
+}
+
+const httpServer = createServer(async (req, res) => {
+    try {
+        const url = new URL(req.url ?? "/", "http://localhost");
+
+        if (await handleOAuthRoute(req, res, url)) return;
+
+        if (url.pathname !== MCP_PATH) {
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+
+        await handleMcp(req, res);
+    } catch (error) {
+        console.error("Request failed", error);
+        if (!res.headersSent) sendJson(res, 500, { error: "Internal Server Error" });
+        else res.end();
+    }
 });
 
 httpServer.listen(PORT, () => {
