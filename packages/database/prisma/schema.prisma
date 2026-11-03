@@ -101,6 +101,53 @@ model User {
   personalRecord PersonalRecord[]
   bodyWeightLog  BodyWeightLog[]
   program        Program[]
+  oauthCode      OAuthAuthorizationCode[]
+  oauthSession   OAuthSession[]
+}
+
+/// Cliente OAuth registrado dinamicamente (RFC 7591) pelo host do MCP — Claude, Inspector etc.
+/// Só clientes públicos: sem secret, a prova de posse é o PKCE.
+model OAuthClient {
+  id           String   @id
+  name         String?
+  redirectUris String[]
+  createdAt    DateTime @default(now())
+
+  authorizationCode OAuthAuthorizationCode[]
+  session           OAuthSession[]
+}
+
+/// Código de uso único entre o login e o `/oauth/token`. Guardado só o hash.
+model OAuthAuthorizationCode {
+  codeHash      String   @id
+  clientId      String
+  userId        Int
+  redirectUri   String
+  codeChallenge String
+  scope         String
+  expiresAt     DateTime
+
+  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Uma linha = um login de um cliente. O refresh rotaciona os dois tokens na mesma linha;
+/// logout apaga a linha, o que invalida access e refresh de uma vez.
+model OAuthSession {
+  id               Int      @id @default(autoincrement())
+  clientId         String
+  userId           Int
+  scope            String
+  accessTokenHash  String   @unique
+  accessExpiresAt  DateTime
+  refreshTokenHash String   @unique
+  refreshExpiresAt DateTime
+  createdAt        DateTime @default(now())
+
+  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Um conjunto ordenado de treinos (A → B → C …) que rotaciona continuamente.

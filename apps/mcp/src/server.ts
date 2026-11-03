@@ -10,26 +10,16 @@ import { registerBodyWeightTools } from "./tools/body-weight.js";
 import { registerAnalysisTools } from "./tools/analysis.js";
 import { registerExerciseResource } from "./resources/exercises.js";
 
-export function buildServer(): McpServer {
+export function buildServer(userId: number): McpServer {
     const server = new McpServer({
         name: "plato",
         version: "1.0.0",
     });
 
-    let userId: number | null = null;
+    // O usuário vem do token OAuth validado no transporte; a sessão MCP nasce autenticada.
+    const requireAuth = (): number => userId;
 
-    const setUserId = (id: number) => {
-        userId = id;
-    };
-
-    const requireAuth = (): number => {
-        if (userId === null) {
-            throw new Error("Not authenticated. Call the login tool first.");
-        }
-        return userId;
-    };
-
-    registerAuthTools(server, setUserId);
+    registerAuthTools(server, requireAuth);
     registerProfileTools(server, requireAuth);
     registerExerciseTools(server, requireAuth);
     registerWorkoutTools(server, requireAuth);
