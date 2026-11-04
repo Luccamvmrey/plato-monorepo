@@ -9,9 +9,18 @@ import type { ReactNode } from "react";
 type DeletionAlertDialogProps = {
     children: ReactNode;
     onConfirm: () => void;
+    title?: string;
+    description?: string;
+    confirmLabel?: string;
 };
 
-const DeletionAlertDialog = ({ children, onConfirm }: DeletionAlertDialogProps) => {
+const DeletionAlertDialog = ({
+    children,
+    onConfirm,
+    title = "Você tem certeza?",
+    description = "Esta ação não pode ser desfeita",
+    confirmLabel = "Deletar",
+}: DeletionAlertDialogProps) => {
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -19,12 +28,12 @@ const DeletionAlertDialog = ({ children, onConfirm }: DeletionAlertDialogProps) 
             </AlertDialogTrigger>
             <AlertDialogContent size="sm">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                    <AlertDialogDescription>Esta ação não pode ser desfeita</AlertDialogDescription>
+                    <AlertDialogTitle>{title}</AlertDialogTitle>
+                    <AlertDialogDescription>{description}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel variant="outline">Cancelar</AlertDialogCancel>
-                    <AlertDialogAction variant="destructive" onClick={onConfirm}>Deletar</AlertDialogAction>
+                    <AlertDialogAction variant="destructive" onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

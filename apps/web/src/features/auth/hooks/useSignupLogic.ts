@@ -1,4 +1,6 @@
 import { useAuth } from "@/features/auth/hooks/useAuth.ts";
+import { useReturnPath } from "@/features/auth/hooks/useReturnPath.ts";
+import { shareTokenFromReturnPath } from "@plato/shared";
 import { useLocation } from "wouter";
 import { path } from "@/core/constants/path.ts";
 import type { RegisterRequest } from "@/features/auth/auth.types.ts";
@@ -11,6 +13,7 @@ type SignupErrors = { name?: string; email?: string; password?: string; terms?: 
 export const useSignupLogic = () => {
     const { registerMutation } = useAuth();
     const [, navigate] = useLocation();
+    const { returnPath, withReturn } = useReturnPath();
     const [errors, setErrors] = useState<SignupErrors>({});
 
     const FORM_ID = "signup-form";
@@ -65,11 +68,13 @@ export const useSignupLogic = () => {
             setErrors(newErrors);
             return;
         }
-        registerMutation.mutate(data);
+        const sharedPlanToken = shareTokenFromReturnPath(returnPath) ?? undefined;
+
+        registerMutation.mutate({ ...data, sharedPlanToken });
     }
 
     const handleGoBack = () => {
-        navigate(path.LOGIN);
+        navigate(withReturn(path.LOGIN));
     }
 
     const emailTakenError = registerMutation.isError && (registerMutation.error as AxiosError)?.response?.status === 409

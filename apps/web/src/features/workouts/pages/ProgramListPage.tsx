@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, type Variants } from "framer-motion";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { path } from "@/core/constants/path.ts";
 import { usePrograms } from "@/features/workouts/hooks/usePrograms.ts";
 import ProgramListItem from "@/features/workouts/components/program/ProgramListItem.tsx";
+import type { ProgramWithWorkouts } from "@/features/workouts/program.types.ts";
+import ShareSheet from "@/features/sharing/components/ShareSheet.tsx";
+import { useFeaturedPlans } from "@/features/sharing/hooks/useFeaturedPlans.ts";
 
 const stagger: Variants = {
     hidden: {},
@@ -29,6 +33,8 @@ const ProgramListPage = () => {
         deactivateProgramMutation,
         deleteProgramMutation,
     } = usePrograms();
+    const { hasPlans: hasSuggestedPrograms } = useFeaturedPlans();
+    const [sharingProgram, setSharingProgram] = useState<ProgramWithWorkouts | null>(null);
 
     const { data: programs, isLoading } = programsQuery;
 
@@ -72,6 +78,18 @@ const ProgramListPage = () => {
                 Uma rotação de treinos, sem prender a dias da semana. O Plato sugere o próximo, e você pode fazer outro quando quiser.
             </motion.p>
 
+            {hasSuggestedPrograms && (
+                <motion.button
+                    variants={staggerItem}
+                    type="button"
+                    onClick={() => navigate(path.SUGGESTED)}
+                    className="flex items-center justify-between gap-3 min-h-11 px-1 text-[14px] font-medium text-primary text-left"
+                >
+                    Ver programas sugeridos
+                    <ChevronRight className="size-4 shrink-0" aria-hidden />
+                </motion.button>
+            )}
+
             <motion.div variants={staggerItem} className="flex-1 flex flex-col gap-3 mt-1">
                 {/* O esqueleto é escolhido ANTES do estado vazio: com `programs`
                     undefined durante o fetch, o convite a criar piscaria na tela. */}
@@ -100,10 +118,21 @@ const ProgramListPage = () => {
                             onDeactivate={() => deactivateProgramMutation.mutate(program.id)}
                             onEdit={() => navigate(`${path.PROGRAM_EDITOR}/${program.id}`)}
                             onDelete={() => deleteProgramMutation.mutate(program.id)}
+                            onShare={() => setSharingProgram(program)}
                         />
                     ))
                 )}
             </motion.div>
+
+            {sharingProgram && (
+                <ShareSheet
+                    kind="PROGRAM"
+                    sourceId={sharingProgram.id}
+                    name={sharingProgram.name}
+                    open
+                    onClose={() => setSharingProgram(null)}
+                />
+            )}
         </motion.div>
     );
 };

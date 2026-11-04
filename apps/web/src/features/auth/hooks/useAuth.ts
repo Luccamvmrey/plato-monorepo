@@ -4,16 +4,18 @@ import { AuthService } from "@/features/auth/auth.service.ts";
 import type { LoginResponse, RegisterRequest, RegisterResponse } from "@/features/auth/auth.types.ts";
 import { useLocation } from "wouter";
 import { path } from "@/core/constants/path.ts";
+import { useReturnPath } from "@/features/auth/hooks/useReturnPath.ts";
 
 export const useAuth = () => {
     const [, navigate] = useLocation();
+    const { returnPath, withReturn } = useReturnPath();
     const login = useAuthStore((state) => state.login);
 
     const loginMutation = useMutation({
         mutationFn: AuthService.login,
         onSuccess: (data: LoginResponse) => {
             login(data.token, data.user);
-            navigate(path.WORKOUTS);
+            navigate(returnPath ?? path.WORKOUTS);
         },
     });
 
@@ -24,7 +26,7 @@ export const useAuth = () => {
         onSuccess: (_data: RegisterResponse, variables: RegisterRequest) => {
             loginMutation.mutate(
                 { email: variables.email, password: variables.password },
-                { onError: () => navigate(path.LOGIN) }
+                { onError: () => navigate(withReturn(path.LOGIN)) }
             );
         },
     });

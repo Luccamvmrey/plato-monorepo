@@ -6,6 +6,7 @@ import WorkoutListItem from "@/features/workouts/components/workout-list/Workout
 import { Button } from "@/components/ui/button.tsx";
 import { useLocation } from "wouter";
 import { path } from "@/core/constants/path.ts";
+import { useFeaturedPlans } from "@/features/sharing/hooks/useFeaturedPlans.ts";
 
 type WorkoutListProps = {
     workouts?: Workout[];
@@ -33,6 +34,7 @@ const WorkoutList = ({
     programName,
 }: WorkoutListProps) => {
     const [, navigate] = useLocation();
+    const { hasPlans: hasSuggestedPrograms } = useFeaturedPlans();
 
     const handleCreateWorkout = () => {
         navigate(path.WORKOUT_EDITOR + "/new");
@@ -66,13 +68,20 @@ const WorkoutList = ({
                 {isArchivedView ? (
                     <p className="text-muted-foreground font-medium">Nenhum treino arquivado</p>
                 ) : (
-                    <Button
-                        variant="outline"
-                        className="flex flex-row gap-2 text-muted-foreground h-[56px] border-dashed border-2"
-                        onClick={handleCreateWorkout}
-                    >
-                        Crie seu primeiro treino
-                    </Button>
+                    <div className="flex flex-col items-center gap-2">
+                        {hasSuggestedPrograms && (
+                            <Button className="h-[52px] px-5 font-medium" onClick={() => navigate(path.SUGGESTED)}>
+                                Começar com um programa pronto
+                            </Button>
+                        )}
+                        <Button
+                            variant="outline"
+                            className="flex flex-row gap-2 text-muted-foreground h-[56px] border-dashed border-2"
+                            onClick={handleCreateWorkout}
+                        >
+                            Crie seu primeiro treino
+                        </Button>
+                    </div>
                 )}
             </div>
         )
