@@ -5,18 +5,23 @@ import { useState } from "react";
 import { path } from "@/core/constants/path";
 import type { Workout } from "@/features/workouts/workout.types";
 import { WorkoutService } from "@/features/workouts/services/workout.service";
+import { useTrackingMode } from "@/features/user/hooks/useTrackingMode";
+import type { TrackingModeValue } from "@/features/user/tracking-modes";
 
 export const useWorkoutListItemLogic = (workout: Workout) => {
     const navigate = useLocation()[1];
     const { createSessionMutation, findActiveSessionQuery } = useActiveSession();
+    const { needsChoice, saveTrackingMode, isLoading: isLoadingMode } = useTrackingMode();
     const toggleStatusMutation = useAppMutation({
         mutationFn: WorkoutService.toggleStatus,
         invalidateQueries: [["workouts"]],
     });
-    const { data: activeSessionData, isLoading } = findActiveSessionQuery;
+    const { data: activeSessionData, isLoading: isLoadingSession } = findActiveSessionQuery;
     const activeSession = activeSessionData?.activeSession;
+    const isLoading = isLoadingSession || isLoadingMode;
 
     const [conflictError, setConflictError] = useState<string | null>(null);
+    const [isChoosingMode, setIsChoosingMode] = useState(false);
 
     const handleEdit = () => {
         navigate(path.WORKOUT_EDITOR + `/${workout.id}`);
@@ -24,6 +29,11 @@ export const useWorkoutListItemLogic = (workout: Workout) => {
 
     const handleToggleStatus = () => {
         toggleStatusMutation.mutate(workout.id);
+    };
+
+    const startSession = () => {
+        setConflictError(null);
+        createSessionMutation.mutate({ workoutId: workout.id });
     };
 
     const handleQuickStart = () => {
@@ -39,8 +49,25 @@ export const useWorkoutListItemLogic = (workout: Workout) => {
             return;
         }
 
-        setConflictError(null);
-        createSessionMutation.mutate({ workoutId: workout.id });
+        if (needsChoice) {
+            setIsChoosingMode(true);
+            return;
+        }
+
+        startSession();
+    };
+
+    // A preferência tem de estar salva ANTES de criar a sessão: é o servidor que copia
+    // o modo do usuário para a sessão nova.
+    const handleChooseMode = async (mode: TrackingModeValue) => {
+        setIsChoosingMode(false);
+
+        try {
+            await saveTrackingMode(mode);
+            startSession();
+        } catch {
+            setConflictError("Não foi possível salvar sua escolha. Tente novamente.");
+        }
     };
 
     const isResumingSession = activeSession?.workoutId === workout.id;
@@ -58,5 +85,8 @@ export const useWorkoutListItemLogic = (workout: Workout) => {
         isPending: createSessionMutation.isPending || toggleStatusMutation.isPending,
         conflictError,
         createError,
+        isChoosingMode,
+        handleChooseMode,
+        cancelChoosingMode: () => setIsChoosingMode(false),
     };
 };

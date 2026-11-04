@@ -19,7 +19,7 @@ export const BodyWeightCard = () => {
     return (
         <div className="mx-4 mb-4 bg-card border rounded-xl p-4">
             <div className="flex items-start justify-between gap-3 mb-3">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.05em]">
+                <p className="text-[13px] text-muted-foreground">
                     Peso corporal
                 </p>
 
@@ -112,7 +112,7 @@ export const BodyWeightCard = () => {
 
             {logs.length > 1 && (
                 <div className="mt-4 pt-4 border-t">
-                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.05em] mb-2">
+                    <p className="text-[13px] text-muted-foreground mb-2">
                         Histórico
                     </p>
 

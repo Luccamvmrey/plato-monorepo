@@ -38,6 +38,7 @@ interface ActiveWorkoutActions {
     addExtraSet: (exerciseId: number) => void;
     setExerciseOrder: (order: number[]) => void;
     setExerciseWeight: (exerciseId: number, weight: number | null) => void;
+    undoLastSet: (exerciseId: number) => void;
     startRest: () => void;
     adjustRest: (deltaSeconds: number) => void;
     dismissRest: () => void;
@@ -88,6 +89,25 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
                           }
                         : state.activeSession,
                 })),
+
+            undoLastSet: (exerciseId) =>
+                set((state) => {
+                    if (!state.activeSession) return state;
+
+                    const { pendingSets } = state.activeSession;
+                    const lastIndex = pendingSets.map((pending) => pending.exerciseId).lastIndexOf(exerciseId);
+
+                    if (lastIndex === -1) return state;
+
+                    return {
+                        // O descanso era o da série desfeita.
+                        restEndsAt: null,
+                        activeSession: {
+                            ...state.activeSession,
+                            pendingSets: pendingSets.filter((_, index) => index !== lastIndex),
+                        },
+                    };
+                }),
 
             startRest: () =>
                 set((state) => ({ restEndsAt: Date.now() + state.restDuration * 1000 })),

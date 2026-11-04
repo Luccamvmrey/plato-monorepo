@@ -70,25 +70,26 @@ const ProgramEditorPage = () => {
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <h1 className="text-xl font-medium tracking-tight">
+                <h1 className="text-[24px] font-semibold tracking-[-0.03em]">
                     {isNew ? "Novo programa" : "Editar programa"}
                 </h1>
             </div>
 
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                    <Label htmlFor="program-name">Nome</Label>
+                    <Label htmlFor="program-name" className="text-[13px] font-normal text-muted-foreground ml-1">Nome</Label>
                     <Input
                         id="program-name"
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                         placeholder="Rotação A–E"
+                        className="h-12 text-lg font-medium tracking-tight"
                         autoComplete="off"
                     />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <Label htmlFor="program-description">Descrição (opcional)</Label>
+                    <Label htmlFor="program-description" className="text-[13px] font-normal text-muted-foreground ml-1">Descrição (opcional)</Label>
                     <Textarea
                         id="program-description"
                         value={description}
@@ -119,7 +120,7 @@ const ProgramEditorPage = () => {
                 )}
             >
                 <Button
-                    className="w-full h-14 rounded-xl font-medium tracking-tight gap-2"
+                    className="w-full h-[52px] font-medium tracking-[-0.01em] gap-2"
                     onClick={handleSubmit}
                     disabled={!canSubmit}
                 >

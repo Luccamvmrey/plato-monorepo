@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import type { Workout } from "@/features/workouts/workout.types.ts";
 import type { ProgramCycleEntry } from "@/features/workouts/program.types.ts";
 import WorkoutListItem from "@/features/workouts/components/workout-list/WorkoutListItem.tsx";
@@ -14,10 +15,14 @@ type WorkoutListProps = {
     programName?: string;
 };
 
-const SectionLabel = ({ children }: { children: string }) => (
-    <h2 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground px-1">
+const Section = ({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) => (
+    <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3 px-1 min-h-6">
+            <h2 className="text-[13px] font-medium text-muted-foreground truncate">{title}</h2>
+            {action}
+        </div>
         {children}
-    </h2>
+    </section>
 );
 
 const WorkoutList = ({
@@ -73,26 +78,48 @@ const WorkoutList = ({
         )
     }
 
+    const standaloneItems = standalone.map((workout) => (
+        <WorkoutListItem
+            workout={workout}
+            key={workout.id}
+            isLastDone={workout.id === lastCompletedWorkoutId}
+        />
+    ));
+
     if (inProgram.length === 0) {
-        return (
-            <div className="flex flex-col gap-4">
-                {standalone.map((workout) => (
-                    <WorkoutListItem
-                        workout={workout}
-                        key={workout.id}
-                        isLastDone={workout.id === lastCompletedWorkoutId}
-                    />
-                ))}
-            </div>
-        );
+        return <div className="flex flex-col gap-2">{standaloneItems}</div>;
     }
 
+    const featured = inProgram.find((workout) => cycleEntryFor(workout.id)?.isNext);
+    const restOfCycle = inProgram.filter((workout) => workout !== featured);
+
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-3">
-                <SectionLabel>{programName ?? "Programa"}</SectionLabel>
-                <div className="flex flex-col gap-4">
-                    {inProgram.map((workout) => (
+        <div className="flex flex-col gap-5">
+            {featured && (
+                <WorkoutListItem
+                    workout={featured}
+                    isLastDone={featured.id === lastCompletedWorkoutId}
+                    cycleEntry={cycleEntryFor(featured.id)}
+                    cycleTotal={cycle?.length}
+                    programName={programName}
+                    isFeatured
+                />
+            )}
+
+            {restOfCycle.length > 0 && (
+                <Section
+                    title={featured ? "Resto da rotação" : programName ?? "Programa"}
+                    action={
+                        <button
+                            type="button"
+                            onClick={() => navigate(path.PROGRAMS)}
+                            className="relative tap-target text-[13px] font-medium text-primary shrink-0"
+                        >
+                            Programas
+                        </button>
+                    }
+                >
+                    {restOfCycle.map((workout) => (
                         <WorkoutListItem
                             workout={workout}
                             key={workout.id}
@@ -101,23 +128,10 @@ const WorkoutList = ({
                             cycleTotal={cycle?.length}
                         />
                     ))}
-                </div>
-            </div>
-
-            {standalone.length > 0 && (
-                <div className="flex flex-col gap-3">
-                    <SectionLabel>Avulsos</SectionLabel>
-                    <div className="flex flex-col gap-4">
-                        {standalone.map((workout) => (
-                            <WorkoutListItem
-                                workout={workout}
-                                key={workout.id}
-                                isLastDone={workout.id === lastCompletedWorkoutId}
-                            />
-                        ))}
-                    </div>
-                </div>
+                </Section>
             )}
+
+            {standalone.length > 0 && <Section title="Fora da rotação">{standaloneItems}</Section>}
         </div>
     );
 };

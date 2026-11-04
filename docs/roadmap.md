@@ -75,7 +75,7 @@ Não aparece para o usuário, mas é pré-requisito para cobrar.
 - Timer de descanso com vibração, automático depois de cada série e só no fim da rodada em bi-sets.
 
 **Modo simplificado (5 a 8 dias):**
-- Criar o enum `TrackingMode { FULL, SIMPLE }` em `Workout`, copiado para `WorkoutSession` no início, como o snapshot já faz.
+- Criar o enum `TrackingMode { FULL, SIMPLE }` como preferência em `User`, copiada para `WorkoutSession` no início, como o snapshot já faz.
 - Tornar `actualWeight` e `rpe` anuláveis. Não gravar `0` nem `8` como valor padrão: 0 kg é carga legítima e o RPE 8 seria inventado.
 - Preencher `actualReps` com as reps previstas e aplicar o peso opcional às séries do exercício.
 - Gravar com `excludedFromRecords = true` na v1, porque as reps são presumidas e não devem alimentar PR, e1RM nem progressão. A flag já existe e o histórico já a filtra.

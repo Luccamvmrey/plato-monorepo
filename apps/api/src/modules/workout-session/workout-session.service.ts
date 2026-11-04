@@ -82,11 +82,18 @@ const create = async (userId: number, data: any) => {
         }
     });
 
+    // O modo é preferência da pessoa, não do treino. Copiado para a sessão porque
+    // trocar a preferência depois não pode mudar como uma sessão já foi registrada.
+    const user = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { trackingMode: true },
+    });
+
     const newSession = await prisma.workoutSession.create({
         data: {
             user: { connect: { id: userId } },
             workout: { connect: { id: data.workoutId } },
-            trackingMode: workout!.trackingMode,
+            trackingMode: user.trackingMode,
             ...(programId !== null ? { program: { connect: { id: programId } } } : {}),
             sessionExercise: {
                 // orderIndex derivado da POSIÇÃO, não copiado do plano: o do plano vem
@@ -149,7 +156,7 @@ const listById = async (userId: number, workoutSessionId: number) => {
 const findActiveSession = async (userId: number) => {
     const activeSession = await prisma.workoutSession.findFirst({
         where: { userId, completedAt: null },
-        include: SESSION_INCLUDE
+        include: SESSION_WITH_WORKOUT_INCLUDE
     });
 
     if (!activeSession) return null;

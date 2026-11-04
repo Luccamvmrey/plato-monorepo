@@ -11,6 +11,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/profile', userController.profile);
+router.get('/tracking-mode', userController.trackingPreference);
 router.get('/stats', userController.stats);
 router.get('/streak', userController.streak);
 router.get('/export', userController.exportData);

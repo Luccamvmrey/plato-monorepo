@@ -23,6 +23,9 @@ export const loginSchema = z.object({
 
 // `password` fica de fora de propósito: o service não passa por hashPassword, então
 // aceitar a senha aqui gravaria texto puro no banco. Troca de senha é fluxo próprio.
-export const updateUserSchema = registerSchema.omit({ password: true, acceptedTerms: true }).partial()
+export const updateUserSchema = registerSchema
+    .omit({ password: true, acceptedTerms: true })
+    .extend({ trackingMode: z.enum(["FULL", "SIMPLE"]) })
+    .partial()
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>

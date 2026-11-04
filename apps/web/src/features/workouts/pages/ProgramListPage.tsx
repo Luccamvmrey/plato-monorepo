@@ -55,7 +55,7 @@ const ProgramListPage = () => {
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Button>
-                    <h1 className="text-xl font-medium tracking-tight">Programas</h1>
+                    <h1 className="text-[24px] font-semibold tracking-[-0.03em]">Programas</h1>
                 </div>
                 <Button
                     variant="ghost"
@@ -68,12 +68,11 @@ const ProgramListPage = () => {
                 </Button>
             </motion.div>
 
-            <motion.p variants={staggerItem} className="text-[13px] text-muted-foreground px-1">
-                Um programa é uma rotação de treinos. O Plato sugere o próximo da ordem —
-                sem prender a dias da semana, e sem bloquear se você fizer outro.
+            <motion.p variants={staggerItem} className="text-[14px] text-muted-foreground px-1">
+                Uma rotação de treinos, sem prender a dias da semana. O Plato sugere o próximo, e você pode fazer outro quando quiser.
             </motion.p>
 
-            <motion.div variants={staggerItem} className="flex-1 flex flex-col gap-4 mt-1">
+            <motion.div variants={staggerItem} className="flex-1 flex flex-col gap-3 mt-1">
                 {/* O esqueleto é escolhido ANTES do estado vazio: com `programs`
                     undefined durante o fetch, o convite a criar piscaria na tela. */}
                 {isLoading ? (

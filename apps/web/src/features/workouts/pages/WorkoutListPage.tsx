@@ -8,7 +8,6 @@ import { WorkoutListSkeleton } from "@/features/workouts/components/workout-list
 import WorkoutListHeader from "@/features/workouts/components/workout-list/WorkoutListHeader.tsx";
 import WorkoutList from "@/features/workouts/components/workout-list/WorkoutList.tsx";
 import StreakWidget from "@/features/workouts/components/workout-list/StreakWidget.tsx";
-import { Button } from "@/components/ui/button.tsx";
 
 const stagger: Variants = {
     hidden: {},
@@ -44,31 +43,13 @@ const WorkoutListPage = () => {
                 <WorkoutListHeader />
             </motion.div>
 
-            {streakData && (
+            {streakData && !showArchived && (
                 <motion.div variants={staggerItem}>
                     <StreakWidget streak={streakData} />
                 </motion.div>
             )}
 
-            {/* Fica fora da visão de arquivados: lá a rotação não diz nada. */}
-            {!showArchived && (
-                <motion.div variants={staggerItem}>
-                    <ActiveProgramBanner />
-                </motion.div>
-            )}
-
-            <motion.div variants={staggerItem} className="flex justify-end -mt-2">
-                <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => setShowArchived(!showArchived)}
-                    className="text-muted-foreground text-xs font-normal h-auto p-0 hover:no-underline relative tap-target"
-                >
-                    {showArchived ? "Ver Ativos" : "Ver Arquivados"}
-                </Button>
-            </motion.div>
-
-            <motion.div variants={staggerItem} className="flex-1 flex flex-col">
+            <motion.div variants={staggerItem} className="flex-1 flex flex-col mt-1">
                 {/* O esqueleto precisa ser escolhido ANTES do WorkoutList: com
                     `workouts` ainda undefined ele já decidiu que a lista está
                     vazia, e o "Crie seu primeiro treino" piscava atrás do
@@ -84,6 +65,23 @@ const WorkoutListPage = () => {
                         programName={activeProgram?.program.name}
                     />
                 )}
+            </motion.div>
+
+            {/* Fica fora da visão de arquivados: lá a rotação não diz nada. */}
+            {!showArchived && (
+                <motion.div variants={staggerItem}>
+                    <ActiveProgramBanner />
+                </motion.div>
+            )}
+
+            <motion.div variants={staggerItem} className="flex justify-center">
+                <button
+                    type="button"
+                    onClick={() => setShowArchived(!showArchived)}
+                    className="min-h-11 px-3 text-[13px] text-muted-foreground"
+                >
+                    {showArchived ? "Voltar para os treinos ativos" : "Ver treinos arquivados"}
+                </button>
             </motion.div>
         </motion.div>
     );

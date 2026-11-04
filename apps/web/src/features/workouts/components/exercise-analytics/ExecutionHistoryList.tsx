@@ -1,70 +1,60 @@
-import { formatDateShort } from "@/core/utils/formatters";
+import { useState } from "react";
+import { formatDateCustom } from "@/core/utils/formatters";
 import { UNITS } from "@/core/constants/units";
+import { formatWeightPtBr } from "@/features/workouts/utils/progression";
+import type { ExerciseExecutionRow } from "@/features/workouts/hooks/useExerciseAnalytics";
 
-interface SetEntry {
-    date: Date;
-    weight: number;
-    reps: number;
-    rpe: number;
-    e1rm: number;
-    note?: string;
-}
+const INITIAL_ROWS = 6;
 
-interface ExecutionHistoryListProps {
-    data: SetEntry[];
-}
+const loadLine = ({ setCount, topLoad }: ExerciseExecutionRow) =>
+    topLoad !== null && topLoad > 0
+        ? `${setCount} × ${formatWeightPtBr(topLoad)} ${UNITS.WEIGHT}`
+        : `${setCount} ${setCount === 1 ? UNITS.SINGLE_SET : UNITS.SETS}`;
 
-export const ExecutionHistoryList = ({ data }: ExecutionHistoryListProps) => {
-    const sorted = data.slice().reverse();
+/** Uma linha por sessão: o que se compara é uma sessão com a anterior, não série a série. */
+export const ExecutionHistoryList = ({ executions }: { executions: ExerciseExecutionRow[] }) => {
+    const [showAll, setShowAll] = useState(false);
 
-    const grouped: { date: string; sets: SetEntry[]; note?: string }[] = [];
-    const seen = new Set<string>();
-
-    for (const entry of sorted) {
-        const key = formatDateShort(entry.date);
-        if (!seen.has(key)) {
-            seen.add(key);
-            grouped.push({ date: key, sets: [], note: entry.note });
-        }
-        grouped[grouped.length - 1].sets.push(entry);
-    }
+    const newestFirst = [...executions].reverse();
+    const rows = showAll ? newestFirst : newestFirst.slice(0, INITIAL_ROWS);
 
     return (
-        <div className="mx-4 mb-6 bg-card border border-border rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-                <p className="text-[13px] font-medium text-foreground">Últimas execuções</p>
-            </div>
+        <section className="bg-card border border-border rounded-xl">
+            <h2 className="px-4 pt-4 pb-2 text-[15px] font-medium tracking-[-0.02em]">Últimas sessões</h2>
 
-            {grouped.map(({ date, sets, note }) => (
-                <div key={date}>
-                    <div className="px-4 py-2 bg-muted/40">
-                        <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground">
-                            {date}
-                        </p>
-                        {note && (
-                            <p className="text-[11px] text-muted-foreground italic mt-0.5">
-                                {note}
+            <ul className="px-4">
+                {rows.map((row) => (
+                    <li key={row.id} className="flex items-start gap-3 py-3 border-t border-border">
+                        <span className="w-12 shrink-0 text-[13px] text-muted-foreground tabular-nums">
+                            {formatDateCustom(row.date, "dd/MM")}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[14px] font-medium tabular-nums">{loadLine(row)}</p>
+                            <p className="text-[13px] text-muted-foreground tabular-nums mt-0.5">
+                                {row.isSimple ? "modo simples" : `${row.reps.join(" · ")} ${UNITS.REPS}s`}
                             </p>
-                        )}
-                    </div>
-                    {sets.map((set, i) => (
-                        <div
-                            key={i}
-                            className="flex items-center gap-3 px-4 py-3 border-b border-border/50 last:border-0"
-                        >
-                            <span className="text-[13px] font-medium text-foreground w-20 flex-shrink-0">
-                                {set.weight}{UNITS.WEIGHT} × {set.reps}
-                            </span>
-                            <span className="text-[12px] text-muted-foreground">
-                                RPE {set.rpe}
-                            </span>
-                            <span className="ml-auto text-[12px] text-muted-foreground">
-                                ~{set.e1rm.toFixed(1)} {UNITS.WEIGHT}
-                            </span>
+                            {row.note && (
+                                <p className="text-[12px] text-muted-foreground italic mt-1">{row.note}</p>
+                            )}
                         </div>
-                    ))}
-                </div>
-            ))}
-        </div>
+                        {row.e1rm !== null && (
+                            <span className="text-[13px] text-muted-foreground tabular-nums whitespace-nowrap">
+                                e1RM {Math.round(row.e1rm)}
+                            </span>
+                        )}
+                    </li>
+                ))}
+            </ul>
+
+            {newestFirst.length > INITIAL_ROWS && (
+                <button
+                    type="button"
+                    onClick={() => setShowAll((value) => !value)}
+                    className="w-full h-12 border-t border-border text-[14px] font-medium text-primary"
+                >
+                    {showAll ? "Mostrar menos" : `Ver todas (${newestFirst.length})`}
+                </button>
+            )}
+        </section>
     );
 };

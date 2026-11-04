@@ -11,6 +11,7 @@ const formatClock = (seconds: number) =>
 
 export const useRestTimer = () => {
     const restEndsAt = useActiveWorkoutStore((s) => s.restEndsAt);
+    const restDuration = useActiveWorkoutStore((s) => s.restDuration);
     const adjustRest = useActiveWorkoutStore((s) => s.adjustRest);
     const dismissRest = useActiveWorkoutStore((s) => s.dismissRest);
 
@@ -41,14 +42,13 @@ export const useRestTimer = () => {
         return () => clearTimeout(timeout);
     }, [isFinished, restEndsAt, dismissRest]);
 
-    const remainingSeconds = restEndsAt === null
-        ? 0
-        : Math.max(0, Math.ceil((restEndsAt - now) / 1000));
+    const remainingMs = restEndsAt === null ? 0 : Math.max(0, restEndsAt - now);
 
     return {
         isVisible: restEndsAt !== null,
         isFinished,
-        clock: formatClock(remainingSeconds),
+        clock: formatClock(Math.ceil(remainingMs / 1000)),
+        progress: Math.min(1, remainingMs / (restDuration * 1000)),
         adjustRest,
         dismissRest,
     };

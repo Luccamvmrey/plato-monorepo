@@ -21,7 +21,6 @@ export const useActiveExerciseCardLogic = (
     const [noteVisible, setNoteVisible] = useState(() => !!note);
 
     const activeSetNumber = record.logs.length + 1;
-    const pendingSetsCount = Math.max(0, record.effectiveTargetSets - activeSetNumber);
 
     // Este card só aparece em sessão de registro completo, em que o servidor exige
     // peso e RPE. O filtro diz isso ao compilador sem afirmar nada por cast.
@@ -84,7 +83,6 @@ export const useActiveExerciseCardLogic = (
         adviceChain,
         seed,
         activeSetNumber,
-        pendingSetsCount,
         handleSetConfirm,
         isPending: false,
         noteVisible,

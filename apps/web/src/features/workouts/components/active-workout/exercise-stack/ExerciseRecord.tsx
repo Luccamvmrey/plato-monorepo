@@ -50,7 +50,7 @@ const SortablePendingItem = ({
             >
                 <GripVertical className="size-4" />
             </button>
-            <div className="flex-1" onClick={onSwapRequest}>
+            <div className="flex-1 min-w-0" onClick={onSwapRequest}>
                 <ExercisePreviewItem record={record} />
             </div>
         </div>

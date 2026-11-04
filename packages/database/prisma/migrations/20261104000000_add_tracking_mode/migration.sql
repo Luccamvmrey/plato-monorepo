@@ -2,7 +2,8 @@
 CREATE TYPE "TrackingMode" AS ENUM ('FULL', 'SIMPLE');
 
 -- AlterTable
-ALTER TABLE "Workout" ADD COLUMN     "trackingMode" "TrackingMode" NOT NULL DEFAULT 'FULL';
+ALTER TABLE "User" ADD COLUMN     "trackingMode" "TrackingMode" NOT NULL DEFAULT 'FULL',
+ADD COLUMN     "trackingModeChosenAt" TIMESTAMP(3);
 
 -- AlterTable
 ALTER TABLE "WorkoutSession" ADD COLUMN     "trackingMode" "TrackingMode" NOT NULL DEFAULT 'FULL';

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Settings, Sun, Moon, Download, LogOut, Trash2, Check } from "lucide-react";
 import { useUserSettings } from "../hooks/useUserSettings";
+import { TrackingModeSetting } from "./TrackingModeSetting";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -46,6 +47,8 @@ export const GovernanceSettings = () => {
                     <Settings className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <p className="text-[13px] font-medium text-foreground">Configurações</p>
                 </div>
+
+                <TrackingModeSetting />
 
                 {/* Aparência */}
                 <button

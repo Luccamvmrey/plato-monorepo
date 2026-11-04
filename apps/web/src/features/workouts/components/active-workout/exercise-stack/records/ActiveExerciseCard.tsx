@@ -1,11 +1,10 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { MoreHorizontal, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
 import { useActiveExerciseCardLogic } from "@/features/workouts/hooks/useActiveExerciseCardLogic.ts";
 import { useActiveSetInput } from "@/features/workouts/hooks/useActiveSetInput.ts";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import { CompletedSetRow } from "./CompletedSetRow";
-import { PendingSetRow } from "./PendingSetRow";
 import { RpeSelector } from "../../components/RpeSelector";
 import { ProgressionChip } from "../../components/ProgressionChip";
 import SessionGroupBadge from "../../components/SessionGroupBadge";
@@ -28,6 +27,8 @@ type ActiveExerciseCardProps = {
     history?: ExerciseHistoryMap;
 };
 
+const FIELD_LABEL = "text-[13px] text-muted-foreground text-center";
+
 const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardProps) => {
     const {
         showEquipmentWeight,
@@ -36,7 +37,6 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
         adviceChain,
         seed,
         activeSetNumber,
-        pendingSetsCount,
         handleSetConfirm,
         isPending,
         noteVisible,
@@ -61,15 +61,15 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
     });
 
     const { weight, reps, rpe, equipmentWeight, wasSubmitted } = state;
-    const { containerRef, weightRef, repsRef, equipmentRef } = refs;
+    const { weightRef, repsRef, equipmentRef } = refs;
     const { setWeight, setReps, setRpe, setEquipmentWeight, handleConfirm, handleFieldKeyDown } = actions;
 
     // Scrolling the focused field into view is handled globally by
     // useKeepFocusedFieldVisible (mounted in Layout), which also covers the bar-weight
     // input and the note textarea that this card's ad-hoc handler used to miss.
 
-    const doneDots = record.logs.length;
-    const totalDots = record.effectiveTargetSets;
+    const doneSets = record.logs.length;
+    const totalSets = record.effectiveTargetSets;
 
     // Meia-casa de incremento é a tolerância: arredondamentos e anilhas diferentes
     // não devem virar aviso. Avisa e marca, nunca bloqueia — o set grava normalmente.
@@ -95,31 +95,37 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
         && Number.isFinite(typedWeight)
         && deviationAgainst(advice, typedWeight) === "up";
 
+    const loadLabel = LOAD_TYPE_LABEL[record.exercise.loadType] ?? "Carga";
+    const loadHint = LOAD_TYPE_HINT[record.exercise.loadType];
+
     return (
         <motion.div layout className="flex flex-col gap-2">
-            <AnimatePresence>
-                {record.logs.map((log, index) => (
-                    <CompletedSetRow key={log.id} log={log} deviation={logDeviation(log, index)} />
-                ))}
-            </AnimatePresence>
+            {/* As séries feitas viram uma lista só, fora do card ativo: dentro dele
+                aumentariam o [data-keyboard-anchor], e com o teclado aberto o botão
+                de confirmar sairia da tela. */}
+            {record.logs.length > 0 && (
+                <div className="rounded-xl bg-card border border-border divide-y divide-border">
+                    {record.logs.map((log, index) => (
+                        <CompletedSetRow key={log.id} log={log} deviation={logDeviation(log, index)} />
+                    ))}
+                </div>
+            )}
 
             {/* Keeping the whole card on screen — not just the focused input — is what
                 keeps the RPE chips and the confirm button reachable with the keyboard up.
-                Daí o gap-3 em vez de gap-4: a linha da razão custa ~32px, e passar de
-                visualViewport.height − 32 derruba useKeepFocusedFieldVisible para o
-                fallback que esconde o botão Confirmar. */}
+                Daí o gap-3 em vez de gap-4: passar de visualViewport.height − 32 derruba
+                useKeepFocusedFieldVisible para o fallback que esconde o botão Confirmar. */}
             <motion.div
                 layout
-                ref={containerRef}
                 data-keyboard-anchor
                 className="border-2 border-primary/40 rounded-xl bg-card p-4 flex flex-col gap-3"
             >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-base font-medium tracking-[-0.02em] text-foreground">
+                    <div className="flex flex-col gap-2 min-w-0">
+                        <h2 className="text-[20px] font-semibold tracking-[-0.02em] leading-tight text-foreground">
                             {record.exercise.name}
-                        </span>
+                        </h2>
                         <div className="flex items-center flex-wrap gap-2">
                             <ProgressionChip advice={advice} />
                             <MuscleBadge muscle={record.exercise.targetMuscle} />
@@ -129,7 +135,10 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="text-muted-foreground p-1 hover:text-foreground transition-colors flex-shrink-0 mt-0.5">
+                            <button
+                                aria-label="Mais opções"
+                                className="relative tap-target text-muted-foreground p-1 hover:text-foreground transition-colors flex-shrink-0"
+                            >
                                 <MoreHorizontal className="size-5" />
                             </button>
                         </DropdownMenuTrigger>
@@ -160,36 +169,41 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                     </DropdownMenu>
                 </div>
 
-                {/* Progress dots + razão. A razão precisa da largura inteira: dividindo
-                    a linha dos dots ela sobrava com ~45 caracteres e o `truncate` comia
-                    justamente o trecho que carrega a decisão ("— suba para 42,5 kg").
-                    Agrupados num filho só do card para custar um gap, não dois. */}
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                        {Array.from({ length: totalDots }).map((_, idx) => (
+                {/* Progresso + razão. A razão precisa da largura inteira: dividindo a
+                    linha ela sobrava com ~45 caracteres e o `truncate` comia justamente
+                    o trecho que carrega a decisão ("— suba para 42,5 kg"). A barra em
+                    blocos é a mesma linguagem do modo simples e substitui as linhas de
+                    séries futuras, que repetiam o que o campo já mostra. */}
+                <div className="flex flex-col gap-1.5">
+                    <div
+                        className="flex items-center gap-1"
+                        role="img"
+                        aria-label={`Set ${activeSetNumber} de ${totalSets}`}
+                    >
+                        {Array.from({ length: totalSets }).map((_, idx) => (
                             <div
                                 key={idx}
                                 className={cn(
-                                    "w-2 h-2 rounded-full transition-colors",
-                                    idx < doneDots
+                                    "h-1.5 flex-1 rounded-full transition-colors",
+                                    idx < doneSets
                                         ? "bg-success"
-                                        : idx === doneDots
+                                        : idx === doneSets
                                         ? "bg-primary"
                                         : "bg-muted"
                                 )}
                             />
                         ))}
                     </div>
-                    <span className="text-[11px] leading-snug text-muted-foreground line-clamp-2">
+                    <span className="text-[12px] leading-snug text-muted-foreground line-clamp-2">
                         {advice.reason}
                     </span>
                 </div>
 
                 {/* CARGA + REPS inputs */}
                 <div className="flex gap-3">
-                    <div className="flex-1 flex flex-col gap-1">
-                        <span className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground text-center">
-                            {LOAD_TYPE_LABEL[record.exercise.loadType] ?? "Carga"}
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                        <span className={FIELD_LABEL}>
+                            {loadLabel} ({UNITS.WEIGHT})
                         </span>
                         {/* type="text" e não "number": com "number" o browser descarta a
                             vírgula decimal do teclado pt-BR e "82,5" chega como "". */}
@@ -198,7 +212,7 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                             type="text"
                             inputMode="decimal"
                             enterKeyHint="next"
-                            aria-label={LOAD_TYPE_LABEL[record.exercise.loadType] ?? "Carga"}
+                            aria-label={loadLabel}
                             placeholder={seed.weight != null ? `${seed.weight}` : "0"}
                             value={weight}
                             onChange={(e) => setWeight(e.target.value)}
@@ -206,27 +220,10 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                             disabled={isPending || wasSubmitted}
                             className="input-workout"
                         />
-                        {/* Substitui a legenda "kg" em vez de somar uma linha — custo
-                            vertical zero. Avisa e marca o desvio, sem bloquear o registro.
-                            Para peso corporal/assistido, a legenda também explica o que o
-                            número significa — sem isso dá pra confundir carga extra com o
-                            peso corporal inteiro (ex.: Dips). */}
-                        <span className={cn(
-                            "text-[12px] text-center",
-                            isOverPrescribed ? "text-destructive" : "text-muted-foreground"
-                        )}>
-                            {isOverPrescribed
-                                ? `acima do prescrito · ${formatWeightPtBr(advice.suggestedWeight!)} ${UNITS.WEIGHT}`
-                                : LOAD_TYPE_HINT[record.exercise.loadType]
-                                    ? `${UNITS.WEIGHT} · ${LOAD_TYPE_HINT[record.exercise.loadType]}`
-                                    : UNITS.WEIGHT}
-                        </span>
                     </div>
 
-                    <div className="flex-1 flex flex-col gap-1">
-                        <span className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground text-center">
-                            Reps
-                        </span>
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                        <span className={FIELD_LABEL}>Reps</span>
                         <input
                             ref={repsRef}
                             type="text"
@@ -240,16 +237,28 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                             disabled={isPending || wasSubmitted}
                             className="input-workout"
                         />
-                        <span className="text-[12px] text-muted-foreground text-center">repetições</span>
                     </div>
                 </div>
+
+                {/* Só ocupa altura quando tem o que dizer. Avisa o desvio sem bloquear o
+                    registro; para peso corporal/assistido, explica o que o número
+                    significa — sem isso dá pra confundir carga extra com o peso corporal
+                    inteiro (ex.: Dips). */}
+                {(isOverPrescribed || loadHint) && (
+                    <p className={cn(
+                        "text-[12px] text-center -mt-1",
+                        isOverPrescribed ? "text-destructive" : "text-muted-foreground"
+                    )}>
+                        {isOverPrescribed
+                            ? `Acima do prescrito: ${formatWeightPtBr(advice.suggestedWeight!)} ${UNITS.WEIGHT}`
+                            : loadHint}
+                    </p>
+                )}
 
                 {/* Equipment weight (optional) */}
                 {showEquipmentWeight && (
                     <div className="flex flex-col gap-1">
-                        <span className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground text-center">
-                            Peso da Barra
-                        </span>
+                        <span className={FIELD_LABEL}>Peso da barra ({UNITS.WEIGHT})</span>
                         <input
                             ref={equipmentRef}
                             type="text"
@@ -267,10 +276,8 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                 )}
 
                 {/* RPE selector */}
-                <div className="flex flex-col gap-2">
-                    <span className="text-[11px] font-medium tracking-[0.04em] uppercase text-muted-foreground">
-                        RPE
-                    </span>
+                <div className="flex flex-col gap-1">
+                    <span className="text-[13px] text-muted-foreground">Esforço (RPE)</span>
                     <RpeSelector value={rpe} onChange={setRpe} disabled={isPending || wasSubmitted} />
                 </div>
 
@@ -307,19 +314,6 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                     )}
                 </motion.button>
             </motion.div>
-
-            {/* Future sets */}
-            {Array.from({ length: pendingSetsCount }).map((_, idx) => {
-                const futureSetNum = activeSetNumber + 1 + idx;
-                return (
-                    <PendingSetRow
-                        key={`pending-${futureSetNum}`}
-                        setNum={futureSetNum}
-                        reps={advice.suggestedReps}
-                        weight={advice.suggestedWeight ?? undefined}
-                    />
-                );
-            })}
 
             {/* Mesma sheet do editor de treino: aqui a escolha vira uma chamada de
                 API, lá vira troca no rascunho. */}

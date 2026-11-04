@@ -6,6 +6,8 @@ import { buildSessionDeviations, type ExerciseDeviation, type UnexecutedExercise
 
 export type SummaryStats = {
     totalVolume: number;
+    /** Em relação à última sessão deste treino, com a mesma regra de séries válidas. */
+    volumeDeltaPercent: number | null;
     duration: number;
     totalSets: number;
     completedExercises: {
@@ -125,8 +127,15 @@ export const useWorkoutSummaryStats = (
             }
         });
 
+        const previousVolume = lastSession
+            ? calculateTotalVolume(lastSession.sessionSet.filter(set => !set.excludedFromRecords))
+            : 0;
+
         return {
             totalVolume,
+            volumeDeltaPercent: previousVolume > 0
+                ? Math.round(((totalVolume - previousVolume) / previousVolume) * 100)
+                : null,
             duration,
             totalSets,
             completedExercises,

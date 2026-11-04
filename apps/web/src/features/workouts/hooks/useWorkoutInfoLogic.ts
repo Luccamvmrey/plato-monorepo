@@ -11,8 +11,6 @@ export const useWorkoutInfoLogic = () => {
 
     const name = useWorkoutEditorStore(state => state.name);
     const description = useWorkoutEditorStore(state => state.description);
-    const trackingMode = useWorkoutEditorStore(state => state.trackingMode);
-    const setTrackingMode = useWorkoutEditorStore(state => state.setTrackingMode);
     const setWorkoutInfo = useWorkoutEditorStore(state => state.setWorkoutInfo);
     const reset = useWorkoutEditorStore(state => state.reset);
 
@@ -35,8 +33,6 @@ export const useWorkoutInfoLogic = () => {
         title,
         name,
         description,
-        trackingMode,
-        setTrackingMode,
         setWorkoutInfo,
         handleBack,
         handleDelete,

@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { Check, MoreHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils.ts";
+import { MoreHorizontal } from "lucide-react";
 import { MuscleBadge } from "@/core/components/MuscleBadge";
 import {
     DropdownMenu,
@@ -11,9 +10,9 @@ import {
 import AlternativesSheet from "@/features/workouts/components/workout-editor/AlternativesSheet.tsx";
 import { useSimpleExerciseCardLogic } from "@/features/workouts/hooks/useSimpleExerciseCardLogic.ts";
 import type { EnrichedExerciseRecord } from "@/features/workouts/workout.types.ts";
-import { UNITS } from "@/core/constants/units.ts";
 import SessionGroupBadge from "../../components/SessionGroupBadge";
 import ExerciseWeightField from "./ExerciseWeightField";
+import SetTiles from "./SetTiles";
 
 type SimpleActiveExerciseCardProps = {
     record: EnrichedExerciseRecord;
@@ -23,10 +22,11 @@ type SimpleActiveExerciseCardProps = {
 
 const SimpleActiveExerciseCard = ({ record, sessionId, lastWeight }: SimpleActiveExerciseCardProps) => {
     const {
-        activeSetNumber,
+        repLabel,
         showWeight,
         weight,
         handleDone,
+        handleUndo,
         canChangePlan,
         alternativesOpen,
         openAlternatives,
@@ -34,7 +34,7 @@ const SimpleActiveExerciseCard = ({ record, sessionId, lastWeight }: SimpleActiv
         handleSubstitute,
         handleSkip,
         isChangingPlan,
-    } = useSimpleExerciseCardLogic(record, sessionId);
+    } = useSimpleExerciseCardLogic(record, sessionId, lastWeight);
 
     return (
         <motion.div
@@ -43,10 +43,10 @@ const SimpleActiveExerciseCard = ({ record, sessionId, lastWeight }: SimpleActiv
             className="border-2 border-primary/40 rounded-xl bg-card p-4 flex flex-col gap-4"
         >
             <div className="flex items-start justify-between gap-2">
-                <div className="flex flex-col gap-1 min-w-0">
-                    <span className="text-base font-medium tracking-[-0.02em] text-foreground">
+                <div className="flex flex-col gap-2 min-w-0">
+                    <h2 className="text-[20px] font-semibold tracking-[-0.02em] leading-tight text-foreground">
                         {record.exercise.name}
-                    </span>
+                    </h2>
                     <div className="flex items-center flex-wrap gap-2">
                         <MuscleBadge muscle={record.exercise.targetMuscle} />
                         <SessionGroupBadge group={record.group} />
@@ -58,7 +58,7 @@ const SimpleActiveExerciseCard = ({ record, sessionId, lastWeight }: SimpleActiv
                         <DropdownMenuTrigger asChild>
                             <button
                                 aria-label="Mais opções"
-                                className="relative tap-target text-muted-foreground p-1 hover:text-foreground transition-colors flex-shrink-0 mt-0.5"
+                                className="relative tap-target text-muted-foreground p-1 hover:text-foreground transition-colors flex-shrink-0"
                             >
                                 <MoreHorizontal className="size-5" />
                             </button>
@@ -77,51 +77,24 @@ const SimpleActiveExerciseCard = ({ record, sessionId, lastWeight }: SimpleActiv
                 )}
             </div>
 
-            <div className="flex items-center justify-between gap-3">
-                <div
-                    className="flex items-center gap-2"
-                    role="img"
-                    aria-label={`${record.logs.length} de ${record.effectiveTargetSets} séries feitas`}
-                >
-                    {Array.from({ length: record.effectiveTargetSets }).map((_, idx) => (
-                        <div
-                            key={idx}
-                            className={cn(
-                                "w-2.5 h-2.5 rounded-full transition-colors",
-                                idx < record.logs.length
-                                    ? "bg-success"
-                                    : idx === record.logs.length
-                                        ? "bg-primary"
-                                        : "bg-muted"
-                            )}
-                        />
-                    ))}
-                </div>
-                <span className="text-[13px] text-muted-foreground tabular-nums">
-                    {record.effectiveTargetSets} × {record.targetReps}
-                </span>
-            </div>
+            <SetTiles
+                total={record.effectiveTargetSets}
+                done={record.logs.length}
+                repLabel={repLabel}
+                onDone={handleDone}
+                onUndo={handleUndo}
+            />
 
             {showWeight && (
                 <ExerciseWeightField
                     id={`weight-${record.exerciseId}`}
                     value={weight.value}
                     onChange={weight.handleChange}
+                    onStep={weight.handleStep}
+                    onRepeat={weight.handleRepeat}
                     lastWeight={lastWeight}
                 />
             )}
-
-            <motion.button
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                onClick={handleDone}
-                className="btn-session-confirm"
-            >
-                <span className="flex items-center justify-center gap-2">
-                    <Check className="size-5" />
-                    Concluir {UNITS.SINGLE_SET} {activeSetNumber}
-                </span>
-            </motion.button>
 
             <AlternativesSheet
                 target={alternativesOpen ? record.exercise : null}

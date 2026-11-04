@@ -9,6 +9,10 @@ export const useSessionSet = () => {
     const startRest = useActiveWorkoutStore((s) => s.startRest);
 
     const confirmSet = (set: SessionSetPayload, record: EnrichedExerciseRecord) => {
+        // Fecha o teclado: quem acabou uma série vai descansar, não digitar a próxima,
+        // e a barra do timer fica escondida enquanto o teclado está aberto.
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+
         addPendingSet(set);
 
         // Dentro de um bi-set emenda-se direto no próximo exercício: só descansa ao

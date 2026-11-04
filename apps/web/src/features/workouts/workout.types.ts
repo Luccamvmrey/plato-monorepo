@@ -10,7 +10,7 @@ import type { GroupMembership } from "@plato/shared";
 
 export type Exercise = PrismaExercise;
 
-export type TrackingMode = PrismaWorkout["trackingMode"];
+export type TrackingMode = PrismaWorkoutSession["trackingMode"];
 
 export type SessionExerciseOrigin = PrismaSessionExercise["origin"];
 

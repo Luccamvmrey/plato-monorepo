@@ -12,59 +12,43 @@ import type { FC } from "react";
 
 export interface AnalyticsChartProps {
     data: { date: Date; value: number }[];
-    color: string;
-    gradientId: string;
     /** Texto do placeholder enquanto não há 3 sessões. */
     emptyLabel: string;
 }
 
-interface TooltipEntry {
-    name: string;
-    value: number;
-    color: string;
-}
+const COLOR = "var(--color-primary)";
+
+const formatValue = (value: number) => value.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 
 interface ChartTooltipProps {
     active?: boolean;
-    payload?: TooltipEntry[];
+    payload?: { value: number }[];
     label?: number;
 }
 
 const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
     if (!active || !payload?.length) return null;
     return (
-        <div className="bg-card border border-border rounded-lg px-3 py-2">
-            <p className="text-[11px] text-muted-foreground mb-1">
-                {formatDateCustom(label ?? 0, "dd/MM/yyyy")}
-            </p>
-            {payload.map((p) => (
-                <p key={p.name} className="text-[13px] font-medium" style={{ color: p.color }}>
-                    {p.value.toFixed(1)} kg
-                </p>
-            ))}
+        <div className="bg-popover border border-border rounded-lg px-3 py-2">
+            <p className="text-[12px] text-muted-foreground">{formatDateCustom(label ?? 0, "dd/MM/yyyy")}</p>
+            <p className="text-[14px] font-medium tabular-nums">{formatValue(payload[0].value)} kg</p>
         </div>
     );
 };
 
-/**
- * Antes: 160px de altura, duas vezes na mesma página, com o texto repetido palavra
- * por palavra — ~360px de tela quase vazia logo na primeira visita. Agora é uma
- * linha só, com os pontos de progresso ao lado em vez de embaixo, e o `label`
- * diz de qual gráfico se trata.
- */
 const ChartEmpty = ({ current, label }: { current: number; label: string }) => {
     const total = 3;
     const remaining = total - current;
     return (
         <div className="flex items-center justify-between gap-3 py-1">
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
                 {label} em {remaining} {remaining === 1 ? "sessão" : "sessões"}
             </p>
             <div className="flex gap-1.5 shrink-0" aria-hidden="true">
                 {Array.from({ length: total }).map((_, i) => (
                     <div
                         key={i}
-                        className={cn("w-2 h-2 rounded-full", i < current ? "bg-primary" : "bg-muted")}
+                        className={cn("w-2.5 h-2.5 rounded-[3px]", i < current ? "bg-primary" : "bg-muted")}
                     />
                 ))}
             </div>
@@ -78,9 +62,9 @@ const axisStyle = {
     tickLine: false as const,
 };
 
-const chartMargin = { top: 8, right: 8, left: -16, bottom: 0 };
+const chartMargin = { top: 8, right: 0, left: 0, bottom: 0 };
 
-export const AnalyticsChart: FC<AnalyticsChartProps> = ({ data, color, gradientId, emptyLabel }) => {
+export const AnalyticsChart: FC<AnalyticsChartProps> = ({ data, emptyLabel }) => {
     if (data.length < 3) {
         return <ChartEmpty current={data.length} label={emptyLabel} />;
     }
@@ -90,33 +74,52 @@ export const AnalyticsChart: FC<AnalyticsChartProps> = ({ data, color, gradientI
         timestamp: d.date.getTime(),
     }));
 
+    // Eixo a partir do mínimo, não de zero: progressão de carga é 1 a 3% por semana, e
+    // um eixo em zero achatava qualquer curva numa linha reta.
+    const values = data.map((d) => d.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const padding = Math.max((max - min) * 0.2, max * 0.02, 1);
+    const lastIndex = formattedData.length - 1;
+
     return (
-        <ResponsiveContainer width="100%" height={160}>
+        <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={formattedData} margin={chartMargin}>
-                <defs>
-                    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={color} stopOpacity={0.15} />
-                        <stop offset="100%" stopColor={color} stopOpacity={0} />
-                    </linearGradient>
-                </defs>
                 <XAxis
                     dataKey="timestamp"
                     type="number"
                     domain={["dataMin", "dataMax"]}
                     tickFormatter={(t) => formatDateCustom(t, "dd/MM")}
                     {...axisStyle}
-                    minTickGap={30}
+                    tickCount={4}
+                    minTickGap={40}
                 />
-                <YAxis {...axisStyle} />
-                <Tooltip content={<ChartTooltip />} />
+                <YAxis
+                    {...axisStyle}
+                    orientation="right"
+                    width={40}
+                    tickCount={4}
+                    domain={[Math.max(0, Math.floor(min - padding)), Math.ceil(max + padding)]}
+                    tickFormatter={(v: number) => Math.round(v).toLocaleString("pt-BR")}
+                />
+                <Tooltip
+                    content={<ChartTooltip />}
+                    cursor={{ stroke: "var(--color-border)" }}
+                />
                 <Area
                     type="monotone"
                     dataKey="value"
-                    stroke={color}
-                    strokeWidth={2}
-                    fill={`url(#${gradientId})`}
-                    dot={{ fill: color, strokeWidth: 0, r: 3 }}
-                    activeDot={{ r: 5, strokeWidth: 0 }}
+                    stroke={COLOR}
+                    strokeWidth={2.5}
+                    fill={COLOR}
+                    fillOpacity={0.08}
+                    // Só o último ponto: é o "onde estou agora" que se procura no gráfico.
+                    dot={(props: { cx?: number; cy?: number; index?: number }) => (
+                        props.index === lastIndex
+                            ? <circle key="last" cx={props.cx} cy={props.cy} r={4.5} fill={COLOR} stroke="var(--color-card)" strokeWidth={2} />
+                            : <g key={props.index} />
+                    )}
+                    activeDot={{ r: 5, strokeWidth: 0, fill: COLOR }}
                 />
             </AreaChart>
         </ResponsiveContainer>

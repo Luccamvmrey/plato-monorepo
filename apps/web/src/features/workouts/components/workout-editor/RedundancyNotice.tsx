@@ -1,5 +1,4 @@
 import { Info } from "lucide-react";
-import { Button } from "@/components/ui/button.tsx";
 import type { RedundantGroup } from "@/features/workouts/utils/movement.ts";
 import type { WorkoutExerciseDraft } from "@/features/workouts/stores/workout-editor.store.ts";
 
@@ -20,39 +19,30 @@ const RedundancyNotice = ({ groups, onInspect }: RedundancyNoticeProps) => {
     if (groups.length === 0) return null;
 
     return (
-        <div className="flex flex-col gap-3 px-4 py-3 rounded-xl bg-muted/50 border border-border">
-            <div className="flex items-start gap-3">
-                <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-[13px] text-muted-foreground">
-                    {groups.length === 1
-                        ? "Dois exercícios deste treino repetem o mesmo padrão de movimento."
-                        : `${groups.length} padrões de movimento aparecem mais de uma vez neste treino.`}
-                </p>
-            </div>
+        <section className="flex flex-col gap-2 p-4 rounded-xl bg-card border border-border">
+            <h2 className="flex items-start gap-2 text-[14px] font-medium">
+                <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" aria-hidden />
+                Movimentos repetidos
+            </h2>
 
-            <div className="flex flex-col gap-2 pl-7">
-                {groups.map((group) => (
-                    <div key={group.key} className="flex flex-col gap-1">
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                            {group.label}
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                            {group.drafts.map((draft) => (
-                                <Button
-                                    key={draft.instanceId}
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 px-3 text-xs font-normal relative tap-target"
-                                    onClick={() => onInspect(draft)}
-                                >
-                                    {draft.exercise.name}
-                                </Button>
-                            ))}
-                        </div>
+            {groups.map((group) => (
+                <div key={group.key} className="flex flex-col gap-1 pl-6">
+                    <p className="text-[13px] text-muted-foreground">{group.label}: toque para ver alternativas</p>
+                    <div className="flex flex-wrap gap-x-4">
+                        {group.drafts.map((draft) => (
+                            <button
+                                key={draft.instanceId}
+                                type="button"
+                                className="min-h-9 text-left text-[14px] text-primary"
+                                onClick={() => onInspect(draft)}
+                            >
+                                {draft.exercise.name}
+                            </button>
+                        ))}
                     </div>
-                ))}
-            </div>
-        </div>
+                </div>
+            ))}
+        </section>
     );
 };
 

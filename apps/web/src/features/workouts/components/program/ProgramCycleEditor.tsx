@@ -10,6 +10,9 @@ type ProgramCycleEditorProps = {
     onMove: (index: number, direction: -1 | 1) => void;
 };
 
+const HEADING = "text-[17px] font-semibold tracking-[-0.02em] px-1";
+const ICON_BUTTON = "size-9 text-muted-foreground relative tap-target";
+
 /**
  * Ordenação por setas, não por drag and drop.
  *
@@ -27,25 +30,22 @@ const ProgramCycleEditor = ({
 }: ProgramCycleEditorProps) => (
     <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
-            <h2 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground px-1">
-                Ordem da rotação
-            </h2>
+            <h2 className={HEADING}>Ordem da rotação</h2>
 
             {selectedWorkouts.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground px-1 py-3">
+                <p className="text-[14px] text-muted-foreground px-1 py-2">
                     Nenhum treino no programa ainda. Adicione abaixo.
                 </p>
             ) : (
                 <ol className="flex flex-col gap-2">
                     {selectedWorkouts.map((workout, index) => (
-                        <li
-                            key={workout.id}
-                            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card"
-                        >
-                            <span className="text-xs font-medium text-muted-foreground tabular-nums w-4 shrink-0">
+                        <li key={workout.id} className="flex items-center gap-2 p-3 rounded-xl border border-border bg-card">
+                            <span className="size-7 rounded-md bg-muted text-muted-foreground flex items-center justify-center text-[13px] font-medium tabular-nums shrink-0">
                                 {index + 1}
                             </span>
-                            <span className="flex-1 truncate text-sm tracking-tight">
+                            {/* Até duas linhas: com três botões ao lado, cortar em uma
+                                escondia a parte do nome que diferencia os treinos. */}
+                            <span className="flex-1 min-w-0 text-[14px] font-medium leading-snug line-clamp-2">
                                 {workout.name}
                             </span>
 
@@ -53,7 +53,7 @@ const ProgramCycleEditor = ({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="size-9 text-muted-foreground relative tap-target"
+                                    className={ICON_BUTTON}
                                     onClick={() => onMove(index, -1)}
                                     disabled={index === 0}
                                     aria-label={`Mover ${workout.name} para cima`}
@@ -63,7 +63,7 @@ const ProgramCycleEditor = ({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="size-9 text-muted-foreground relative tap-target"
+                                    className={ICON_BUTTON}
                                     onClick={() => onMove(index, 1)}
                                     disabled={index === selectedWorkouts.length - 1}
                                     aria-label={`Mover ${workout.name} para baixo`}
@@ -73,7 +73,7 @@ const ProgramCycleEditor = ({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="size-9 text-muted-foreground relative tap-target"
+                                    className={ICON_BUTTON}
                                     onClick={() => onRemove(workout.id)}
                                     aria-label={`Remover ${workout.name} do programa`}
                                 >
@@ -87,12 +87,10 @@ const ProgramCycleEditor = ({
         </div>
 
         <div className="flex flex-col gap-2">
-            <h2 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground px-1">
-                Treinos disponíveis
-            </h2>
+            <h2 className={HEADING}>Adicionar treino</h2>
 
             {availableWorkouts.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground px-1 py-3">
+                <p className="text-[14px] text-muted-foreground px-1 py-2">
                     Todos os seus treinos ativos já estão no programa.
                 </p>
             ) : (
@@ -100,15 +98,14 @@ const ProgramCycleEditor = ({
                     {availableWorkouts.map((workout) => (
                         <li key={workout.id}>
                             <button
+                                type="button"
                                 onClick={() => onAdd(workout.id)}
-                                className="w-full flex items-center gap-2 px-3 py-3 rounded-xl border border-dashed border-border text-left transition-colors hover:bg-muted/40"
+                                className="w-full min-h-12 flex items-center gap-3 p-3 rounded-xl border border-dashed border-border text-left transition-colors hover:bg-muted/40"
                             >
-                                <Plus className="w-4 h-4 text-muted-foreground shrink-0" />
-                                <span className="flex-1 truncate text-sm tracking-tight">
-                                    {workout.name}
-                                </span>
-                                <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                                    {workout.workoutExercise.length} ex.
+                                <Plus className="size-4 text-muted-foreground shrink-0" />
+                                <span className="flex-1 min-w-0 truncate text-[14px]">{workout.name}</span>
+                                <span className="text-[13px] text-muted-foreground tabular-nums shrink-0">
+                                    {workout.workoutExercise.length} {workout.workoutExercise.length === 1 ? "exercício" : "exercícios"}
                                 </span>
                             </button>
                         </li>

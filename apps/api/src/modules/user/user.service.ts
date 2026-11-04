@@ -17,15 +17,34 @@ const getById = async (id: number) => {
 const update = async (id: number, data: UpdateUserInput) => {
     return prisma.user.update({
         where: { id: id },
-        data,
+        data: data.trackingMode ? { ...data, trackingModeChosenAt: new Date() } : data,
         select: {
             id: true,
             email: true,
             name: true,
             createdAt: true,
+            trackingMode: true,
         }
     });
 }
+
+/**
+ * Modo de treino e se a pessoa ainda precisa escolher um. Rota própria porque a tela de
+ * treinos consulta isto sempre, e o perfil soma todas as séries do histórico.
+ */
+const getTrackingPreference = async (userId: number) => {
+    const user = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { trackingMode: true, trackingModeChosenAt: true },
+    });
+
+    if (user.trackingModeChosenAt) return { trackingMode: user.trackingMode, needsChoice: false };
+
+    // Só pergunta a quem nunca treinou: quem já usa o app segue no modo que conhece.
+    const sessions = await prisma.workoutSession.count({ where: { userId } });
+
+    return { trackingMode: user.trackingMode, needsChoice: sessions === 0 };
+};
 
 const getProfile = async (userId: number) => {
     const user = await prisma.user.findUnique({
@@ -231,4 +250,4 @@ const _getDaysBetweenStr = (startStr: string, endStr: string): string[] => {
     return days;
 };
 
-export { getById, update, getProfile, getStats, getExportData, deleteAccount, getStreak }
+export { getById, update, getTrackingPreference, getProfile, getStats, getExportData, deleteAccount, getStreak }

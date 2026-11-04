@@ -65,8 +65,8 @@ export const useWorkoutSession = (workoutId?: string) => {
             sets: activeSession.pendingSets ?? [],
         };
 
-        // Optimistically clear active session cache before navigating so
-        // SessionRecoveryDialog doesn't fire on the completion page.
+        // Limpa o cache antes de navegar: a sessão já acabou, e a faixa de treino em
+        // andamento não pode aparecer nas telas seguintes.
         queryClient.setQueryData(["activeSession"], null);
         setFinalization({ status: 'pending', sessionId, error: null, payload });
         navigate(`${path.WORKOUT_COMPLETE}/${sessionId}`);
