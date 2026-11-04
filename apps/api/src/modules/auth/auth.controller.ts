@@ -4,6 +4,7 @@ import * as userService from "../user/user.service";
 import dotenv from "dotenv";
 import { verify } from "jsonwebtoken";
 import { AppJwtPayload } from "../../shared/jwt/types";
+import { getUserId } from "../../shared/utils/request";
 
 dotenv.config();
 
@@ -22,5 +23,21 @@ const login = async (req: Request, res: Response) => {
     res.json({ token, user });
 }
 
-export { register, login }
+const refresh = async (req: Request, res: Response) => {
+    const token = await authService.refresh(getUserId(req));
+    res.json({ token });
+}
+
+// Sempre 204: a resposta não pode revelar se o e-mail tem conta no Plato.
+const forgotPassword = async (req: Request, res: Response) => {
+    await authService.requestPasswordReset(req.body.email);
+    res.status(204).send();
+}
+
+const resetPassword = async (req: Request, res: Response) => {
+    await authService.resetPassword(req.body.token, req.body.password);
+    res.status(204).send();
+}
+
+export { register, login, refresh, forgotPassword, resetPassword }
 

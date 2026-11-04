@@ -1,5 +1,10 @@
 import { useCheckSession } from "@/core/hooks/useCheckSession.ts";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/core/api/queryClient.ts";
+import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage.tsx";
+import ResetPasswordPage from "@/features/auth/pages/ResetPasswordPage.tsx";
+import LegalPage from "@/core/pages/LegalPage.tsx";
+import { PRIVACY, TERMS } from "@/core/pages/legal-content.ts";
 import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/sonner.tsx";
 import LoginPage from "@/features/auth/pages/LoginPage.tsx";
@@ -21,8 +26,6 @@ import ErrorBoundary from "@/core/components/ErrorBoundary";
 import NotFoundPage from "@/core/pages/NotFoundPage.tsx";
 import { SessionRecoveryDialog } from "@/features/workouts/components/active-workout/components/dialogs/SessionRecoveryDialog.tsx";
 
-const queryClient = new QueryClient();
-
 export function App() {
     useCheckSession();
 
@@ -32,6 +35,10 @@ export function App() {
                 <Switch>
                     <Route path={path.LOGIN} component={LoginPage}/>
                     <Route path={path.SIGNUP} component={SignupPage}/>
+                    <Route path={path.FORGOT_PASSWORD} component={ForgotPasswordPage}/>
+                    <Route path={path.RESET_PASSWORD} component={ResetPasswordPage}/>
+                    <Route path={path.TERMS}><LegalPage document={TERMS}/></Route>
+                    <Route path={path.PRIVACY}><LegalPage document={PRIVACY}/></Route>
                     <Route path={`${path.WORKOUT_COMPLETE}/:id`} component={WorkoutCompletePage}/>
 
                     <Layout>

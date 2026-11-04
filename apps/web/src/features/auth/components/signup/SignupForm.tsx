@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input.tsx";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPasswordStrength } from "@/core/utils/validation.ts";
+import { Link } from "wouter";
+import { path } from "@/core/constants/path.ts";
 
 type SignupFormProps = {
     formId: string;
     onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-    errors?: { name?: string; email?: string; password?: string };
+    errors?: { name?: string; email?: string; password?: string; terms?: string };
     onBlur?: (field: 'name' | 'email' | 'password', value: string) => void;
 };
 
@@ -122,6 +124,29 @@ const SignupForm = ({ formId, onSubmit, errors, onBlur }: SignupFormProps) => {
                     {errors?.password && (
                         <p id="password-error" role="alert" className="text-destructive text-[12px] mt-1">
                             {errors.password}
+                        </p>
+                    )}
+                </Field>
+
+                <Field>
+                    <label className="flex items-start gap-3 min-h-11 text-[13px] text-muted-foreground">
+                        <input
+                            type="checkbox"
+                            name="acceptedTerms"
+                            aria-invalid={!!errors?.terms}
+                            aria-describedby={errors?.terms ? "terms-error" : undefined}
+                            className="mt-0.5 size-5 shrink-0 accent-primary"
+                        />
+                        <span>
+                            Tenho 18 anos ou mais e aceito os{" "}
+                            <Link href={path.TERMS} className="underline text-foreground">Termos de Uso</Link>
+                            {" "}e a{" "}
+                            <Link href={path.PRIVACY} className="underline text-foreground">Política de Privacidade</Link>.
+                        </span>
+                    </label>
+                    {errors?.terms && (
+                        <p id="terms-error" role="alert" className="text-destructive text-[12px] mt-1">
+                            {errors.terms}
                         </p>
                     )}
                 </Field>

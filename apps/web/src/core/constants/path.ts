@@ -1,6 +1,10 @@
 export const path = {
     LOGIN: "/",
     SIGNUP: "/signup",
+    FORGOT_PASSWORD: "/forgot-password",
+    RESET_PASSWORD: "/reset-password",
+    TERMS: "/terms",
+    PRIVACY: "/privacy",
     WORKOUTS: "/workouts",
     WORKOUT_EDITOR: "/workout-editor",
     PROGRAMS: "/programs",

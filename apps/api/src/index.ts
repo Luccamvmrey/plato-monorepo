@@ -18,6 +18,10 @@ import personalRecordRoutes from "./modules/workout-session/personal-record.rout
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// A API roda atrás de um Nginx. Sem isto, todo mundo teria o IP do proxy e o limite de
+// tentativas seria um contador único para o app inteiro.
+app.set("trust proxy", 1);
+
 app.use(cors());
 app.use(express.json());
 
