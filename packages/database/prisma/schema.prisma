@@ -113,6 +113,10 @@ model User {
   trackingMode   TrackingMode     @default(FULL)
   /// Null até a pessoa escolher. Quem já tinha treino antes desta coluna não é perguntado.
   trackingModeChosenAt DateTime?
+  /// Link pelo qual a pessoa chegou ao cadastro. Null em quem chegou de outra forma.
+  signupPlanId   Int?
+  signupPlan     SharedPlan?      @relation("SignupPlan", fields: [signupPlanId], references: [id], onDelete: SetNull)
+  sharedPlan     SharedPlan[]     @relation("SharedPlanOwner")
   workouts       Workout[]
   workoutSession WorkoutSession[]
   personalRecord PersonalRecord[]
@@ -193,12 +197,16 @@ model Program {
   /// a garantia mora numa migration SQL manual (`program_one_active_per_user`).
   isActive    Boolean  @default(false)
   createdAt   DateTime @default(now())
+  /// Link de onde esta cópia veio. Null em programa criado pelo próprio usuário.
+  sourcePlanId Int?
 
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourcePlan     SharedPlan?      @relation(fields: [sourcePlanId], references: [id], onDelete: SetNull)
   programWorkout ProgramWorkout[]
   workoutSession WorkoutSession[]
 
   @@index([userId])
+  @@index([sourcePlanId])
 }
 
 model ProgramWorkout {
@@ -251,6 +259,7 @@ model Exercise {
   sessionSet       SessionSet[]
   sessionExercise  SessionExercise[]
   personalRecord   PersonalRecord[]
+  sharedPlanExercise SharedPlanExercise[]
 }
 
 model Workout {
@@ -259,10 +268,88 @@ model Workout {
   description     String?
   isActive        Boolean           @default(true)
   userId          Int
+  /// Link de onde esta cópia veio. Null em treino criado pelo próprio usuário.
+  sourcePlanId    Int?
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sourcePlan      SharedPlan?       @relation(fields: [sourcePlanId], references: [id], onDelete: SetNull)
   workoutExercise WorkoutExercise[]
   workoutSession  WorkoutSession[]
   programWorkout  ProgramWorkout[]
+
+  @@index([sourcePlanId])
+}
+
+enum SharedPlanKind {
+  WORKOUT
+  PROGRAM
+}
+
+/// Treino ou programa publicado por link. É uma foto: nada aqui aponta para o treino de
+/// origem, então editar ou apagar o original não muda o link, e "Adicionar" sempre cria
+/// cópias próprias de quem adicionou.
+///
+/// Tabelas em vez de JSON porque a FK em `Exercise` garante que o link não quebra quando
+/// o catálogo muda, e os tipos seguem vindo do Prisma.
+model SharedPlan {
+  id              Int            @id @default(autoincrement())
+  /// 128 bits aleatórios. Fica aberto porque o link é público por natureza e o autor
+  /// precisa poder copiá-lo de novo.
+  token           String         @unique
+  kind            SharedPlanKind
+  name            String
+  description     String?
+  /// Null nos programas da curadoria do Plato.
+  userId          Int?
+  createdAt       DateTime       @default(now())
+  /// O link morre na hora; as cópias já feitas continuam com quem adicionou.
+  revokedAt       DateTime?
+  viewCount       Int            @default(0)
+  /// Chave estável para republicar um programa da curadoria sem trocar o link.
+  curatedKey      String?        @unique
+  /// Posição na lista de sugeridos. Null = fora da lista.
+  featuredOrder   Int?
+  focusLabel      String?
+  sessionsPerWeek Int?
+
+  user            User?               @relation("SharedPlanOwner", fields: [userId], references: [id], onDelete: Cascade)
+  workouts        SharedPlanWorkout[]
+  signups         User[]              @relation("SignupPlan")
+  copiedWorkouts  Workout[]
+  copiedPrograms  Program[]
+
+  @@index([userId])
+}
+
+model SharedPlanWorkout {
+  id          Int     @id @default(autoincrement())
+  planId      Int
+  orderIndex  Int
+  name        String
+  description String?
+
+  plan      SharedPlan           @relation(fields: [planId], references: [id], onDelete: Cascade)
+  exercises SharedPlanExercise[]
+
+  @@unique([planId, orderIndex])
+}
+
+model SharedPlanExercise {
+  id            Int                @id @default(autoincrement())
+  planWorkoutId Int
+  exerciseId    Int
+  orderIndex    Int
+  targetSets    Int
+  targetReps    Int
+  observation   String?
+  groupKey      String?
+  groupType     ExerciseGroupType?
+
+  planWorkout SharedPlanWorkout @relation(fields: [planWorkoutId], references: [id], onDelete: Cascade)
+  /// Restrict: apagar do catálogo um exercício publicado quebraria o link em silêncio.
+  exercise    Exercise          @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@index([planWorkoutId])
+  @@index([exerciseId])
 }
 
 /// Como os exercícios de um grupo se encadeiam. Nos dois casos a execução é a mesma —

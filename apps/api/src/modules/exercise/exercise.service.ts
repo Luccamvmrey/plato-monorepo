@@ -134,13 +134,15 @@ const remove = async (id: number) => {
     // SessionExercise entra na conta porque um exercício pode estar no snapshot de uma
     // sessão sem ter nenhuma série (prescrito e não executado). A FK dele é Restrict,
     // então sem esta checagem o delete falharia com erro cru do banco em vez de 409.
-    const [sessionSets, workoutExercises, sessionExercises] = await Promise.all([
+    // O mesmo vale para SharedPlanExercise, também Restrict: o exercício está em um link.
+    const [sessionSets, workoutExercises, sessionExercises, sharedPlanExercises] = await Promise.all([
         prisma.sessionSet.count({ where: { exerciseId: id } }),
         prisma.workoutExercise.count({ where: { exerciseId: id } }),
         prisma.sessionExercise.count({ where: { exerciseId: id } }),
+        prisma.sharedPlanExercise.count({ where: { exerciseId: id } }),
     ]);
 
-    if (sessionSets > 0 || workoutExercises > 0 || sessionExercises > 0) {
+    if (sessionSets > 0 || workoutExercises > 0 || sessionExercises > 0 || sharedPlanExercises > 0) {
         throw new AppError(
             "Exercise is in use and cannot be deleted. Deleting it would cascade into training history.",
             409

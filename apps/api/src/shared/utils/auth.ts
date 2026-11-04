@@ -8,7 +8,7 @@ import { AppError } from "../error/AppError";
  * @throws AppError 403 if ownership is not verified
  */
 export const ensureOwnership = (
-    resource: { userId: number } | null | undefined,
+    resource: { userId: number | null } | null | undefined,
     userId: number,
     errorMessage = "You do not have permission to access this resource"
 ): void => {

@@ -149,13 +149,22 @@ const getExportData = async (userId: number) => {
             },
             personalRecord: {
                 include: { exercise: true }
+            },
+            sharedPlan: {
+                include: { workouts: { include: { exercises: { include: { exercise: true } } } } }
             }
         }
     });
 }
 
 const deleteAccount = async (userId: number) => {
-    return prisma.user.delete({ where: { id: userId } });
+    // Programas primeiro: `ProgramWorkout` é Restrict em `Workout`, então a cascata de
+    // `User` travaria nos treinos de quem tem programa e a conta não seria excluída.
+    return prisma.$transaction(async (tx) => {
+        await tx.program.deleteMany({ where: { userId } });
+
+        return tx.user.delete({ where: { id: userId } });
+    });
 }
 
 const getStreak = async (userId: number, timezone: string = 'UTC') => {

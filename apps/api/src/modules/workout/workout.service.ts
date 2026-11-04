@@ -110,4 +110,4 @@ const remove = async (userId: number, workoutId: number) => {
     await prisma.workout.delete({ where: { id: workoutId } });
 }
 
-export { create, getByUserId, getById, update, remove, toggleStatus }
+export { create, getByUserId, getById, update, remove, toggleStatus, toWorkoutExerciseRows }

@@ -5,6 +5,9 @@ export const registerSchema = z.object({
     password: z.string().min(8, "Password must be at least 8 characters"),
     name: z.string().min(2, "Name is required"),
     acceptedTerms: z.literal(true, "Terms must be accepted"),
+    /// Link que trouxe a pessoa. Sem validar o formato aqui: token ruim não pode barrar o
+    /// cadastro, então quem decide se ele vale é o service.
+    sharedPlanToken: z.string().optional(),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -24,7 +27,7 @@ export const loginSchema = z.object({
 // `password` fica de fora de propósito: o service não passa por hashPassword, então
 // aceitar a senha aqui gravaria texto puro no banco. Troca de senha é fluxo próprio.
 export const updateUserSchema = registerSchema
-    .omit({ password: true, acceptedTerms: true })
+    .omit({ password: true, acceptedTerms: true, sharedPlanToken: true })
     .extend({ trackingMode: z.enum(["FULL", "SIMPLE"]) })
     .partial()
 

@@ -41,6 +41,12 @@ export {
     weeklyExposures,
     estimateSessionsPerWeek,
 } from "./planned-volume";
+export {
+    SUGGESTED_PROGRAMS_PATH,
+    isShareToken,
+    isSafeReturnPath,
+    shareTokenFromReturnPath,
+} from "./share-links";
 export { resolveBodyWeightAt } from "./body-weight";
 export { calculateE1RM } from "./e1rm";
 export {
