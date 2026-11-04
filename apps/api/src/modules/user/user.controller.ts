@@ -17,11 +17,6 @@ const ensureSelf = (req: Request): number => {
     return userId;
 }
 
-const list = async (_req: Request, res: Response) => {
-    const users = await userService.getAll();
-    res.json(users);
-}
-
 const getById = async (req: Request, res: Response) => {
     const userId = ensureSelf(req);
     const user = await userService.getById(userId);
@@ -73,4 +68,4 @@ const streak = async (req: Request, res: Response) => {
     res.json(data);
 }
 
-export { list, getById, update, profile, stats, exportData, deleteAccount, streak }
+export { getById, update, profile, stats, exportData, deleteAccount, streak }

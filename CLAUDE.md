@@ -101,6 +101,11 @@ Wouter is used for routing. All path strings are defined as constants in `apps/w
 DATABASE_URL=postgresql://...
 JWT_SECRET=...
 PORT=8080
+RESEND_API_KEY=...        # envio de e-mail; sem ela, o e-mail falha e o erro vai para o log
+EMAIL_FROM=...            # opcional; padrão: Plato <nao-responda@plato-work-out.com>
+APP_URL=...               # opcional; base dos links nos e-mails. Padrão: https://plato-work-out.com
+ADMIN_USER_IDS=1,2        # ids que podem escrever no catálogo de exercícios; vazio = ninguém
+EMAIL_LOG_TO_CONSOLE=true # só em desenvolvimento: imprime o e-mail no console em vez de enviar
 ```
 
 **`apps/web/.env`** (optional)

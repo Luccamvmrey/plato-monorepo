@@ -150,7 +150,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"secret123\",\n  \"name\": \"Lucca\"\n}",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"senha-forte-123\",\n  \"name\": \"Lucca\",\n  \"acceptedTerms\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -226,6 +226,90 @@
               ]
             },
             "description": "Autentica e retorna `{ token, user }`.\n\nO script da aba **Tests** grava `token` e `userId` nas variáveis da coleção.\n\n**Body** (loginSchema):\n- `email` — string, formato de e-mail (obrigatório)\n- `password` — string (obrigatório)"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Troca um token válido por outro com mais 30 dias de validade.\n\nResposta: `{ token }`. Erro: `401` se o token for inválido, expirado ou de sessão encerrada."
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Envia um link de redefinição, válido por 1 hora.\n\nSempre responde `204`, exista ou não a conta. Erros: `400` para e-mail inválido, `429` acima de 5 pedidos por hora."
+          },
+          "response": []
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"<token do e-mail>\",\n  \"password\": \"nova-senha-123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Define a nova senha com o token do e-mail, de uso único, e encerra todas as sessões da conta (app e MCP). Responde `204`.\n\nErros: `400` para token inválido ou expirado ou senha com menos de 8 caracteres, `429` acima de 10 tentativas em 15 minutos."
           },
           "response": []
         }
@@ -339,25 +423,6 @@
               ]
             },
             "description": "Apaga a conta do usuário autenticado. Retorna `204 No Content`.\n\n⚠️ Destrutivo e irreversível."
-          },
-          "response": []
-        },
-        {
-          "name": "List users",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users"
-              ]
-            },
-            "description": "Lista todos os usuários."
           },
           "response": []
         },

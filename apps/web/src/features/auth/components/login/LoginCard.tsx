@@ -3,6 +3,8 @@ import LoginForm from "@/features/auth/components/login/LoginForm.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useLoginLogic } from "@/features/auth/hooks/useLoginLogic.ts";
 import type { FormEvent } from "react";
+import { Link } from "wouter";
+import { path } from "@/core/constants/path.ts";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
@@ -48,6 +50,10 @@ const LoginCard = () => {
                             scrim de tela cheia não acrescentava informação. */}
                         {isLoading && <Spinner data-icon="inline-start" />}
                         {isLoading ? "Entrando..." : "Entrar"}
+                    </Button>
+
+                    <Button variant="link" asChild className="w-full">
+                        <Link href={path.FORGOT_PASSWORD}>Esqueci minha senha</Link>
                     </Button>
 
                     <Button

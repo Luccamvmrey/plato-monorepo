@@ -6,7 +6,7 @@ import { useState } from "react";
 import { isValidEmail } from "@/core/utils/validation.ts";
 import { type AxiosError } from "axios";
 
-type SignupErrors = { name?: string; email?: string; password?: string };
+type SignupErrors = { name?: string; email?: string; password?: string; terms?: string };
 
 export const useSignupLogic = () => {
     const { registerMutation } = useAuth();
@@ -57,6 +57,9 @@ export const useSignupLogic = () => {
         }
         if (!data.password || data.password.length < 8) {
             newErrors.password = "A senha deve ter pelo menos 8 caracteres.";
+        }
+        if (!data.acceptedTerms) {
+            newErrors.terms = "Aceite os termos para criar sua conta.";
         }
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);

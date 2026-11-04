@@ -15,6 +15,9 @@ const comparePassword = async (password: string, hash: string): Promise<boolean>
     return compare(password, hash);
 };
 
-const generateToken = (payload: object) => sign(payload, JWT_SECRET);
+// O app renova o token ao abrir, então só cai no login quem ficou 30 dias sem abrir.
+const TOKEN_TTL = "30d";
+
+const generateToken = (payload: object) => sign(payload, JWT_SECRET, { expiresIn: TOKEN_TTL });
 
 export { hashPassword, comparePassword, generateToken };

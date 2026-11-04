@@ -96,6 +96,11 @@ model User {
   name           String?
   password       String
   createdAt      DateTime         @default(now())
+  /// Entra no JWT e é conferida a cada request: incrementar encerra todas as sessões
+  /// abertas de uma vez (ex.: na troca de senha), sem esperar o `exp` dos tokens.
+  tokenVersion   Int              @default(0)
+  /// Null nas contas anteriores à publicação dos termos.
+  termsAcceptedAt DateTime?
   workouts       Workout[]
   workoutSession WorkoutSession[]
   personalRecord PersonalRecord[]
@@ -103,6 +108,19 @@ model User {
   program        Program[]
   oauthCode      OAuthAuthorizationCode[]
   oauthSession   OAuthSession[]
+  passwordResetToken PasswordResetToken[]
+}
+
+/// Pedido de redefinição de senha, de uso único. Guardado só o hash: quem lê o banco
+/// não consegue usar o link enviado por e-mail.
+model PasswordResetToken {
+  tokenHash String   @id
+  userId    Int
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Cliente OAuth registrado dinamicamente (RFC 7591) pelo host do MCP — Claude, Inspector etc.

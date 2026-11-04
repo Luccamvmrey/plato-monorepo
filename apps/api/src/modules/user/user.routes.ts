@@ -22,7 +22,6 @@ router.get('/body-weight', bodyWeightController.list);
 router.post('/body-weight', validateBody(createBodyWeightSchema), bodyWeightController.create);
 router.delete('/body-weight/:id', bodyWeightController.remove);
 
-router.get('/', userController.list);
 router.get('/:id', userController.getById);
 router.put('/:id', validateBody(updateUserSchema), userController.update);
 

@@ -2,16 +2,6 @@ import prisma from "@plato/database";
 import { calculateTotalVolume, setVolume } from "@plato/shared";
 import { UpdateUserInput } from "../auth/auth.schema";
 
-const getAll = async () => {
-    return prisma.user.findMany({
-        select: {
-            id: true,
-            email: true,
-            name: true,
-        }
-    });
-}
-
 const getById = async (id: number) => {
     return prisma.user.findUnique({
         where: { id: id },
@@ -130,7 +120,7 @@ const getExportData = async (userId: number) => {
         where: { id: userId },
         // `include` traz todos os escalares do usuário — sem este omit o hash bcrypt
         // ia no corpo do export.
-        omit: { password: true },
+        omit: { password: true, tokenVersion: true },
         include: {
             workouts: {
                 include: { workoutExercise: { include: { exercise: true } } }
@@ -241,4 +231,4 @@ const _getDaysBetweenStr = (startStr: string, endStr: string): string[] => {
     return days;
 };
 
-export { getAll, getById, update, getProfile, getStats, getExportData, deleteAccount, getStreak }
+export { getById, update, getProfile, getStats, getExportData, deleteAccount, getStreak }

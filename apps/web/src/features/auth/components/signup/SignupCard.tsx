@@ -17,6 +17,7 @@ const SignupCard = () => {
             email: formData.get("email") as string,
             password: formData.get("password") as string,
             name: formData.get("username") as string,
+            acceptedTerms: formData.get("acceptedTerms") === "on",
         })
     }
 
