@@ -1,4 +1,4 @@
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.tsx";
+import AuthFormLayout from "@/features/auth/components/AuthFormLayout.tsx";
 import { useSignupLogic } from "@/features/auth/hooks/useSignupLogic.ts";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button.tsx";
@@ -22,45 +22,36 @@ const SignupCard = () => {
     }
 
     return (
-        <div className="flex flex-col w-[75%] gap-4">
-            <Card className="border border-border">
-                <CardHeader>
-                    <CardTitle className="text-[20px] tracking-[-0.02em]">Bem-vindo ao Plato!</CardTitle>
-                    <CardDescription>
-                        Crie uma conta para treinar conosco.
-                    </CardDescription>
-                    <CardAction>
-                        <Button variant="ghost" size="icon" className="relative tap-target" aria-label="Voltar" onClick={handleGoBack}>
-                            <ArrowLeft/>
-                        </Button>
-                    </CardAction>
-                </CardHeader>
-
-                <CardContent className="flex flex-col gap-3">
-                    <SignupForm
-                        formId={FORM_ID}
-                        onSubmit={handleSubmit}
-                        errors={errors}
-                        onBlur={handleBlur}
-                    />
-                    {signupError && <InlineErrorBanner message={signupError} />}
-                </CardContent>
-
-                <CardFooter>
-                    <Button
-                        type="submit"
-                        form={FORM_ID}
-                        className="flex-1 h-12 font-medium tracking-[-0.01em]"
-                        disabled={isLoading}
-                    >
-                        {/* Cadastro encadeia register + login, então demora mais que
-                            um submit comum — mas o retorno cabe no botão. */}
-                        {isLoading && <Spinner data-icon="inline-start" />}
-                        {isLoading ? "Criando conta..." : "Criar conta"}
-                    </Button>
-                </CardFooter>
-            </Card>
-        </div>
+        <AuthFormLayout
+            title="Bem-vindo ao Plato!"
+            description="Crie uma conta para treinar conosco."
+            action={
+                <Button variant="ghost" size="icon" className="relative tap-target shrink-0" aria-label="Voltar" onClick={handleGoBack}>
+                    <ArrowLeft/>
+                </Button>
+            }
+            footer={
+                <Button
+                    type="submit"
+                    form={FORM_ID}
+                    className="w-full h-12 font-medium tracking-[-0.01em]"
+                    disabled={isLoading}
+                >
+                    {/* Cadastro encadeia register + login, então demora mais que
+                        um submit comum, mas o retorno cabe no botão. */}
+                    {isLoading && <Spinner data-icon="inline-start" />}
+                    {isLoading ? "Criando conta..." : "Criar conta"}
+                </Button>
+            }
+        >
+            <SignupForm
+                formId={FORM_ID}
+                onSubmit={handleSubmit}
+                errors={errors}
+                onBlur={handleBlur}
+            />
+            {signupError && <InlineErrorBanner message={signupError} />}
+        </AuthFormLayout>
     );
 };
 

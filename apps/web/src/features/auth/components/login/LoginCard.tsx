@@ -1,10 +1,8 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import LoginForm from "@/features/auth/components/login/LoginForm.tsx";
+import AuthFormLayout from "@/features/auth/components/AuthFormLayout.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useLoginLogic } from "@/features/auth/hooks/useLoginLogic.ts";
 import type { FormEvent } from "react";
-import { Link } from "wouter";
-import { path } from "@/core/constants/path.ts";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 
@@ -22,24 +20,11 @@ const LoginCard = () => {
     };
 
     return (
-        <div className="flex flex-col w-[75%] gap-4">
-            <Card className="border border-border">
-                <CardHeader>
-                    <CardTitle className="text-[20px] tracking-[-0.02em]">Bem-vindo de volta ao Plato!</CardTitle>
-                    <CardDescription>
-                        Faça login em sua conta.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3">
-                    <LoginForm
-                        formId={FORM_ID}
-                        onSubmit={handleSubmit}
-                        errors={errors}
-                        onBlur={handleBlur}
-                    />
-                    {loginError && <InlineErrorBanner message={loginError} />}
-                </CardContent>
-                <CardFooter className="flex flex-col gap-2">
+        <AuthFormLayout
+            title="Bem-vindo de volta ao Plato!"
+            description="Faça login em sua conta."
+            footer={
+                <>
                     <Button
                         type="submit"
                         form={FORM_ID}
@@ -52,10 +37,6 @@ const LoginCard = () => {
                         {isLoading ? "Entrando..." : "Entrar"}
                     </Button>
 
-                    <Button variant="link" asChild className="w-full">
-                        <Link href={path.FORGOT_PASSWORD}>Esqueci minha senha</Link>
-                    </Button>
-
                     <Button
                         variant="link"
                         onClick={handleCreateAccount}
@@ -64,9 +45,17 @@ const LoginCard = () => {
                     >
                         Criar conta
                     </Button>
-                </CardFooter>
-            </Card>
-        </div>
+                </>
+            }
+        >
+            <LoginForm
+                formId={FORM_ID}
+                onSubmit={handleSubmit}
+                errors={errors}
+                onBlur={handleBlur}
+            />
+            {loginError && <InlineErrorBanner message={loginError} />}
+        </AuthFormLayout>
     );
 };
 
