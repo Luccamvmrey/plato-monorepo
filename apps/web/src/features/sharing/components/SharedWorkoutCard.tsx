@@ -1,5 +1,5 @@
-import { findExerciseGroups } from "@plato/shared";
-import { GROUP_TYPE_LABEL } from "@/features/workouts/utils/movement.ts";
+import { buildGroupMembership } from "@plato/shared";
+import ExerciseGroupChip from "@/features/workouts/components/workout-editor/exercise-list/ExerciseGroupChip.tsx";
 import type { PublicSharedExercise, PublicSharedWorkout } from "@/features/sharing/sharing.types.ts";
 import { cn } from "@/lib/utils.ts";
 
@@ -13,8 +13,7 @@ type SharedWorkoutCardProps = {
 };
 
 const SharedWorkoutCard = ({ workout, showHeader }: SharedWorkoutCardProps) => {
-    const groups = findExerciseGroups(workout.exercises);
-    const groupByIndex = new Map(groups.flatMap((run) => run.indexes.map((index) => [index, run] as const)));
+    const membership = buildGroupMembership(workout.exercises);
 
     return (
         <section className="rounded-xl bg-card border border-border">
@@ -29,21 +28,25 @@ const SharedWorkoutCard = ({ workout, showHeader }: SharedWorkoutCardProps) => {
 
             <ul className={cn("px-4 pb-2", !showHeader && "pt-2 [&>li:first-child]:border-t-0")}>
                 {workout.exercises.map((item, index) => {
-                    const group = groupByIndex.get(index);
-                    const isGroupStart = group?.indexes[0] === index;
+                    const group = membership[index];
 
                     return (
-                        <li
-                            key={item.orderIndex}
-                            className={cn("py-2.5 border-t border-border", group && "border-l-2 border-l-primary/50 pl-3")}
-                        >
-                            {isGroupStart && (
-                                <p className="text-[13px] font-medium text-primary mb-1">
-                                    {GROUP_TYPE_LABEL[group.groupType] ?? "Grupo"}
-                                </p>
+                        <li key={item.orderIndex} className="py-2.5 border-t border-border">
+                            {/* O mesmo cabeçalho e a mesma posição do editor: bi-set se lê igual em todo o app. */}
+                            {group?.isFirst && (
+                                <div className="mb-2">
+                                    <ExerciseGroupChip groupType={group.groupType} size={group.size} />
+                                </div>
                             )}
                             <div className="flex items-baseline gap-3 text-[14px]">
-                                <span className="flex-1 min-w-0">{item.exercise.name}</span>
+                                <span className="flex-1 min-w-0">
+                                    {group && (
+                                        <span className="text-muted-foreground tabular-nums mr-1.5">
+                                            {group.position + 1}/{group.size}
+                                        </span>
+                                    )}
+                                    {item.exercise.name}
+                                </span>
                                 <span className="text-[13px] text-muted-foreground tabular-nums shrink-0">
                                     {formatTarget(item)}
                                 </span>

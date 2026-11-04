@@ -4,7 +4,8 @@ import { GROUP_TYPE_DESCRIPTION, GROUP_TYPE_LABEL } from "@/features/workouts/ut
 type ExerciseGroupChipProps = {
     groupType: string;
     size: number;
-    onUngroup: () => void;
+    /** Ausente onde o grupo é só leitura, como na página pública de um link. */
+    onUngroup?: () => void;
 };
 
 /**
@@ -34,14 +35,16 @@ const ExerciseGroupChip = ({ groupType, size, onUngroup }: ExerciseGroupChipProp
             </span>
         </div>
 
-        <button
-            type="button"
-            onClick={onUngroup}
-            aria-label="Desfazer agrupamento"
-            className="relative tap-target text-muted-foreground hover:text-foreground transition-colors shrink-0"
-        >
-            <X data-icon="inline" className="size-3.5" />
-        </button>
+        {onUngroup && (
+            <button
+                type="button"
+                onClick={onUngroup}
+                aria-label="Desfazer agrupamento"
+                className="relative tap-target text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            >
+                <X data-icon="inline" className="size-3.5" />
+            </button>
+        )}
     </div>
 );
 

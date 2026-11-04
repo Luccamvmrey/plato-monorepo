@@ -1,9 +1,24 @@
+import { motion, type Variants } from "framer-motion";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { path } from "@/core/constants/path.ts";
 import { useFeaturedPlans } from "@/features/sharing/hooks/useFeaturedPlans.ts";
+
+const stagger: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+};
+
+const staggerItem: Variants = {
+    hidden: { opacity: 0, y: 14 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { type: "spring", stiffness: 380, damping: 28 },
+    },
+};
 
 const SuggestedProgramsPage = () => {
     const [, navigate] = useLocation();
@@ -42,28 +57,33 @@ const SuggestedProgramsPage = () => {
                     </p>
                 )}
 
-                {plans.map((plan) => (
-                    <Link
-                        key={plan.token}
-                        href={`${path.SHARED}/${plan.token}`}
-                        className="flex items-center gap-3 rounded-xl bg-card border border-border p-4 transition-transform active:scale-[0.98]"
-                    >
-                        <div className="flex-1 min-w-0">
-                            <h2 className="text-[17px] font-semibold tracking-[-0.02em] leading-tight">{plan.name}</h2>
-                            {plan.description && (
-                                <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2">{plan.description}</p>
-                            )}
-                            <p className="text-[13px] text-muted-foreground mt-1 tabular-nums">
-                                {[
-                                    plan.focusLabel,
-                                    plan.sessionsPerWeek ? `${plan.sessionsPerWeek}x por semana` : null,
-                                    `${plan.workoutCount} ${plan.workoutCount === 1 ? "treino" : "treinos"}`,
-                                ].filter(Boolean).join(" · ")}
-                            </p>
-                        </div>
-                        <ChevronRight className="size-4 text-muted-foreground shrink-0" aria-hidden />
-                    </Link>
-                ))}
+                {hasPlans && (
+                    <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-3">
+                        {plans.map((plan) => (
+                            <motion.div key={plan.token} variants={staggerItem}>
+                                <Link
+                                    href={`${path.SHARED}/${plan.token}`}
+                                    className="flex items-center gap-3 rounded-xl bg-card border border-border p-4 transition-transform active:scale-[0.98]"
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-[17px] font-semibold tracking-[-0.02em] leading-tight">{plan.name}</h2>
+                                        {plan.description && (
+                                            <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2">{plan.description}</p>
+                                        )}
+                                        <p className="text-[13px] text-muted-foreground mt-1 tabular-nums">
+                                            {[
+                                                plan.focusLabel,
+                                                plan.sessionsPerWeek ? `${plan.sessionsPerWeek}x por semana` : null,
+                                                `${plan.workoutCount} ${plan.workoutCount === 1 ? "treino" : "treinos"}`,
+                                            ].filter(Boolean).join(" · ")}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="size-4 text-muted-foreground shrink-0" aria-hidden />
+                                </Link>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                )}
             </div>
         </main>
     );

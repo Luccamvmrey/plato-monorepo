@@ -1,3 +1,4 @@
+import { motion, type Variants } from "framer-motion";
 import { Link2Off, Plus } from "lucide-react";
 import { useParams } from "wouter";
 import type { MuscleGroup } from "@plato/database/generated/prisma/enums";
@@ -9,6 +10,20 @@ import SharedWorkoutCard from "@/features/sharing/components/SharedWorkoutCard.t
 import { useSharedPlanPage } from "@/features/sharing/hooks/useSharedPlanPage.ts";
 
 const MAX_MUSCLES_SHOWN = 5;
+
+const stagger: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+};
+
+const staggerItem: Variants = {
+    hidden: { opacity: 0, y: 14 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { type: "spring", stiffness: 380, damping: 28 },
+    },
+};
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
@@ -34,7 +49,9 @@ const CenteredMessage = ({ title, description, action, onAction }: {
 }) => (
     <Shell>
         <div className="flex flex-col items-center text-center gap-4 pt-24">
-            <Link2Off className="size-9 text-muted-foreground opacity-40" aria-hidden />
+            <div className="size-12 rounded-2xl bg-muted flex items-center justify-center">
+                <Link2Off className="size-5 text-muted-foreground" aria-hidden />
+            </div>
             <div className="flex flex-col gap-1.5">
                 <h1 className="text-[22px] font-semibold tracking-[-0.03em]">{title}</h1>
                 <p className="text-[14px] text-muted-foreground">{description}</p>
@@ -106,7 +123,7 @@ const SharedPlanPage = () => {
     return (
         <Shell>
             <header className="flex flex-col gap-1">
-                <p className="text-[13px] font-medium text-primary">
+                <p className="text-[13px] font-medium text-muted-foreground">
                     {plan.isCurated
                         ? "Sugerido pelo Plato"
                         : `${isProgram ? "Programa compartilhado" : "Treino compartilhado"} com você`}
@@ -134,11 +151,13 @@ const SharedPlanPage = () => {
                 ))}
             </section>
 
-            <div className="flex flex-col gap-3">
+            <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-3">
                 {plan.workouts.map((workout) => (
-                    <SharedWorkoutCard key={workout.orderIndex} workout={workout} showHeader={isProgram} />
+                    <motion.div key={workout.orderIndex} variants={staggerItem}>
+                        <SharedWorkoutCard workout={workout} showHeader={isProgram} />
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
 
             {plan.isCurated && (
                 <p className="text-[13px] text-muted-foreground">
@@ -149,7 +168,7 @@ const SharedPlanPage = () => {
             {/* A altura reserva o espaço do rodapé fixo: sem ela, ele cobriria o fim da lista. */}
             <div aria-hidden className={isAuthenticated ? "h-24" : "h-36"} />
 
-            <div className="fixed inset-x-0 bottom-0 bg-background border-t border-border px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+            <div className="fixed inset-x-0 bottom-0 bg-background/95 backdrop-blur-sm border-t border-border px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
                 <div className="mx-auto max-w-lg flex flex-col gap-1">
                     <Button
                         onClick={handleAdd}
