@@ -3,6 +3,9 @@
 > a qualquer tela, presente ou futura. Consulte antes de gerar qualquer componente.
 >
 > Stack: React · Tailwind CSS v4 · shadcn/ui · Framer Motion · Geist Variable
+>
+> Revisado em 04/11/2026, depois do redesenho das telas. Antes de criar um conceito na
+> tela, procure como o app já o desenha e reaproveite o componente.
 
 ---
 
@@ -41,6 +44,10 @@ limpas com bordas sutis.
 `primary` é reservado para **ações que o usuário executa**.
 Badges informativos usam seus próprios tokens — nunca `primary`.
 
+**Exceções:** o texto que aponta o estado atual da rotação ("Próximo", "Em uso") e o
+gráfico, que tem uma cor só (§7). Rótulos que só informam, como "Sugerido pelo Plato",
+usam `muted-foreground`.
+
 ```tsx
 // ✅ Correto
 <Button>Iniciar</Button>                                   // azul — ação
@@ -56,7 +63,8 @@ Badges informativos usam seus próprios tokens — nunca `primary`.
 
 ## 3. Badges de Grupo Muscular
 
-14 grupos, 6 cores. Agrupados por função muscular.
+Cores agrupadas por função muscular. **Use o badge só onde ele identifica um exercício
+sozinho**, nunca repetido em lista. Em gráficos e resumos, o nome do grupo é texto comum.
 
 | Grupo (enum) | Classe CSS | Cor | Grupo funcional |
 |---|---|---|---|
@@ -77,40 +85,8 @@ Badges informativos usam seus próprios tokens — nunca `primary`.
 
 ### Uso obrigatório — sempre via componente
 
-```tsx
-// components/shared/MuscleBadge.tsx
-import { muscleGroupBadgeClass, muscleGroupLabel } from "@/lib/muscle-group"
-import { cn } from "@/lib/utils"
-
-export function MuscleBadge({ group, className }: { group: MuscleGroup; className?: string }) {
-  return (
-    <span className={cn("badge-muscle", muscleGroupBadgeClass[group], className)}>
-      {muscleGroupLabel[group]}
-    </span>
-  )
-}
-```
-
-```ts
-// lib/muscle-group.ts
-export const muscleGroupBadgeClass: Record<MuscleGroup, string> = {
-  CHEST: "badge-chest", SHOULDERS: "badge-shoulders", TRICEPS: "badge-triceps",
-  BACK: "badge-back", LOWER_BACK: "badge-lower-back", TRAPS: "badge-traps",
-  BICEPS: "badge-biceps", FOREARMS: "badge-forearms",
-  QUADRICEPS: "badge-quadriceps", HAMSTRINGS: "badge-hamstrings",
-  GLUTES: "badge-glutes", CALVES: "badge-calves",
-  CORE: "badge-core", NECK: "badge-neck",
-}
-
-export const muscleGroupLabel: Record<MuscleGroup, string> = {
-  CHEST: "Peito", SHOULDERS: "Ombros", TRICEPS: "Tríceps",
-  BACK: "Costas", LOWER_BACK: "Lombar", TRAPS: "Trapézio",
-  BICEPS: "Bíceps", FOREARMS: "Antebraço",
-  QUADRICEPS: "Quadríceps", HAMSTRINGS: "Isquiotibial",
-  GLUTES: "Glúteos", CALVES: "Panturrilha",
-  CORE: "Core", NECK: "Pescoço",
-}
-```
+O componente é `core/components/MuscleBadge.tsx`. Os nomes dos grupos vêm de
+`muscleGroupTranslation`, em `core/utils/translations.ts`.
 
 ---
 
@@ -118,19 +94,22 @@ export const muscleGroupLabel: Record<MuscleGroup, string> = {
 
 **Font:** Geist Variable — `font-sans` em todo o projeto.
 
-### 4 níveis fixos — não use outros
+### Níveis
 
 | Nível | Especificação | Uso |
 |---|---|---|
-| Display | `text-[22px] font-medium tracking-[-0.03em]` | Números grandes: volume, PR, timer |
-| Heading | `text-base font-medium tracking-[-0.02em]` | Títulos de tela, nomes de treino |
-| Body | `text-[13px] font-normal` | Texto de exercício, descrições |
-| Meta | `text-[11px] font-medium tracking-[0.04em] uppercase` | Labels de coluna, categorias |
+| Número | `text-[32px]` a `text-[40px] font-semibold tabular-nums` | O número principal da tela |
+| Título de tela | `text-[24px] font-semibold tracking-[-0.03em]` | O `h1` de toda tela |
+| Título de card | `text-[17px]` a `text-[20px] font-semibold tracking-[-0.02em]` | Nome do treino, do programa ou da seção |
+| Corpo | `text-[14px]` | Exercícios, listas, descrições |
+| Rótulo | `text-[13px] font-medium text-muted-foreground` | Rótulos em frase, metadados |
+| Selo | `text-[11px] font-medium tracking-[0.04em] uppercase` | Só dentro de chips, como o selo de bi-set |
 
 **Regras:**
-- Nunca `font-semibold` ou `font-bold` — apenas `font-medium` para destaque
-- Nunca `text-xs` arbitrário — use `text-[11px]` com letter-spacing correto
-- `tracking-tight` obrigatório em headings acima de 16px
+- `font-semibold` é para títulos e números; `font-medium` para destaque em texto corrido. Nunca `font-bold`
+- Rótulos são frases de 13px. Uppercase pequeno fica restrito aos selos
+- Números que se comparam ou mudam usam `tabular-nums`
+- Tracking negativo em títulos acima de 16px
 
 ---
 
@@ -177,21 +156,36 @@ Toda tela usa header inline sem card wrapper ou fundo próprio:
 
 ```tsx
 // Tela raiz (tab)
-<div className="flex items-center justify-between px-4 pt-6 pb-4">
-  <h1 className="text-[22px] font-medium tracking-[-0.03em]">Título</h1>
+<div className="flex flex-row items-center justify-between py-2">
+  <h1 className="text-[24px] font-semibold tracking-[-0.03em]">Título</h1>
   {/* ação opcional à direita */}
 </div>
 
 // Tela filha (push navigation) — com botão voltar
-<div className="flex items-center gap-3 px-4 pt-4 pb-2">
-  <button onClick={() => router.back()}
-          className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center
-                     text-muted-foreground">
-    <ChevronLeft className="w-4 h-4" />
-  </button>
-  <h1 className="text-[15px] font-medium tracking-[-0.02em]">Título</h1>
+<div className="flex items-center gap-1 py-2">
+  <Button variant="ghost" size="icon" className="rounded-full relative tap-target -ml-2" aria-label="Voltar">
+    <ArrowLeft className="w-5 h-5" />
+  </Button>
+  <h1 className="text-[24px] font-semibold tracking-[-0.03em]">Título</h1>
 </div>
 ```
+
+### Bi-sets e outros grupos
+
+Um bi-set se lê igual em todo o app: o cabeçalho `ExerciseGroupChip` abre o grupo, e cada
+membro mostra a posição (`1/2`) em `text-muted-foreground tabular-nums` antes do nome. Na
+sessão, use `SessionGroupBadge`. Nunca marque um grupo com barra lateral ou cor própria.
+
+### Bottom sheets
+
+Bottom sheet usa `rounded-t-2xl pb-[calc(env(safe-area-inset-bottom)+1rem)]`. Em escolhas
+neutras, desligue o foco automático com `onOpenAutoFocus={(e) => e.preventDefault()}`, para
+a primeira opção não parecer já selecionada.
+
+### Botões principais
+
+O botão principal da tela tem `h-[52px]`, como "Iniciar treino". Em formulários e rodapés
+de edição, `h-12`.
 
 ### Footer fixo com CTA
 
@@ -258,21 +252,17 @@ O filtro selecionado usa a cor do próprio grupo, não `primary`:
 
 ## 7. Gráficos (Recharts)
 
-### Cores — regra semântica obrigatória
+### Cor — uma por gráfico
 
-| Métrica | Token | Razão |
-|---|---|---|
-| e1RM / força | `var(--color-primary)` azul | É progresso — o que se persegue |
-| Volume / tonnage | `var(--color-success)` verde | É acúmulo de trabalho concluído |
+Todo gráfico usa `var(--color-primary)`, inclusive barras com `bg-primary`. Métricas
+diferentes são abas do mesmo gráfico, não cores diferentes. Nada de cores de grupo muscular
+em gráfico. Âmbar é só para recorde.
 
-**Nunca inverter.** e1RM verde e volume azul é semanticamente errado.
+### Dados
 
-```ts
-const CHART_COLORS = {
-  e1rm:   "var(--color-primary)",
-  volume: "var(--color-success)",
-}
-```
+Uma linha por sessão, não por série. O eixo Y parte do mínimo, porque com base em zero uma
+progressão de 1 a 3% vira linha reta. Série do modo simples entra no gráfico de carga e
+nunca nos de força ou volume.
 
 ### Gradiente de área — opacidade máxima 0.15
 
@@ -442,9 +432,10 @@ const staggerItem = {
 | Ícone com fundo colorido único | `bg-blue-500 rounded-full` | `bg-muted rounded-lg` ou sem fundo |
 | Borda esquerda colorida em cards | `border-l-4 border-primary` | `border border-border` |
 | Header de tela filha em card | Card wrapper separado | Top bar compacta sem fundo próprio |
-| `font-semibold` / `font-bold` | Peso 600/700 | Apenas `font-medium` (500) |
+| `font-bold` | Peso 700 | `font-semibold` em títulos e números (§4) |
 | Radius arbitrário | `rounded-[10px]` hardcoded | Sempre da escala de tokens |
-| Cores de gráfico invertidas | e1RM verde, volume azul | e1RM = `primary`, volume = `success` |
+| Arco-íris em gráfico | Uma cor por grupo muscular | Uma cor por gráfico, `primary` |
+| Grupo inventado por tela | Barra lateral azul no bi-set | `ExerciseGroupChip` e posição `1/2` |
 | Gradiente de área opaco | `stopOpacity` 0.4+ | Máximo 0.15 |
 | Tooltip padrão Recharts | Fundo branco, quebra dark mode | `ChartTooltip` customizado |
 | e1RM estimado em neon | `text-primary` com destaque | `text-muted-foreground` |
@@ -458,14 +449,15 @@ const staggerItem = {
 
 **Identidade visual**
 - [ ] Nenhum badge usa `bg-primary` ou `bg-blue-*`
-- [ ] Badges de grupo usam `<MuscleBadge>` ou `badge-muscle badge-{grupo}`
-- [ ] Botões CTA usam `bg-primary` — e só eles
+- [ ] Badges de grupo usam `<MuscleBadge>` ou `badge-muscle badge-{grupo}`, só onde identificam um exercício sozinho
+- [ ] Botões CTA usam `bg-primary`; fora eles, azul só nas exceções do §2 e nos gráficos
+- [ ] Conceito que já existe no app reaproveita o componente (ex.: bi-set)
 - [ ] Conclusões usam `bg-success-subtle` / `text-success`
 - [ ] PRs usam `badge-pr` / tokens `--pr-*`
 
 **Tipografia e layout**
-- [ ] Tipografia segue os 4 níveis da escala
-- [ ] Nunca `font-bold` ou `font-semibold`
+- [ ] Tipografia segue os níveis do §4
+- [ ] `h1` em `text-[24px] font-semibold`; nunca `font-bold`
 - [ ] Radius sempre da escala de tokens
 - [ ] Bordas sempre `border-border` — sem hardcode
 
@@ -477,7 +469,7 @@ const staggerItem = {
 - [ ] Pluralização correta em português
 
 **Gráficos**
-- [ ] e1RM = `primary` (azul), volume = `success` (verde) — nunca invertido
+- [ ] Uma cor por gráfico, `primary`
 - [ ] Gradiente com `stopOpacity` máximo 0.15
 - [ ] `ChartTooltip` customizado — sem tooltip padrão Recharts
 - [ ] Gráfico com < 3 pontos mostra estado de aviso
