@@ -20,6 +20,8 @@ export interface RegisterRequest {
     password: string;
     name: string;
     acceptedTerms: boolean;
+    /** Link que trouxe a pessoa ao cadastro, quando houver. */
+    sharedPlanToken?: string;
 }
 
 export interface RegisterResponse {

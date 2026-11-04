@@ -2,24 +2,32 @@ import prisma from "@plato/database";
 import { comparePassword, generateToken, hashPassword } from "./auth.utils";
 import { AppError } from "../../shared/error/AppError";
 import { sendEmail } from "../../shared/email/email";
+import { getAppUrl } from "../../shared/utils/app-url";
+import { findPlanIdForSignup } from "../share/share.service";
 import { createHash, randomBytes } from "crypto";
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
-const DEFAULT_APP_URL = "https://plato-work-out.com";
 
 const hashResetToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
 const issueToken = (user: { id: number, email: string, tokenVersion: number }) =>
     generateToken({ id: user.id, email: user.email, tv: user.tokenVersion });
 
-const register = async ({ email, password, name }: { email: string, password: string, name: string }) => {
+const register = async ({ email, password, name, sharedPlanToken }: {
+    email: string,
+    password: string,
+    name: string,
+    sharedPlanToken?: string,
+}) => {
     const hashedPassword = await hashPassword(password);
+    const signupPlanId = await findPlanIdForSignup(sharedPlanToken);
 
     const user = await prisma.user.create({
         data: {
             email,
             password: hashedPassword,
             name,
+            signupPlanId,
             // O schema só deixa o cadastro chegar aqui com os termos aceitos.
             termsAcceptedAt: new Date(),
         }
@@ -67,7 +75,7 @@ const requestPasswordReset = async (email: string) => {
         }),
     ]);
 
-    const appUrl = (process.env.APP_URL ?? DEFAULT_APP_URL).replace(/\/$/, "");
+    const appUrl = getAppUrl();
     const link = `${appUrl}/reset-password?token=${token}`;
 
     // Sem await: esperar o provedor faria a resposta demorar mais só quando a conta

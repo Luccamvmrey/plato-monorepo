@@ -5,6 +5,8 @@ export const path = {
     RESET_PASSWORD: "/reset-password",
     TERMS: "/terms",
     PRIVACY: "/privacy",
+    SHARED: "/s",
+    SUGGESTED: "/suggested",
     WORKOUTS: "/workouts",
     WORKOUT_EDITOR: "/workout-editor",
     PROGRAMS: "/programs",

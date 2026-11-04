@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Settings, Sun, Moon, Download, LogOut, Trash2, Check } from "lucide-react";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { TrackingModeSetting } from "./TrackingModeSetting";
+import { SharedLinksSetting } from "@/features/sharing/components/SharedLinksSetting.tsx";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -49,6 +50,8 @@ export const GovernanceSettings = () => {
                 </div>
 
                 <TrackingModeSetting />
+
+                <SharedLinksSetting />
 
                 {/* Aparência */}
                 <button

@@ -1,4 +1,5 @@
 import { useAuth } from "@/features/auth/hooks/useAuth.ts";
+import { useReturnPath } from "@/features/auth/hooks/useReturnPath.ts";
 import { useLocation } from "wouter";
 import { path } from "@/core/constants/path.ts";
 import type { LoginRequest } from "@/features/auth/auth.types.ts";
@@ -10,6 +11,7 @@ type LoginErrors = { email?: string; password?: string };
 export const useLoginLogic = () => {
     const { loginMutation } = useAuth();
     const [, navigate] = useLocation();
+    const { withReturn } = useReturnPath();
     const [errors, setErrors] = useState<LoginErrors>({});
 
     const FORM_ID = "login-form";
@@ -55,7 +57,7 @@ export const useLoginLogic = () => {
     }
 
     const handleCreateAccount = () => {
-        navigate(path.SIGNUP);
+        navigate(withReturn(path.SIGNUP));
     }
 
     return {

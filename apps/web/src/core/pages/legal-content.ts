@@ -56,7 +56,7 @@ export const TERMS: LegalDocument = {
 
 export const PRIVACY: LegalDocument = {
     title: "Política de Privacidade",
-    updatedAt: UPDATED_AT,
+    updatedAt: "4 de novembro de 2026",
     sections: [
         {
             heading: "Dados que coletamos",
@@ -80,6 +80,15 @@ export const PRIVACY: LegalDocument = {
             heading: "Com quem compartilhamos",
             paragraphs: [
                 "Apenas com fornecedores necessários para operar o Plato: Supabase (banco de dados), Vultr (servidor) e Resend (envio de e-mails). Alguns deles podem tratar dados fora do Brasil.",
+                "Se você criar um link de compartilhamento, o conteúdo descrito na seção abaixo fica acessível a quem tiver o link.",
+            ],
+        },
+        {
+            heading: "Links de compartilhamento",
+            paragraphs: [
+                "Criar um link é uma escolha sua. Qualquer pessoa com o link, mesmo sem conta, vê o nome e a descrição do treino ou programa, os exercícios, as séries, as repetições e as observações. Seu nome e seu e-mail não aparecem. Evite colocar informações pessoais nesses campos.",
+                "O link mostra o conteúdo do momento em que foi criado. Você pode desativá-lo em Perfil > Configurações, e ele também deixa de funcionar quando a conta é apagada. Quem já adicionou o treino ou programa fica com a própria cópia, mesmo depois disso.",
+                "Contamos quantas vezes cada link foi aberto e adicionado, e registramos na conta nova o link que levou ao cadastro, para medir o uso do recurso.",
             ],
         },
         {

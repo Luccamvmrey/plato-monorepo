@@ -24,6 +24,8 @@ import ExerciseAnalyticsPage from "@/features/workouts/pages/ExerciseAnalyticsPa
 import UserProfilePage from "@/features/user/pages/UserProfilePage.tsx";
 import ErrorBoundary from "@/core/components/ErrorBoundary";
 import NotFoundPage from "@/core/pages/NotFoundPage.tsx";
+import SharedPlanPage from "@/features/sharing/pages/SharedPlanPage.tsx";
+import SuggestedProgramsPage from "@/features/sharing/pages/SuggestedProgramsPage.tsx";
 
 export function App() {
     useCheckSession();
@@ -38,6 +40,12 @@ export function App() {
                     <Route path={path.RESET_PASSWORD} component={ResetPasswordPage}/>
                     <Route path={path.TERMS}><LegalPage document={TERMS}/></Route>
                     <Route path={path.PRIVACY}><LegalPage document={PRIVACY}/></Route>
+                    <Route path={`${path.SHARED}/:token`}>
+                        <ErrorBoundary><SharedPlanPage /></ErrorBoundary>
+                    </Route>
+                    <Route path={path.SUGGESTED}>
+                        <ErrorBoundary><SuggestedProgramsPage /></ErrorBoundary>
+                    </Route>
                     <Route path={`${path.WORKOUT_COMPLETE}/:id`} component={WorkoutCompletePage}/>
 
                     <Layout>

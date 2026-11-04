@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, ChevronDown, Play, SquarePen, Undo2 } from "lucide-react";
+import { Archive, ChevronDown, Play, Share2, SquarePen, Undo2 } from "lucide-react";
 import type { Workout } from "@/features/workouts/workout.types.ts";
 import type { ProgramCycleEntry } from "@/features/workouts/program.types.ts";
 import { Button } from "@/components/ui/button.tsx";
@@ -10,6 +10,7 @@ import { useWorkoutListItemLogic } from "@/features/workouts/hooks/useWorkoutLis
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 import { cn } from "@/lib/utils.ts";
 import { TrackingModeChoiceSheet } from "./TrackingModeChoiceSheet";
+import ShareSheet from "@/features/sharing/components/ShareSheet.tsx";
 
 type WorkoutListItemProps = {
     workout: Workout;
@@ -37,6 +38,7 @@ const musclesOf = (workout: Workout) => {
 
 const WorkoutListItem = ({ workout, isLastDone, cycleEntry, cycleTotal, isFeatured, programName }: WorkoutListItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
     const {
         handleEdit,
         handleQuickStart,
@@ -92,7 +94,23 @@ const WorkoutListItem = ({ workout, isLastDone, cycleEntry, cycleTotal, isFeatur
                     {workout.isActive ? <Archive data-icon="inline-start" /> : <Undo2 data-icon="inline-start" />}
                     {workout.isActive ? "Arquivar" : "Reativar"}
                 </Button>
+                <Button
+                    variant="ghost"
+                    className="h-10 px-2 gap-2 text-muted-foreground font-normal"
+                    onClick={() => setIsSharing(true)}
+                >
+                    <Share2 data-icon="inline-start" />
+                    Compartilhar
+                </Button>
             </div>
+
+            <ShareSheet
+                kind="WORKOUT"
+                sourceId={workout.id}
+                name={workout.name}
+                open={isSharing}
+                onClose={() => setIsSharing(false)}
+            />
         </div>
     );
 

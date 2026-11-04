@@ -37,4 +37,26 @@ JOIN "User" u ON u."createdAt" <= now() - n.semanas * interval '1 week'
 GROUP BY n.semanas
 ORDER BY n.semanas;
 
+\echo '=== Links: criados por usuarios e funil de aquisicao ==='
+SELECT
+    (SELECT count(*) FROM "SharedPlan" WHERE "userId" IS NOT NULL) AS links_criados,
+    (SELECT count(*) FROM "SharedPlan" WHERE "userId" IS NOT NULL AND "revokedAt" IS NOT NULL) AS links_revogados,
+    (SELECT coalesce(sum("viewCount"), 0) FROM "SharedPlan") AS visitas,
+    (SELECT count(*) FROM "User" WHERE "signupPlanId" IS NOT NULL) AS cadastros_por_link,
+    (SELECT count(DISTINCT w."userId") FROM "Workout" w WHERE w."sourcePlanId" IS NOT NULL) AS usuarios_que_adicionaram,
+    (SELECT count(DISTINCT s."userId")
+       FROM "WorkoutSession" s
+       JOIN "Workout" w ON w.id = s."workoutId"
+      WHERE w."sourcePlanId" IS NOT NULL AND s."completedAt" IS NOT NULL) AS concluiram_treino_copiado;
+
+\echo '=== Programas sugeridos ==='
+SELECT
+    p."curatedKey" AS programa,
+    p."viewCount" AS visitas,
+    (SELECT count(*) FROM "Program" c WHERE c."sourcePlanId" = p.id) AS adicoes,
+    (SELECT count(*) FROM "User" u WHERE u."signupPlanId" = p.id) AS cadastros
+FROM "SharedPlan" p
+WHERE p."curatedKey" IS NOT NULL
+ORDER BY p."featuredOrder" NULLS LAST;
+
 ROLLBACK;

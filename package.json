@@ -12,7 +12,7 @@
     "db:studio": "npx prisma studio --schema=./packages/database/prisma/schema.prisma",
     "clean": "rm -rf node_modules package-lock.json packages/database/dist packages/shared/dist apps/*/node_modules && npm install",
     "build": "npm run build --workspaces",
-    "test": "npm run test -w packages/shared"
+    "test": "npm run test -w packages/shared && npm run test -w apps/api"
   },
   "keywords": [],
   "author": "",

@@ -1,4 +1,4 @@
-import { Check, SquarePen, Trash2 } from "lucide-react";
+import { Check, Share2, SquarePen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import DeletionAlertDialog from "@/core/components/DeletionAlertDialog.tsx";
@@ -12,6 +12,7 @@ type ProgramListItemProps = {
     onDeactivate: () => void;
     onEdit: () => void;
     onDelete: () => void;
+    onShare: () => void;
 };
 
 const ProgramListItem = ({
@@ -21,6 +22,7 @@ const ProgramListItem = ({
     onDeactivate,
     onEdit,
     onDelete,
+    onShare,
 }: ProgramListItemProps) => (
     <section className={cn(
         "rounded-xl bg-card flex flex-col gap-3 p-4",
@@ -43,6 +45,15 @@ const ProgramListItem = ({
             {/* gap-2 é o mínimo: com .tap-target cada botão tem 44px de alvo sobre
                 36px visuais, e 4px de gap faria os alvos se invadirem. */}
             <div className="flex gap-2 shrink-0 -mr-1 -mt-1">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 text-muted-foreground relative tap-target"
+                    onClick={onShare}
+                    aria-label="Compartilhar programa"
+                >
+                    <Share2 data-icon="inline" />
+                </Button>
                 <Button
                     variant="ghost"
                     size="icon"
