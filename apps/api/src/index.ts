@@ -14,6 +14,8 @@ import programRoutes from "./modules/program/program.routes";
 import workoutSessionRoutes from "./modules/workout-session/workout-session.routes";
 import personalRecordRoutes from "./modules/workout-session/personal-record.routes";
 import shareRoutes from "./modules/share/share.routes";
+import * as shareController from "./modules/share/share.controller";
+import { shareReadLimiter } from "./shared/middleware/rateLimitMiddleware";
 
 // --- Server Setup ---
 const app = express();
@@ -35,6 +37,9 @@ app.use("/api/programs", programRoutes);
 app.use("/api/sessions", workoutSessionRoutes);
 app.use("/api/personal-records", personalRecordRoutes);
 app.use("/api/shares", shareRoutes);
+
+// Fora de /api porque devolve HTML: o Nginx aponta `/s/` para cá. Ver `share.controller`.
+app.get("/share-page/:token", shareReadLimiter, shareController.getPage);
 
 // --- Health Check ---
 // `/health` fica fora do prefixo /api e por isso pode não passar pelo reverse proxy;

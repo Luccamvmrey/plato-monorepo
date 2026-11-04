@@ -315,6 +315,22 @@ const addToLibrary = async (userId: number, token: string) => {
     });
 };
 
+/** O mínimo para o preview do link. Não soma visita: quem chega aqui pode ser um robô. */
+const getPageSummary = async (token: string) => {
+    if (!isShareToken(token)) return null;
+
+    return prisma.sharedPlan.findFirst({
+        where: { token, revokedAt: null },
+        select: {
+            kind: true,
+            name: true,
+            description: true,
+            curatedKey: true,
+            _count: { select: { workouts: true } },
+        },
+    });
+};
+
 /** Link que vale para atribuir um cadastro. Token ruim nunca pode impedir a conta. */
 const findPlanIdForSignup = async (token: unknown): Promise<number | null> => {
     if (!isShareToken(token)) return null;
@@ -327,4 +343,4 @@ const findPlanIdForSignup = async (token: unknown): Promise<number | null> => {
     return plan?.id ?? null;
 };
 
-export { create, getOwnLinks, revoke, getPublic, getFeatured, addToLibrary, findPlanIdForSignup };
+export { create, getOwnLinks, revoke, getPublic, getFeatured, addToLibrary, getPageSummary, findPlanIdForSignup };
