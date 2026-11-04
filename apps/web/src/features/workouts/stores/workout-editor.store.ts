@@ -85,6 +85,7 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
 
             setWorkoutInfo: (field, value) => set((state) => ({ ...state, [field]: value })),
 
+
             addExercises: (newExercises) => set((state) => {
                 const drafts: WorkoutExerciseDraft[] = newExercises.map((ex, index) => ({
                     instanceId: generateSafeId(),

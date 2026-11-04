@@ -10,7 +10,7 @@ const StreakCard = ({ streak }: Props) => {
 
     return (
         <div className="mx-4 mb-4 bg-card border rounded-xl p-4">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.05em] mb-3">
+            <p className="text-[13px] text-muted-foreground mb-2">
                 Sequência
             </p>
 
@@ -31,14 +31,14 @@ const StreakCard = ({ streak }: Props) => {
                             size="md"
                             label={DAY_LABELS[day.dayOfWeek]}
                         />
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground">
                             {DAY_LABELS[day.dayOfWeek]}
                         </span>
                     </div>
                 ))}
             </div>
 
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
                 {restRemaining === 2
                     ? 'Nenhum dia livre usado esta semana'
                     : restRemaining === 1

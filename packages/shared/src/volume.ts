@@ -6,9 +6,13 @@ import type { VolumeSet } from "./types";
  *
  * Cuidado com `0`: peso corporal e máquina assistida registram `actualWeight: 0`
  * legitimamente, então nada aqui pode usar guarda de truthiness.
+ *
+ * Peso não informado (`null`) soma 0 aqui, o que é seguro para totais e máximos: a
+ * série só não acrescenta nada. Quem precisa distinguir "não informado" de "0 kg" usa
+ * `effectiveLoad`, que devolve `null`.
  */
 export const externalLoad = (set: VolumeSet): number =>
-    set.actualWeight + (set.equipmentWeight ?? 0);
+    (set.actualWeight ?? 0) + (set.equipmentWeight ?? 0);
 
 /** Volume (tonelagem) de uma série. */
 export const calculateSetVolume = (

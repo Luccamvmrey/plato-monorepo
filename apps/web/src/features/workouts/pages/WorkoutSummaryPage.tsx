@@ -1,11 +1,13 @@
 import { motion, type Variants } from "framer-motion";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { WorkoutSummarySkeleton } from "../components/workout-summary/WorkoutSummarySkeleton";
 import { path } from "@/core/constants/path.ts";
 import { useWorkoutSummaryLogic } from "@/features/workouts/hooks/useWorkoutSummaryLogic.ts";
 import { useStreakData } from "@/features/user/hooks/useStreakData";
-import { formatDateShort, formatWeight } from "@/core/utils/formatters";
+import { formatDateShort } from "@/core/utils/formatters";
 import { formatDurationExtensive } from "@/core/utils/time";
+import { UNITS } from "@/core/constants/units";
 import SummaryPRBanner from "../components/workout-summary/SummaryPRBanner";
 import StreakBanner from "../components/workout-summary/StreakBanner";
 import SummaryMetricsGrid from "../components/workout-summary/SummaryMetricsGrid";
@@ -38,10 +40,22 @@ const WorkoutSummaryPage = () => {
         );
     }
 
+    // No modo simplificado as reps são presumidas, e sem peso nenhum informado não há
+    // volume a mostrar. "0 kg" diria que a pessoa não levantou nada.
+    const isSimple = workoutSession.trackingMode === "SIMPLE";
+
+    const lead = stats.totalVolume > 0
+        ? {
+            label: isSimple ? "Volume estimado" : "Volume total",
+            value: `${Math.round(stats.totalVolume).toLocaleString("pt-BR")} ${UNITS.WEIGHT}`,
+            deltaPercent: isSimple ? null : stats.volumeDeltaPercent,
+        }
+        : undefined;
+
     const metrics = [
-        { label: "Volume", value: formatWeight(stats.totalVolume), unit: null },
-        { label: "Duração", value: formatDurationExtensive(stats.duration), unit: null },
-        { label: "Sets", value: String(stats.totalSets), unit: null },
+        { label: "Duração", value: formatDurationExtensive(stats.duration) },
+        { label: "Sets", value: String(stats.totalSets) },
+        { label: "Exercícios", value: String(stats.completedExercises.length) },
     ];
 
     return (
@@ -49,26 +63,24 @@ const WorkoutSummaryPage = () => {
             variants={stagger}
             initial="hidden"
             animate="show"
-            className="flex flex-col pb-[184px] overflow-y-auto"
+            className="flex flex-col gap-3 pb-[184px]"
         >
-            <motion.div variants={staggerItem} className="pt-6 pb-4 px-4">
-                <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.05em] mb-1">
-                    Treino finalizado
+            <motion.header variants={staggerItem} className="pt-2 pb-1">
+                <p className="flex items-center gap-1.5 text-[13px] font-medium text-success">
+                    <CheckCircle2 className="size-4" aria-hidden />
+                    Treino concluído
                 </p>
-                <h1 className="text-[22px] font-medium tracking-[-0.03em] text-foreground">
-                    {workout.name}
-                </h1>
+                <h1 className="text-[24px] font-semibold tracking-[-0.03em] leading-tight mt-1.5">{workout.name}</h1>
                 {workoutSession.completedAt && (
                     <p className="text-[13px] text-muted-foreground mt-1">
                         {formatDateShort(workoutSession.completedAt)}
-                        {stats.duration > 0 && ` · ${formatDurationExtensive(stats.duration)}`}
                     </p>
                 )}
-            </motion.div>
+                {streakData && <StreakBanner streak={streakData} />}
+            </motion.header>
 
             <SummaryPRBanner newPRs={stats.newPRs} />
-            {streakData && <StreakBanner streak={streakData} />}
-            <SummaryMetricsGrid metrics={metrics} />
+            <SummaryMetricsGrid lead={lead} metrics={metrics} />
             <SummaryExerciseList exercises={stats.completedExercises} unexecuted={stats.unexecuted} />
             <SummaryVolumeChart volumeByGroup={stats.volumeByGroup} />
 
@@ -83,7 +95,7 @@ const WorkoutSummaryPage = () => {
                     onClick={handleFinish}
                     className="w-full h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] bg-primary text-primary-foreground"
                 >
-                    Concluir e Voltar
+                    Concluir
                 </Button>
             </div>
         </motion.div>

@@ -40,7 +40,7 @@ const UserProfilePage = () => {
         >
             {/* Header inline */}
             <motion.div variants={staggerItem} className="px-4 pt-6 pb-2">
-                <h1 className="text-[22px] font-medium tracking-[-0.03em]">Perfil</h1>
+                <h1 className="text-[24px] font-semibold tracking-[-0.03em]">Perfil</h1>
             </motion.div>
 
             {/* Cada seção já era guardada individualmente, então o gate bloqueante

@@ -12,7 +12,8 @@ const WorkoutListHeader = () => {
 
     return (
         <div className="flex flex-row items-center justify-between py-2">
-            <h1 className="text-xl font-medium tracking-tight">Biblioteca</h1>
+            {/* O mesmo nome da aba: "Biblioteca" fazia a tela parecer outro lugar. */}
+            <h1 className="text-[24px] font-semibold tracking-[-0.03em]">Treinos</h1>
             <Button variant="ghost" size="icon" className="rounded-full relative tap-target" onClick={handleCreateWorkout} aria-label="Novo treino">
                 <Plus className="w-5 h-5" />
             </Button>

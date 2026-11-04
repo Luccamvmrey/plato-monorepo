@@ -3,6 +3,8 @@ import { type FormEvent, useState } from "react";
 import { Input } from "@/components/ui/input.tsx";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "wouter";
+import { path } from "@/core/constants/path.ts";
 
 type LoginFormProps = {
     formId: string;
@@ -70,6 +72,12 @@ const LoginForm = ({ formId, onSubmit, errors, onBlur }: LoginFormProps) => {
                             {errors.password}
                         </p>
                     )}
+                    <Link
+                        href={path.FORGOT_PASSWORD}
+                        className="relative tap-target self-end w-fit! mt-1.5 text-[13px] text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+                    >
+                        Esqueci minha senha
+                    </Link>
                 </Field>
             </FieldGroup>
         </form>

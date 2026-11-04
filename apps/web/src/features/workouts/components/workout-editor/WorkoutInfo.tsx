@@ -36,7 +36,7 @@ const WorkoutInfo = ({ nameError, onNameBlur, onNameChange }: WorkoutInfoProps) 
     return (
         <div className="flex flex-col gap-6">
             <div className="flex w-full items-center justify-between px-1">
-                <h1 className="text-xl font-medium tracking-tight">{title} Treino</h1>
+                <h1 className="text-[24px] font-semibold tracking-[-0.03em]">{title} Treino</h1>
 
                 {id === "new" ? (
                     <Button variant="ghost" size="icon" className="rounded-full" type="button" onClick={handleBack} aria-label="Fechar editor">
@@ -53,7 +53,7 @@ const WorkoutInfo = ({ nameError, onNameBlur, onNameChange }: WorkoutInfoProps) 
 
             <div className="flex flex-col gap-4">
                 <div className="w-full flex flex-col gap-2">
-                    <Label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">
+                    <Label htmlFor="name" className="text-[13px] font-normal text-muted-foreground ml-1">
                         Nome do Treino
                     </Label>
                     <Input
@@ -77,18 +77,20 @@ const WorkoutInfo = ({ nameError, onNameBlur, onNameChange }: WorkoutInfoProps) 
                     {nameError && <p id="name-error" role="alert" className="text-destructive text-[12px] mt-1">{nameError}</p>}
                 </div>
                 <div className="w-full flex flex-col gap-2">
-                    <Label htmlFor="description" className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">
+                    <Label htmlFor="description" className="text-[13px] font-normal text-muted-foreground ml-1">
                         Descrição
                     </Label>
                     <Textarea
                         id="description"
                         name="description"
-                        placeholder="Foco em cadência..."
-                        className="min-h-[100px] resize-none"
+                        rows={2}
+                        placeholder="Opcional. Ex.: foco em cadência"
+                        className="min-h-[68px] resize-none"
                         value={description}
                         onChange={(e) => setWorkoutInfo("description", e.target.value)}
                     />
                 </div>
+
             </div>
         </div>
     );

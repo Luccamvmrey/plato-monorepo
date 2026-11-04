@@ -82,10 +82,18 @@ const create = async (userId: number, data: any) => {
         }
     });
 
+    // O modo é preferência da pessoa, não do treino. Copiado para a sessão porque
+    // trocar a preferência depois não pode mudar como uma sessão já foi registrada.
+    const user = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { trackingMode: true },
+    });
+
     const newSession = await prisma.workoutSession.create({
         data: {
             user: { connect: { id: userId } },
             workout: { connect: { id: data.workoutId } },
+            trackingMode: user.trackingMode,
             ...(programId !== null ? { program: { connect: { id: programId } } } : {}),
             sessionExercise: {
                 // orderIndex derivado da POSIÇÃO, não copiado do plano: o do plano vem
@@ -148,7 +156,7 @@ const listById = async (userId: number, workoutSessionId: number) => {
 const findActiveSession = async (userId: number) => {
     const activeSession = await prisma.workoutSession.findFirst({
         where: { userId, completedAt: null },
-        include: SESSION_INCLUDE
+        include: SESSION_WITH_WORKOUT_INCLUDE
     });
 
     if (!activeSession) return null;
@@ -174,9 +182,9 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
     exerciseId: number;
     setNumber: number;
     actualReps: number;
-    actualWeight: number;
+    actualWeight: number | null;
     equipmentWeight?: number;
-    rpe: number;
+    rpe: number | null;
     userObservation?: string;
 }> }) => {
     const existing = await prisma.workoutSession.findUnique({
@@ -188,6 +196,14 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
 
     // Idempotency: if already completed, return without creating duplicate sets
     if (existing.completedAt !== null) return existing;
+
+    // O modo vem da sessão, nunca do cliente: é ele que decide o que entra em PR e
+    // progressão, e um campo enviado pelo cliente poderia contaminar os dois.
+    const isSimple = existing.trackingMode === "SIMPLE";
+
+    if (!isSimple && body.sets.some((set) => set.actualWeight === null || set.rpe === null)) {
+        throw new AppError("Weight and RPE are required in full tracking mode", 400);
+    }
 
     const now = new Date();
 
@@ -221,8 +237,10 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
                     actualReps:      set.actualReps,
                     actualWeight:    set.actualWeight,
                     equipmentWeight: set.equipmentWeight ?? null,
-                    rpe:             set.rpe,
+                    rpe:             isSimple ? null : set.rpe,
                     userObservation: set.userObservation ?? null,
+                    // As reps do modo simplificado são presumidas, não medidas.
+                    excludedFromRecords: isSimple,
                 })),
             });
         }

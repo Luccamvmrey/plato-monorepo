@@ -1,6 +1,5 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check, SquarePen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
-import { Check, Power, SquarePen, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import DeletionAlertDialog from "@/core/components/DeletionAlertDialog.tsx";
 import type { ProgramWithWorkouts } from "@/features/workouts/program.types.ts";
@@ -23,45 +22,27 @@ const ProgramListItem = ({
     onEdit,
     onDelete,
 }: ProgramListItemProps) => (
-    <Card className={cn("bg-card shadow-none", program.isActive && "border-primary/40")}>
-        <CardHeader className="pb-2">
-            <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-1 min-w-0">
-                    <CardTitle className="text-lg font-medium tracking-tight truncate">
-                        {program.name}
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                        {program.programWorkout.length}
-                        {program.programWorkout.length === 1 ? " treino" : " treinos"}
-                    </p>
-                </div>
+    <section className={cn(
+        "rounded-xl bg-card flex flex-col gap-3 p-4",
+        program.isActive ? "border-2 border-primary/40" : "border border-border"
+    )}>
+        <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
                 {program.isActive && (
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 shrink-0">
-                        Ativo
-                    </span>
+                    <p className="flex items-center gap-1 text-[13px] font-medium text-primary mb-1">
+                        <Check className="size-3.5" strokeWidth={2.5} aria-hidden />
+                        Em uso
+                    </p>
+                )}
+                <h2 className="text-[20px] font-semibold tracking-[-0.02em] leading-tight">{program.name}</h2>
+                {program.description && (
+                    <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2">{program.description}</p>
                 )}
             </div>
-        </CardHeader>
 
-        <CardContent className="pb-2">
-            <ol className="flex flex-col gap-1">
-                {program.programWorkout.map((entry, index) => (
-                    <li key={entry.id} className="flex items-center gap-2 text-sm">
-                        <span className="text-xs text-muted-foreground tabular-nums w-4 shrink-0">
-                            {index + 1}
-                        </span>
-                        <span className="flex-1 truncate text-foreground/90 tracking-tight">
-                            {entry.workout.name}
-                        </span>
-                    </li>
-                ))}
-            </ol>
-        </CardContent>
-
-        <CardFooter className="flex flex-row items-center justify-between gap-2 pt-2 border-t border-border/50">
             {/* gap-2 é o mínimo: com .tap-target cada botão tem 44px de alvo sobre
                 36px visuais, e 4px de gap faria os alvos se invadirem. */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0 -mr-1 -mt-1">
                 <Button
                     variant="ghost"
                     size="icon"
@@ -82,22 +63,30 @@ const ProgramListItem = ({
                     </Button>
                 </DeletionAlertDialog>
             </div>
+        </div>
 
-            <Button
-                onClick={program.isActive ? onDeactivate : onActivate}
-                disabled={isPending}
-                variant={program.isActive ? "secondary" : "default"}
-                className="h-9 px-4 gap-2 font-medium tracking-tight relative tap-target"
-            >
-                {isPending
-                    ? <Spinner data-icon="inline-start" />
-                    : program.isActive
-                        ? <Power data-icon="inline-start" />
-                        : <Check data-icon="inline-start" />}
-                {program.isActive ? "Desativar" : "Ativar"}
-            </Button>
-        </CardFooter>
-    </Card>
+        {/* A rotação em blocos numerados: mesma linguagem das séries na sessão. */}
+        <ol className="flex flex-col gap-1.5">
+            {program.programWorkout.map((entry, index) => (
+                <li key={entry.id} className="flex items-center gap-3 text-[14px]">
+                    <span className="size-7 rounded-md bg-muted text-muted-foreground flex items-center justify-center text-[13px] font-medium tabular-nums shrink-0">
+                        {index + 1}
+                    </span>
+                    <span className="flex-1 min-w-0 truncate">{entry.workout.name}</span>
+                </li>
+            ))}
+        </ol>
+
+        <Button
+            onClick={program.isActive ? onDeactivate : onActivate}
+            disabled={isPending}
+            variant={program.isActive ? "ghost" : "secondary"}
+            className={cn("w-full h-11 font-medium", program.isActive && "text-muted-foreground")}
+        >
+            {isPending && <Spinner data-icon="inline-start" />}
+            {program.isActive ? "Parar de usar" : "Usar este programa"}
+        </Button>
+    </section>
 );
 
 export default ProgramListItem;

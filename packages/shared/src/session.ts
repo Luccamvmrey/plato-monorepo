@@ -1,13 +1,13 @@
 import type { RpeSet, SummarizableSession, TrainingSet } from "./types";
 import { calculateTotalVolume } from "./volume";
 
-/** RPE médio de um conjunto de séries. Conjunto vazio devolve 0. */
+/** RPE médio das séries com RPE informado. Sem nenhuma, devolve 0. */
 export const calculateAverageRPE = (sets: readonly RpeSet[]): number => {
-    if (sets.length === 0) return 0;
+    const known = sets.flatMap((set) => (set.rpe === null ? [] : [set.rpe]));
 
-    const sum = sets.reduce((total, set) => total + set.rpe, 0);
+    if (known.length === 0) return 0;
 
-    return sum / sets.length;
+    return known.reduce((total, rpe) => total + rpe, 0) / known.length;
 };
 
 /** Duração da sessão em segundos. Sessão sem início ou sem fim devolve 0. */

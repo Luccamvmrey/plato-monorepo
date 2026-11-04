@@ -24,7 +24,6 @@ import ExerciseAnalyticsPage from "@/features/workouts/pages/ExerciseAnalyticsPa
 import UserProfilePage from "@/features/user/pages/UserProfilePage.tsx";
 import ErrorBoundary from "@/core/components/ErrorBoundary";
 import NotFoundPage from "@/core/pages/NotFoundPage.tsx";
-import { SessionRecoveryDialog } from "@/features/workouts/components/active-workout/components/dialogs/SessionRecoveryDialog.tsx";
 
 export function App() {
     useCheckSession();
@@ -97,7 +96,6 @@ export function App() {
                     </Layout>
                 </Switch>
 
-                <SessionRecoveryDialog />
                 <Toaster position="top-center"/>
             </QueryClientProvider>
         </div>

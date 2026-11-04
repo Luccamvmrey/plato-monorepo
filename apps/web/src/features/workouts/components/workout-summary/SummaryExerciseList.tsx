@@ -1,7 +1,5 @@
 import { motion, type Variants } from "framer-motion";
-import { MuscleBadge } from "@/core/components/MuscleBadge";
 import DeviationBadge from "@/features/workouts/components/DeviationBadge";
-import { cn } from "@/lib/utils";
 import type { SummaryStats } from "@/features/workouts/hooks/useWorkoutSummaryStats";
 
 const staggerItem: Variants = {
@@ -18,65 +16,41 @@ const SummaryExerciseList = ({ exercises, unexecuted = [] }: Props) => {
     if (exercises.length === 0 && unexecuted.length === 0) return null;
 
     return (
-        <motion.div
-            variants={staggerItem}
-            className="mx-4 mb-4 bg-card border border-border rounded-xl overflow-hidden"
-        >
-            <div className="px-4 py-3 border-b border-border">
-                <p className="text-[13px] font-medium text-foreground">Exercícios realizados</p>
-            </div>
-            {exercises.map((ex, i) => (
-                <div
-                    key={ex.id}
-                    className={cn(
-                        "flex flex-col gap-0.5 px-4 py-3",
-                        i < exercises.length - 1 && "border-b border-border"
-                    )}
-                >
-                    <div className="flex items-center gap-3">
-                        <span className="text-[13px] text-foreground flex-1 min-w-0 truncate">
-                            {ex.name}
-                        </span>
-                        {ex.deviation && <DeviationBadge kind={ex.deviation.kind} />}
-                        <MuscleBadge muscle={ex.muscleGroup} />
-                        <span className="text-[12px] text-muted-foreground ml-2 flex-shrink-0">
-                            {ex.sets}×{ex.reps}
-                        </span>
-                    </div>
-                    {/* Segunda linha: texto longo aqui não tira largura do nome. */}
-                    {ex.deviation?.replacedName && (
-                        <p className="text-[11px] text-muted-foreground">
-                            no lugar de {ex.deviation.replacedName}
-                        </p>
-                    )}
-                </div>
-            ))}
+        <motion.section variants={staggerItem} className="bg-card border border-border rounded-xl">
+            <h2 className="px-4 pt-4 pb-2 text-[15px] font-medium tracking-[-0.02em]">Exercícios</h2>
 
-            {/* Prescrito e não executado. Só aparece em sessão com snapshot — é a
-                informação que nenhuma lista derivada de séries conseguia ter. */}
-            {unexecuted.length > 0 && (
-                <div className="border-t border-border">
-                    {unexecuted.map((ex) => (
-                        <div
-                            key={`${ex.kind}-${ex.exerciseId}`}
-                            className="flex flex-col gap-0.5 px-4 py-3"
-                        >
-                            <div className="flex items-center gap-3">
-                                <span className="text-[13px] text-muted-foreground flex-1 min-w-0 truncate">
-                                    {ex.name}
-                                </span>
-                                <DeviationBadge kind={ex.kind} />
-                            </div>
-                            {ex.replacedByName && (
-                                <p className="text-[11px] text-muted-foreground/70">
-                                    por {ex.replacedByName}
-                                </p>
-                            )}
+            <ul className="px-4 pb-1">
+                {exercises.map((ex) => (
+                    <li key={ex.id} className="flex flex-col gap-0.5 py-3 border-t border-border">
+                        <div className="flex items-center gap-3">
+                            <span className="text-[14px] flex-1 min-w-0 truncate">{ex.name}</span>
+                            {ex.deviation && <DeviationBadge kind={ex.deviation.kind} />}
+                            <span className="text-[13px] text-muted-foreground tabular-nums shrink-0">
+                                {ex.sets} × {ex.reps}
+                            </span>
                         </div>
-                    ))}
-                </div>
-            )}
-        </motion.div>
+                        {/* Segunda linha: texto longo aqui não tira largura do nome. */}
+                        {ex.deviation?.replacedName && (
+                            <p className="text-[12px] text-muted-foreground">no lugar de {ex.deviation.replacedName}</p>
+                        )}
+                    </li>
+                ))}
+
+                {/* Prescrito e não executado. Só aparece em sessão com snapshot — é a
+                    informação que nenhuma lista derivada de séries conseguia ter. */}
+                {unexecuted.map((ex) => (
+                    <li key={`${ex.kind}-${ex.exerciseId}`} className="flex flex-col gap-0.5 py-3 border-t border-border">
+                        <div className="flex items-center gap-3">
+                            <span className="text-[14px] text-muted-foreground flex-1 min-w-0 truncate">{ex.name}</span>
+                            <DeviationBadge kind={ex.kind} />
+                        </div>
+                        {ex.replacedByName && (
+                            <p className="text-[12px] text-muted-foreground">por {ex.replacedByName}</p>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </motion.section>
     );
 };
 

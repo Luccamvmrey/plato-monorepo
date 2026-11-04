@@ -1,5 +1,6 @@
 import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
 import { cn } from "@/lib/utils.ts";
+import { RestTimerBar } from "./RestTimerBar";
 
 interface ActiveWorkoutActionsProps {
     onFinishClick: () => void;
@@ -24,32 +25,37 @@ export const ActiveWorkoutActions = ({
                 // bottom-navbar em vez de bottom-[92px]: a NavBar tem 92px + safe-area
                 // inset, então o valor cru deixava esta barra por baixo dela num
                 // aparelho com notch.
-                "fixed bottom-navbar inset-x-0 p-4 pb-3 bg-background/95 backdrop-blur-sm border-t border-border flex items-center gap-3",
+                "fixed bottom-navbar inset-x-0 p-4 pb-3 bg-background/95 backdrop-blur-sm border-t border-border flex flex-col gap-3",
                 // Finishing/cancelling is never the next action while logging a set,
                 // and this bar sits directly over the RPE selector and confirm button
                 // once the keyboard is up.
                 isKeyboardOpen && "hidden"
             )}
         >
-            <button
-                onClick={onFinishClick}
-                disabled={isFinishPending || isCancelPending}
-                className={cn(
-                    "flex-1 h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] transition-all",
-                    isAllCompleted
-                        ? "bg-success text-success-foreground"
-                        : "bg-muted text-muted-foreground opacity-40 cursor-not-allowed"
-                )}
-            >
-                {isFinishPending ? "Finalizando..." : "Finalizar Treino"}
-            </button>
-            <button
-                onClick={onCancelClick}
-                disabled={isFinishPending || isCancelPending}
-                className="text-[13px] text-muted-foreground px-3 py-2 disabled:opacity-40"
-            >
-                Cancelar
-            </button>
+            {/* Sem série pela frente não há o que descansar. */}
+            {!isAllCompleted && <RestTimerBar />}
+
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={onFinishClick}
+                    disabled={isFinishPending || isCancelPending}
+                    className={cn(
+                        "flex-1 h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] transition-all",
+                        isAllCompleted
+                            ? "bg-success text-success-foreground"
+                            : "bg-muted text-muted-foreground opacity-40 cursor-not-allowed"
+                    )}
+                >
+                    {isFinishPending ? "Finalizando..." : "Finalizar Treino"}
+                </button>
+                <button
+                    onClick={onCancelClick}
+                    disabled={isFinishPending || isCancelPending}
+                    className="text-[13px] text-muted-foreground px-3 py-2 disabled:opacity-40"
+                >
+                    Cancelar
+                </button>
+            </div>
         </div>
     );
 };

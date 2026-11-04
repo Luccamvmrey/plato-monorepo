@@ -66,12 +66,16 @@ Não aparece para o usuário, mas é pré-requisito para cobrar.
 
 ### Fase 1: menos atrito na academia (7 a 11 dias)
 
+> **Situação em 04/11/2026:** implementada. Testada de ponta a ponta com banco descartável e no viewport de celular, mas ainda não num aparelho real.
+>
+> **Limites conhecidos:** o iPhone não vibra ao fim do descanso (aviso só visual); com a tela apagada ou o app em segundo plano não há aviso, o que depende das notificações da Fase 3. Exercício feito só no modo simplificado aparece na análise como "ainda não realizado", porque ela depende de peso e RPE medidos.
+
 **Ganhos rápidos, sem loja (2 a 3 dias):**
 - Tela sempre ligada durante o treino (Wake Lock).
-- Timer de descanso com vibração. Não encontrei um dedicado no código, só o tempo total do treino; confirmar ao especificar.
+- Timer de descanso com vibração, automático depois de cada série e só no fim da rodada em bi-sets.
 
 **Modo simplificado (5 a 8 dias):**
-- Criar o enum `TrackingMode { FULL, SIMPLE }` em `Workout`, copiado para `WorkoutSession` no início, como o snapshot já faz.
+- Criar o enum `TrackingMode { FULL, SIMPLE }` como preferência em `User`, copiada para `WorkoutSession` no início, como o snapshot já faz.
 - Tornar `actualWeight` e `rpe` anuláveis. Não gravar `0` nem `8` como valor padrão: 0 kg é carga legítima e o RPE 8 seria inventado.
 - Preencher `actualReps` com as reps previstas e aplicar o peso opcional às séries do exercício.
 - Gravar com `excludedFromRecords = true` na v1, porque as reps são presumidas e não devem alimentar PR, e1RM nem progressão. A flag já existe e o histórico já a filtra.

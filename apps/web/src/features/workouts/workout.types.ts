@@ -10,6 +10,8 @@ import type { GroupMembership } from "@plato/shared";
 
 export type Exercise = PrismaExercise;
 
+export type TrackingMode = PrismaWorkoutSession["trackingMode"];
+
 export type SessionExerciseOrigin = PrismaSessionExercise["origin"];
 
 /** Motivo da sugestão, em código. O rótulo vive em `utils/movement.ts`. */
@@ -112,9 +114,11 @@ export interface SessionSetPayload {
   exerciseId: number
   setNumber: number
   actualReps: number
-  actualWeight: number
+  /** Null = peso não informado, só no modo simplificado. */
+  actualWeight: number | null
   equipmentWeight?: number
-  rpe: number
+  /** Null no modo simplificado. */
+  rpe: number | null
   userObservation?: string
 }
 
@@ -125,6 +129,8 @@ export interface FinishSessionPayload {
 /**
  * Histórico cru entregue por GET /sessions/workout/:id/exercise-history.
  * Escopado ao treino: o mesmo exercício em dois treinos progride separadamente.
+ * Peso e RPE são sempre números aqui: a API só devolve séries com
+ * `excludedFromRecords: false`, e as do modo simplificado têm essa marca.
  */
 export interface ExerciseExecutionSet {
   setNumber: number

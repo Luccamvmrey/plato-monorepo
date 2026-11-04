@@ -1,8 +1,6 @@
-import { CheckCircle2, Plus } from "lucide-react";
-import { cn } from "@/lib/utils.ts";
+import { CheckCircle2, ChevronUp, Plus } from "lucide-react";
 import { CompletedSetRow } from "./CompletedSetRow";
 import type { EnrichedExerciseRecord } from "@/features/workouts/workout.types.ts";
-import { UNITS } from "@/core/constants/units.ts";
 
 type CompletedExerciseCardProps = {
     record: EnrichedExerciseRecord;
@@ -11,34 +9,34 @@ type CompletedExerciseCardProps = {
 };
 
 const CompletedExerciseCard = ({ record, onHeaderClick, onAddExtraSet }: CompletedExerciseCardProps) => (
-    <div
-        className={cn(
-            "flex flex-col gap-2 p-4 rounded-xl bg-card border border-border",
-            onHeaderClick && "cursor-pointer hover:bg-muted/20 transition-colors"
-        )}
-        onClick={onHeaderClick}
-    >
-        <div className="flex items-center gap-2">
-            <CheckCircle2 className="size-4 text-success flex-shrink-0" />
-            <span className="text-[13px] font-medium text-muted-foreground flex-1">
-                {record.exercise.name}
+    <div className="rounded-xl bg-card border border-border">
+        <button
+            type="button"
+            aria-expanded
+            onClick={onHeaderClick}
+            className="w-full min-h-14 flex items-center gap-3 px-4 py-3 text-left"
+        >
+            <CheckCircle2 className="size-5 text-success shrink-0" />
+            <span className="flex-1 min-w-0 text-[14px] font-medium truncate">{record.exercise.name}</span>
+            <span className="text-[13px] text-muted-foreground tabular-nums whitespace-nowrap">
+                {record.logs.length}/{record.effectiveTargetSets}
             </span>
-            <span className="text-[11px] text-muted-foreground">
-                {record.logs.length} / {record.effectiveTargetSets}{" "}
-                {record.effectiveTargetSets === 1 ? UNITS.SINGLE_SET : UNITS.SETS}
-            </span>
-        </div>
-        <div className="flex flex-col gap-1.5">
-            {record.logs.map(log => (
-                <CompletedSetRow key={log.id} log={log} variant="summary" />
+            <ChevronUp className="size-4 text-muted-foreground shrink-0" />
+        </button>
+
+        <div className="divide-y divide-border border-t border-border">
+            {record.logs.map((log) => (
+                <CompletedSetRow key={log.id} log={log} />
             ))}
         </div>
+
         {onAddExtraSet && (
             <button
-                className="flex items-center gap-1.5 mt-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors self-start"
-                onClick={(e) => { e.stopPropagation(); onAddExtraSet(); }}
+                type="button"
+                className="w-full h-11 flex items-center gap-1.5 px-4 border-t border-border text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                onClick={onAddExtraSet}
             >
-                <Plus className="size-3.5" />
+                <Plus className="size-4" />
                 Série extra
             </button>
         )}

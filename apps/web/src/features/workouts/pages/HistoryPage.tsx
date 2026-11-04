@@ -4,6 +4,7 @@ import { HistorySkeleton } from "../components/history/HistorySkeleton";
 import { Button } from "@/components/ui/button";
 import { WorkoutFilterSelect } from "../components/history/WorkoutFilterSelect";
 import { SessionHistoryCard } from "../components/history/SessionHistoryCard";
+import { TrainingCalendarCard } from "../components/history/TrainingCalendarCard";
 import { useHistoryLogic } from "@/features/workouts/hooks/useHistoryLogic";
 import { path } from "@/core/constants/path";
 
@@ -29,6 +30,8 @@ const HistoryPage = () => {
         sessionPrMap,
         isLoading,
         filteredSessions,
+        months,
+        calendar,
         navigate,
     } = useHistoryLogic();
 
@@ -43,7 +46,7 @@ const HistoryPage = () => {
         >
             {/* Header */}
             <motion.div variants={staggerItem} className="flex items-center justify-between py-2">
-                <h1 className="text-[22px] font-medium tracking-[-0.03em]">Histórico</h1>
+                <h1 className="text-[24px] font-semibold tracking-[-0.03em]">Histórico</h1>
                 <WorkoutFilterSelect
                     value={selectedFilter}
                     onValueChange={setSelectedFilter}
@@ -57,18 +60,31 @@ const HistoryPage = () => {
                 </motion.div>
             )}
 
-            {/* Lista de sessões */}
             {!isEmpty && !isLoading && (
-                <motion.div variants={staggerItem} className="flex flex-col">
-                    {filteredSessions?.map(session => (
-                        <SessionHistoryCard
-                            key={session.id}
-                            session={session}
-                            sessionPrMap={sessionPrMap}
-                            navigate={navigate}
-                        />
+                <>
+                    <motion.div variants={staggerItem}>
+                        <TrainingCalendarCard calendar={calendar} />
+                    </motion.div>
+
+                    {months.map((month) => (
+                        <motion.section key={month.key} variants={staggerItem} className="flex flex-col gap-2 mt-3">
+                            <h2 className="flex items-baseline justify-between gap-3 px-1 text-[13px] font-medium text-muted-foreground">
+                                {month.label}
+                                <span className="font-normal tabular-nums">
+                                    {month.sessions.length} {month.sessions.length === 1 ? "treino" : "treinos"}
+                                </span>
+                            </h2>
+                            {month.sessions.map((session) => (
+                                <SessionHistoryCard
+                                    key={session.id}
+                                    session={session}
+                                    sessionPrMap={sessionPrMap}
+                                    navigate={navigate}
+                                />
+                            ))}
+                        </motion.section>
                     ))}
-                </motion.div>
+                </>
             )}
 
             {/* Estado vazio */}

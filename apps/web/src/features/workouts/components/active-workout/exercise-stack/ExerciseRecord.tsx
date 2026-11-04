@@ -9,6 +9,8 @@ import ExerciseHeaderMinimized from "./records/ExerciseHeaderMinimized";
 import ExerciseHeaderInactive from "./records/ExerciseHeaderInactive";
 import ActiveExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/ActiveExerciseCard.tsx";
 import CompletedExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/CompletedExerciseCard.tsx";
+import SimpleActiveExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/SimpleActiveExerciseCard.tsx";
+import SimpleCompletedExerciseCard from "@/features/workouts/components/active-workout/exercise-stack/records/SimpleCompletedExerciseCard.tsx";
 import ExercisePreviewItem from "@/features/workouts/components/active-workout/exercise-stack/records/ExercisePreviewItem.tsx";
 
 type ExerciseRecordProps = {
@@ -19,6 +21,8 @@ type ExerciseRecordProps = {
     onSwapRequest?: () => void;
     onUndoSkip?: () => void;
     isChangingPlan?: boolean;
+    isSimple?: boolean;
+    lastWeight?: number;
 };
 
 const SortablePendingItem = ({
@@ -46,7 +50,7 @@ const SortablePendingItem = ({
             >
                 <GripVertical className="size-4" />
             </button>
-            <div className="flex-1" onClick={onSwapRequest}>
+            <div className="flex-1 min-w-0" onClick={onSwapRequest}>
                 <ExercisePreviewItem record={record} />
             </div>
         </div>
@@ -61,11 +65,22 @@ const ExerciseRecord = ({
     onSwapRequest,
     onUndoSkip,
     isChangingPlan,
+    isSimple,
+    lastWeight,
 }: ExerciseRecordProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     switch (record.status) {
         case "COMPLETED":
+            if (isSimple) {
+                return (
+                    <SimpleCompletedExerciseCard
+                        record={record}
+                        lastWeight={lastWeight}
+                        onAddExtraSet={addExtraSet ? () => addExtraSet(record.exerciseId) : undefined}
+                    />
+                );
+            }
             if (isExpanded) {
                 return (
                     <CompletedExerciseCard
@@ -90,7 +105,9 @@ const ExerciseRecord = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 >
-                    <ActiveExerciseCard record={record} sessionId={sessionId} history={history} />
+                    {isSimple
+                        ? <SimpleActiveExerciseCard record={record} sessionId={sessionId} lastWeight={lastWeight} />
+                        : <ActiveExerciseCard record={record} sessionId={sessionId} history={history} />}
                 </motion.div>
             );
 

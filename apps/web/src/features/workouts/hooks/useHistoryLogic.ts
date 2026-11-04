@@ -5,6 +5,7 @@ import { useWorkouts } from "@/features/workouts/hooks/useWorkouts";
 import { useLocation } from "wouter";
 import type { WorkoutSession } from "../workout.types";
 import { externalLoad, setVolume } from "@plato/shared";
+import { buildTrainingCalendar, groupSessionsByMonth } from "../utils/history-summary";
 
 const computeSessionPrs = (sessions: WorkoutSession[]): Map<number, Set<number>> => {
     const result = new Map<number, Set<number>>();
@@ -22,6 +23,9 @@ const computeSessionPrs = (sessions: WorkoutSession[]): Map<number, Set<number>>
         const sessionTotalVolume: Record<number, number> = {};
 
         for (const set of session.sessionSet) {
+            // Mesma regra do servidor: série marcada não conta para recorde.
+            if (set.excludedFromRecords) continue;
+
             const exId = set.exerciseId;
             // externalLoad/setVolume incluem o peso da barra; antes esta era a única
             // tela do frontend que o ignorava.
@@ -59,16 +63,21 @@ export const useHistoryLogic = () => {
 
     const isLoading = sessionsLoading;
 
-    const filteredSessions = sessions?.filter(session => {
+    const filteredSessions = useMemo(() => sessions?.filter(session => {
         if (selectedFilter === "all") {
             return session.workout?.isActive !== false;
         }
         return session.workoutId === Number(selectedFilter);
-    });
+    }), [sessions, selectedFilter]);
 
     const sessionPrMap = useMemo(() => computeSessionPrs(sessions ?? []), [sessions]);
 
+    const months = useMemo(() => groupSessionsByMonth(filteredSessions ?? []), [filteredSessions]);
+    const calendar = useMemo(() => buildTrainingCalendar(filteredSessions ?? [], new Date()), [filteredSessions]);
+
     return {
+        months,
+        calendar,
         selectedFilter,
         setSelectedFilter,
         sessions,

@@ -12,7 +12,7 @@ const ActiveWorkoutHeader = ({ workout, session, onBackClick }: ActiveWorkoutHea
     if (!workout || !session) return null;
 
     return (
-        <div className="h-12 flex items-center justify-between sticky top-0 z-10">
+        <div className="h-12 flex items-center justify-between sticky top-0 z-10 bg-background">
             <button
                 onClick={onBackClick}
                 className="flex items-center gap-1.5 min-w-0"

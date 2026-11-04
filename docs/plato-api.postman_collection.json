@@ -483,7 +483,7 @@
                 "{{userId}}"
               ]
             },
-            "description": "Atualiza o próprio usuário. O `:id` precisa ser o do usuário autenticado — id alheio responde `403`.\n\n**Body** (updateUserSchema — todos os campos opcionais):\n- `email` — string, formato de e-mail\n- `name` — string, mínimo 2 caracteres\n\n`password` **não** é aceito aqui: o service não aplica hash, então a senha seria gravada em texto puro. Troca de senha é fluxo próprio."
+            "description": "Atualiza o próprio usuário. O `:id` precisa ser o do usuário autenticado — id alheio responde `403`.\n\n**Body** (updateUserSchema — todos os campos opcionais):\n- `email` — string, formato de e-mail\n- `name` — string, mínimo 2 caracteres\n\n`password` **não** é aceito aqui: o service não aplica hash, então a senha seria gravada em texto puro. Troca de senha é fluxo próprio.\n\n`trackingMode` é opcional: `FULL` ou `SIMPLE`. Preferência pessoal; cada sessão copia o valor ao iniciar, então a troca vale a partir do próximo treino."
           },
           "response": []
         },
@@ -559,6 +559,26 @@
               ]
             },
             "description": "Remove um registro de peso. Retorna `204`.\n\n`404` se não existir, `403` se pertencer a outro usuário."
+          },
+          "response": []
+        },
+        {
+          "name": "Get tracking mode",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/tracking-mode",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "tracking-mode"
+              ]
+            },
+            "description": "Modo de treino do usuário autenticado.\n\nResposta: `{ trackingMode, needsChoice }`. `needsChoice` é `true` só para quem nunca escolheu e não tem nenhuma sessão."
           },
           "response": []
         }
@@ -1320,7 +1340,7 @@
                 "finish"
               ]
             },
-            "description": "Encerra a sessão enviando todas as séries de uma vez.\n\n**Body** (finishSessionSchema):\n- `sets` — array (obrigatório) de:\n  - `workoutSessionId` — inteiro positivo (obrigatório)\n  - `exerciseId` — inteiro positivo (obrigatório)\n  - `setNumber` — inteiro positivo (obrigatório)\n  - `actualReps` — inteiro ≥ 0 (obrigatório)\n  - `actualWeight` — número ≥ 0 (obrigatório)\n  - `equipmentWeight` — número ≥ 0, opcional\n  - `rpe` — número entre 1 e 10 (obrigatório)\n  - `userObservation` — string, opcional"
+            "description": "Encerra a sessão enviando todas as séries de uma vez.\n\n**Body** (finishSessionSchema):\n- `sets` — array (obrigatório) de:\n  - `workoutSessionId` — inteiro positivo (obrigatório)\n  - `exerciseId` — inteiro positivo (obrigatório)\n  - `setNumber` — inteiro positivo (obrigatório)\n  - `actualReps` — inteiro ≥ 0 (obrigatório)\n  - `actualWeight` — número ≥ 0 (obrigatório)\n  - `equipmentWeight` — número ≥ 0, opcional\n  - `rpe` — número entre 1 e 10 (obrigatório)\n  - `userObservation` — string, opcional\n\n`actualWeight` e `rpe` aceitam `null` só em sessão `SIMPLE`; em `FULL` isso responde `400`. Em `SIMPLE` o servidor descarta o RPE enviado e marca as séries com `excludedFromRecords`, então elas ficam fora de PR e progressão."
           },
           "response": []
         },

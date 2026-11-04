@@ -5,9 +5,18 @@ import { useExerciseListLogic } from "@/features/workouts/hooks/useExerciseListL
 const ExerciseList = () => {
     const { exercises, membership } = useExerciseListLogic();
 
+    const totalSets = exercises.reduce((sum, exercise) => sum + exercise.targetSets, 0);
+
     return (
-        <div className="flex flex-col gap-3 mt-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider ml-1">Exercícios</span>
+        <div className="flex flex-col gap-2 mt-2">
+            <div className="flex items-baseline justify-between gap-3 px-1">
+                <h2 className="text-[17px] font-semibold tracking-[-0.02em]">Exercícios</h2>
+                {exercises.length > 0 && (
+                    <span className="text-[13px] text-muted-foreground tabular-nums">
+                        {exercises.length} · {totalSets} {totalSets === 1 ? "série" : "séries"}
+                    </span>
+                )}
+            </div>
             <div className="flex flex-col gap-2">
                 <SortableContext
                     items={exercises.map(e => e.instanceId)}

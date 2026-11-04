@@ -1,83 +1,55 @@
-import { Award, BarChart2 } from "lucide-react";
-import { MuscleBadge } from "@/core/components/MuscleBadge";
-import { cn } from "@/lib/utils";
+import { muscleGroupTranslation } from "@/core/utils/translations";
 import type { MuscleGroup } from "@plato/database/generated/prisma/enums";
-import { formatWeight } from "@/core/utils/formatters";
 
 interface PerformanceSnapshotsProps {
     peakStrength: Record<string, number>;
     volumeLeaders: Record<string, { name: string; volume: number }>;
 }
 
+/**
+ * Antes eram duas listas iguais por grupo muscular, uma para carga e outra para volume,
+ * cada uma com seu cartão. Lado a lado na mesma linha se lê o grupo inteiro de uma vez.
+ */
 export const PerformanceSnapshots = ({ peakStrength, volumeLeaders }: PerformanceSnapshotsProps) => {
-    const strengthEntries = Object.entries(peakStrength);
-    const volumeEntries = Object.entries(volumeLeaders);
+    const muscles = Array.from(new Set([...Object.keys(peakStrength), ...Object.keys(volumeLeaders)]));
 
     return (
-        <>
-            {/* Cargas máximas */}
-            <div className="mx-4 mb-4 bg-card border border-border rounded-xl overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-                    <Award className="w-4 h-4 text-pr flex-shrink-0" />
-                    <p className="text-[13px] font-medium text-foreground">Cargas máximas</p>
-                </div>
+        <section className="mx-4 mb-4 bg-card border border-border rounded-xl">
+            <h2 className="px-4 pt-4 pb-2 text-[15px] font-medium tracking-[-0.02em]">Melhores por grupo</h2>
 
-                {strengthEntries.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-                        <p className="text-[13px] text-muted-foreground">
-                            Suas cargas máximas aparecerão aqui conforme você completa os exercícios.
-                        </p>
-                    </div>
-                ) : (
-                    strengthEntries.map(([muscle, maxLoad], i) => (
-                        <div
-                            key={muscle}
-                            className={cn(
-                                "flex items-center gap-3 px-4 py-3",
-                                i < strengthEntries.length - 1 && "border-b border-border"
-                            )}
-                        >
-                            <MuscleBadge muscle={muscle as MuscleGroup} />
-                            <span className="ml-auto text-[13px] font-medium text-foreground">
-                                {maxLoad}
-                                <span className="text-[12px] font-normal text-muted-foreground ml-1">kg</span>
-                            </span>
-                        </div>
-                    ))
-                )}
-            </div>
+            {muscles.length === 0 ? (
+                <p className="px-4 pb-4 text-[13px] text-muted-foreground">
+                    Suas melhores cargas aparecem aqui conforme você completa os exercícios.
+                </p>
+            ) : (
+                <ul className="px-4 pb-1">
+                    {muscles.map((muscle) => {
+                        const load = peakStrength[muscle];
+                        const leader = volumeLeaders[muscle];
 
-            {/* Líderes de volume */}
-            <div className="mx-4 mb-4 bg-card border border-border rounded-xl overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-                    <BarChart2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <p className="text-[13px] font-medium text-foreground">Líderes de volume</p>
-                </div>
-
-                {volumeEntries.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-                        <p className="text-[13px] text-muted-foreground">
-                            Seus exercícios com maior volume aparecerão aqui.
-                        </p>
-                    </div>
-                ) : (
-                    volumeEntries.map(({ 0: muscle, 1: leader }, i) => (
-                        <div
-                            key={muscle}
-                            className={cn(
-                                "px-4 py-3",
-                                i < volumeEntries.length - 1 && "border-b border-border"
-                            )}
-                        >
-                            <div className="flex items-center justify-between mb-1">
-                                <MuscleBadge muscle={muscle as MuscleGroup} />
-                                <span className="text-[12px] text-muted-foreground">{formatWeight(leader.volume)}</span>
-                            </div>
-                            <p className="text-[13px] font-medium text-foreground">{leader.name}</p>
-                        </div>
-                    ))
-                )}
-            </div>
-        </>
+                        return (
+                            <li key={muscle} className="flex items-center gap-3 py-3 border-t border-border">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[14px] font-medium">
+                                        {muscleGroupTranslation[muscle as MuscleGroup]}
+                                    </p>
+                                    {leader && (
+                                        <p className="text-[13px] text-muted-foreground truncate mt-0.5">
+                                            Mais volume: {leader.name}
+                                        </p>
+                                    )}
+                                </div>
+                                {load !== undefined && (
+                                    <p className="text-[17px] font-semibold tracking-[-0.02em] tabular-nums whitespace-nowrap">
+                                        {load.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+                                        <span className="text-[13px] font-normal tracking-normal text-muted-foreground ml-1">kg</span>
+                                    </p>
+                                )}
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+        </section>
     );
 };
