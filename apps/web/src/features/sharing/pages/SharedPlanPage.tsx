@@ -13,8 +13,16 @@ const MAX_MUSCLES_SHOWN = 5;
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
 const Shell = ({ children }: { children: React.ReactNode }) => (
-    <main className="min-h-dvh w-screen bg-background overflow-y-auto px-4 pt-6">
-        <div className="mx-auto max-w-lg flex flex-col gap-5">{children}</div>
+    <main className="min-h-dvh w-screen bg-background overflow-y-auto px-4 pt-4">
+        <div className="mx-auto max-w-lg flex flex-col gap-5">
+            {/* Quem chega por um link pode nunca ter ouvido falar do app. */}
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground min-h-6">
+                <img src="/icon.svg" alt="" className="size-5 shrink-0" />
+                <span className="font-semibold text-foreground">Plato</span>
+                <span className="truncate">Registre treinos e acompanhe sua carga</span>
+            </div>
+            {children}
+        </div>
     </main>
 );
 
@@ -91,8 +99,7 @@ const SharedPlanPage = () => {
     const meta = [
         plan.focusLabel,
         plan.sessionsPerWeek ? `${plan.sessionsPerWeek}x por semana` : null,
-        isProgram ? plural(plan.workouts.length, "treino", "treinos") : null,
-        plural(summary.totalExercises, "exercício", "exercícios"),
+        isProgram ? plural(plan.workouts.length, "treino", "treinos") : plural(summary.totalExercises, "exercício", "exercícios"),
         plural(summary.totalSets, "série", "séries"),
     ].filter(Boolean).join(" · ");
 
@@ -109,11 +116,11 @@ const SharedPlanPage = () => {
                 <p className="text-[13px] text-muted-foreground mt-1 tabular-nums">{meta}</p>
             </header>
 
-            <section aria-label="Séries por grupo muscular" className="flex flex-col gap-2.5">
-                <h2 className="text-[13px] font-medium text-muted-foreground">Séries por grupo muscular</h2>
+            <section aria-label="Grupos musculares mais trabalhados" className="flex flex-col gap-2.5">
+                <h2 className="text-[13px] font-medium text-muted-foreground">Grupos mais trabalhados, em séries</h2>
                 {muscles.map((muscle) => (
                     <div key={muscle.muscle} className="flex items-center gap-3 text-[13px]">
-                        <span className="w-24 shrink-0 truncate">
+                        <span className="w-28 shrink-0">
                             {muscleGroupTranslation[muscle.muscle as MuscleGroup]}
                         </span>
                         <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
@@ -142,7 +149,7 @@ const SharedPlanPage = () => {
             {/* A altura reserva o espaço do rodapé fixo: sem ela, ele cobriria o fim da lista. */}
             <div aria-hidden className={isAuthenticated ? "h-24" : "h-36"} />
 
-            <div className="fixed inset-x-0 bottom-0 bg-background/95 backdrop-blur border-t border-border px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+            <div className="fixed inset-x-0 bottom-0 bg-background border-t border-border px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
                 <div className="mx-auto max-w-lg flex flex-col gap-1">
                     <Button
                         onClick={handleAdd}
