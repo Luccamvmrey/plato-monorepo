@@ -35,6 +35,8 @@ export default defineConfig({
             },
             workbox: {
                 navigateFallback: "/index.html",
+                // Rotas servidas pelo API/MCP via Nginx: a navegação tem que chegar ao servidor, não à SPA.
+                navigateFallbackDenylist: [/^\/oauth\//, /^\/\.well-known\//, /^\/mcp(\/|$)/, /^\/api\//],
                 runtimeCaching: [
                     {
                         urlPattern: /^\/api\/.*/,
