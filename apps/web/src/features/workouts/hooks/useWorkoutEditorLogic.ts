@@ -20,6 +20,7 @@ export const useWorkoutEditorLogic = () => {
 
     const name = useWorkoutEditorStore(state => state.name);
     const description = useWorkoutEditorStore(state => state.description);
+    const trackingMode = useWorkoutEditorStore(state => state.trackingMode);
     const exercises = useWorkoutEditorStore(state => state.exercises);
     const reorderExercises = useWorkoutEditorStore(state => state.reorderExercises);
     const loadWorkout = useWorkoutEditorStore(state => state.loadWorkout);
@@ -113,6 +114,7 @@ export const useWorkoutEditorLogic = () => {
         const payload = {
             name,
             description,
+            trackingMode,
             exercises: exercises.map((ex, index) => ({
                 exerciseId: ex.exercise.id,
                 targetSets: ex.targetSets,

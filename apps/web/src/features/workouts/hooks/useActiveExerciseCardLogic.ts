@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { useSessionSet } from "@/features/workouts/hooks/useSessionSet";
-import { useSessionExercises } from "@/features/workouts/hooks/useSessionExercises";
+import { useSessionPlanActions } from "@/features/workouts/hooks/useSessionPlanActions";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
 import { buildAdviceChain } from "@/features/workouts/utils/progression";
-import type { EnrichedExerciseRecord, Exercise, ExerciseHistoryMap } from "@/features/workouts/workout.types";
+import type { EnrichedExerciseRecord, ExerciseHistoryMap, SessionSet } from "@/features/workouts/workout.types";
 import { type SetSubmissionData } from "@/features/workouts/hooks/useActiveSetInput";
 
 export const useActiveExerciseCardLogic = (
@@ -12,9 +12,8 @@ export const useActiveExerciseCardLogic = (
     history?: ExerciseHistoryMap
 ) => {
     const { confirmSet } = useSessionSet();
-    const { substituteExerciseMutation, skipExerciseMutation } = useSessionExercises(sessionId);
+    const planActions = useSessionPlanActions(record, sessionId);
     const [equipmentWeightVisible, setEquipmentWeightVisible] = useState<boolean | null>(null);
-    const [alternativesOpen, setAlternativesOpen] = useState(false);
 
     const exerciseNotes = useActiveWorkoutStore((s) => s.activeSession?.exerciseNotes);
     const setExerciseNote = useActiveWorkoutStore((s) => s.setExerciseNote);
@@ -24,13 +23,23 @@ export const useActiveExerciseCardLogic = (
     const activeSetNumber = record.logs.length + 1;
     const pendingSetsCount = Math.max(0, record.effectiveTargetSets - activeSetNumber);
 
+    // Este card só aparece em sessão de registro completo, em que o servidor exige
+    // peso e RPE. O filtro diz isso ao compilador sem afirmar nada por cast.
+    const loggedSets = useMemo(
+        () => record.logs.filter(
+            (log): log is SessionSet & { actualWeight: number; rpe: number } =>
+                log.actualWeight !== null && log.rpe !== null
+        ),
+        [record.logs],
+    );
+
     // A prescrição é uma cadeia: o histórico dá o ponto de partida e cada set
     // registrado nesta sessão re-prescreve o seguinte. O índice i é o que valia para
     // o set i+1 — é isso que permite julgar o desvio de um set concluído contra a
     // prescrição daquele set, e não contra a corrente.
     const adviceChain = useMemo(
-        () => buildAdviceChain(history?.[record.exerciseId] ?? [], record.targetReps, record.logs),
-        [history, record.exerciseId, record.targetReps, record.logs],
+        () => buildAdviceChain(history?.[record.exerciseId] ?? [], record.targetReps, loggedSets),
+        [history, record.exerciseId, record.targetReps, loggedSets],
     );
     const advice = adviceChain[adviceChain.length - 1];
 
@@ -57,7 +66,7 @@ export const useActiveExerciseCardLogic = (
             rpe: data.rpe,
             equipmentWeight: data.equipmentWeight,
             userObservation: note || undefined,
-        });
+        }, record);
     };
 
     const toggleEquipmentWeight = () => {
@@ -67,33 +76,8 @@ export const useActiveExerciseCardLogic = (
     const toggleNote = () => setNoteVisible(v => !v);
     const setNote = (text: string) => setExerciseNote(record.exerciseId, text);
 
-    // Trocar e pular só existem com snapshot: em sessão legada não há SessionExercise
-    // para referenciar no servidor, e a alternativa seria inventar um id.
-    const canChangePlan = record.sessionExerciseId !== null;
-
-    const handleSubstitute = (exercise: Exercise) => {
-        if (!record.sessionExerciseId) return;
-
-        substituteExerciseMutation.mutate(
-            { sessionExerciseId: record.sessionExerciseId, exerciseId: exercise.id },
-            { onSuccess: () => setAlternativesOpen(false) }
-        );
-    };
-
-    const handleSkip = () => {
-        if (!record.sessionExerciseId) return;
-
-        skipExerciseMutation.mutate({ sessionExerciseId: record.sessionExerciseId, skipped: true });
-    };
-
     return {
-        canChangePlan,
-        alternativesOpen,
-        openAlternatives: () => setAlternativesOpen(true),
-        closeAlternatives: () => setAlternativesOpen(false),
-        handleSubstitute,
-        handleSkip,
-        isChangingPlan: substituteExerciseMutation.isPending || skipExerciseMutation.isPending,
+        ...planActions,
         showEquipmentWeight,
         toggleEquipmentWeight,
         advice,

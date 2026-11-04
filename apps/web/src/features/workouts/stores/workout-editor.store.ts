@@ -1,4 +1,4 @@
-import type { Exercise, Workout, WorkoutExercise } from "@/features/workouts/workout.types.ts";
+import type { Exercise, TrackingMode, Workout, WorkoutExercise } from "@/features/workouts/workout.types.ts";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { arrayMove } from "@dnd-kit/sortable";
@@ -36,6 +36,7 @@ export interface WorkoutExerciseDraft {
 interface WorkoutEditorState {
     name: string;
     description: string;
+    trackingMode: TrackingMode;
     exercises: WorkoutExerciseDraft[];
     isSubmitting: boolean;
 }
@@ -43,6 +44,7 @@ interface WorkoutEditorState {
 interface WorkoutEditorActions {
     // Meta
     setWorkoutInfo: (field: "name" | "description", value: string) => void;
+    setTrackingMode: (mode: TrackingMode) => void;
 
     // Exercise List
     addExercises: (exercises: Exercise[]) => void;
@@ -80,10 +82,13 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
         (set) => ({
             name: "",
             description: "",
+            trackingMode: "FULL",
             exercises: [],
             isSubmitting: false,
 
             setWorkoutInfo: (field, value) => set((state) => ({ ...state, [field]: value })),
+
+            setTrackingMode: (trackingMode) => set({ trackingMode }),
 
             addExercises: (newExercises) => set((state) => {
                 const drafts: WorkoutExerciseDraft[] = newExercises.map((ex, index) => ({
@@ -120,6 +125,7 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
             loadWorkout: (workout) => set({
                 name: workout.name,
                 description: workout.description ?? "",
+                trackingMode: workout.trackingMode,
                 exercises: workout.workoutExercise
                     .filter(we => we.exercise)
                     // O GET não ordena `workoutExercise` (WORKOUT_INCLUDE não tem
@@ -193,7 +199,7 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
                 };
             }),
 
-            reset: () => set({ name: "", description: "", exercises: [], isSubmitting: false }),
+            reset: () => set({ name: "", description: "", trackingMode: "FULL", exercises: [], isSubmitting: false }),
         }),
         {
             name: "plato-workout-editor-storage",
@@ -201,6 +207,7 @@ export const useWorkoutEditorStore = create<WorkoutEditorState & WorkoutEditorAc
             partialize: (state) => ({
                 name: state.name,
                 description: state.description,
+                trackingMode: state.trackingMode,
                 exercises: state.exercises,
             }),
         }

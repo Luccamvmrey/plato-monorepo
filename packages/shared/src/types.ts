@@ -9,7 +9,8 @@
 
 /** O que basta para calcular carga e volume de uma série. */
 export interface VolumeSet {
-    actualWeight: number;
+    /** Null = peso não informado (modo simplificado). Diferente de 0 kg. */
+    actualWeight: number | null;
     actualReps: number;
     /** "Peso da Barra" — componente aditivo da carga. Ausente/nulo significa 0. */
     equipmentWeight?: number | null;
@@ -17,7 +18,8 @@ export interface VolumeSet {
 
 /** O que basta para medir esforço. */
 export interface RpeSet {
-    rpe: number;
+    /** Null = esforço não informado (modo simplificado). */
+    rpe: number | null;
 }
 
 /** O que basta para contar exercícios distintos. */

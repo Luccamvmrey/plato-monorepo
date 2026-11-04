@@ -28,6 +28,7 @@ const ActiveWorkoutPage = () => {
         id,
         activeSession,
         exerciseHistory,
+        lastWeights,
         workout,
         exerciseStack,
         isLoading,
@@ -85,6 +86,7 @@ const ActiveWorkoutPage = () => {
                 exerciseStack={exerciseStack}
                 session={activeSession}
                 history={exerciseHistory}
+                lastWeights={lastWeights}
                 setExerciseOrder={setExerciseOrder}
                 addExtraSet={addExtraSet}
             />

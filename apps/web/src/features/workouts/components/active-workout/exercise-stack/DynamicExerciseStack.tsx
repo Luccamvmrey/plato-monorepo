@@ -23,6 +23,8 @@ type DynamicExerciseStackProps = {
     history?: ExerciseHistoryMap;
     setExerciseOrder: (order: number[]) => void;
     addExtraSet: (exerciseId: number) => void;
+    /** Maior peso informado na última sessão deste treino, por exercício. */
+    lastWeights?: Record<number, number>;
 };
 
 const DynamicExerciseStack = ({
@@ -31,6 +33,7 @@ const DynamicExerciseStack = ({
     history,
     setExerciseOrder,
     addExtraSet,
+    lastWeights,
 }: DynamicExerciseStackProps) => {
     useAutoTransition(exerciseStack);
 
@@ -108,6 +111,8 @@ const DynamicExerciseStack = ({
                                     history={history}
                                     addExtraSet={addExtraSet}
                                     isChangingPlan={isMutating}
+                                    isSimple={session.trackingMode === "SIMPLE"}
+                                    lastWeight={lastWeights?.[record.exerciseId]}
                                     onUndoSkip={
                                         record.sessionExerciseId !== null
                                             ? () => skipExerciseMutation.mutate({

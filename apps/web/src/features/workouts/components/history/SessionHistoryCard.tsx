@@ -58,7 +58,7 @@ export const SessionHistoryCard = ({ session, sessionPrMap, navigate }: SessionH
             <div className="flex gap-6 mb-3">
                 <div>
                     <p className="text-[10px] font-medium tracking-[0.05em] uppercase text-muted-foreground mb-0.5">
-                        Volume total
+                        {session.trackingMode === "SIMPLE" ? "Volume estimado" : "Volume total"}
                     </p>
                     <p className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
                         {totalVolume.toLocaleString("pt-BR")} {UNITS.WEIGHT}
@@ -69,7 +69,7 @@ export const SessionHistoryCard = ({ session, sessionPrMap, navigate }: SessionH
                         RPE médio
                     </p>
                     <p className="text-[15px] font-medium tracking-[-0.02em] text-foreground">
-                        {avgRpe.toFixed(1)}
+                        {avgRpe > 0 ? avgRpe.toFixed(1) : "—"}
                     </p>
                 </div>
             </div>

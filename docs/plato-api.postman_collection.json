@@ -750,7 +750,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Treino A - Push\",\n  \"description\": \"Peito, ombro e tríceps\",\n  \"exercises\": [\n    {\n      \"exerciseId\": 1,\n      \"orderIndex\": 1,\n      \"targetSets\": 4,\n      \"targetReps\": 8,\n      \"observations\": \"Cadência 3-0-1\"\n    },\n    {\n      \"exerciseId\": 2,\n      \"orderIndex\": 2,\n      \"targetSets\": 3,\n      \"targetReps\": 12\n    }\n  ]\n}",
+              "raw": "{\n  \"name\": \"Treino A - Push\",\n  \"description\": \"Peito, ombro e tríceps\",\n  \"trackingMode\": \"FULL\",\n  \"exercises\": [\n    {\n      \"exerciseId\": 1,\n      \"orderIndex\": 1,\n      \"targetSets\": 4,\n      \"targetReps\": 8,\n      \"observations\": \"Cadência 3-0-1\"\n    },\n    {\n      \"exerciseId\": 2,\n      \"orderIndex\": 2,\n      \"targetSets\": 3,\n      \"targetReps\": 12\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -767,7 +767,7 @@
                 "workouts"
               ]
             },
-            "description": "Cria um plano de treino para o usuário autenticado. Retorna `201`.\n\n**Body** (createWorkoutSchema):\n- `name` — string, mínimo 1 caractere (obrigatório)\n- `description` — string, opcional\n- `exercises` — array não-vazio (obrigatório) de:\n  - `exerciseId` — inteiro positivo (obrigatório)\n  - `orderIndex` — inteiro positivo (obrigatório)\n  - `targetSets` — inteiro positivo (obrigatório)\n  - `targetReps` — inteiro positivo (obrigatório)\n  - `observations` — string, opcional"
+            "description": "Cria um plano de treino para o usuário autenticado. Retorna `201`.\n\n**Body** (createWorkoutSchema):\n- `name` — string, mínimo 1 caractere (obrigatório)\n- `description` — string, opcional\n- `exercises` — array não-vazio (obrigatório) de:\n  - `exerciseId` — inteiro positivo (obrigatório)\n  - `orderIndex` — inteiro positivo (obrigatório)\n  - `targetSets` — inteiro positivo (obrigatório)\n  - `targetReps` — inteiro positivo (obrigatório)\n  - `observations` — string, opcional\n\n`trackingMode` é opcional: `FULL` (padrão) ou `SIMPLE`. Cada sessão copia o modo do treino ao iniciar."
           },
           "response": []
         },
@@ -829,7 +829,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Treino A - Push (v2)\",\n  \"description\": \"Ajuste de volume\",\n  \"exercises\": [\n    {\n      \"exerciseId\": 1,\n      \"orderIndex\": 1,\n      \"targetSets\": 5,\n      \"targetReps\": 6,\n      \"observations\": \"Progredir carga\"\n    }\n  ]\n}",
+              "raw": "{\n  \"name\": \"Treino A - Push (v2)\",\n  \"description\": \"Ajuste de volume\",\n  \"trackingMode\": \"FULL\",\n  \"exercises\": [\n    {\n      \"exerciseId\": 1,\n      \"orderIndex\": 1,\n      \"targetSets\": 5,\n      \"targetReps\": 6,\n      \"observations\": \"Progredir carga\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -847,7 +847,7 @@
                 "{{workoutId}}"
               ]
             },
-            "description": "Atualiza um treino.\n\n**Body** (updateWorkoutSchema):\n- `name` — string, opcional\n- `description` — string, opcional\n- `exercises` — array **não-vazio, obrigatório**; cada item tem todos os campos de `createWorkoutExercise` como opcionais."
+            "description": "Atualiza um treino.\n\n**Body** (updateWorkoutSchema):\n- `name` — string, opcional\n- `description` — string, opcional\n- `exercises` — array **não-vazio, obrigatório**; cada item tem todos os campos de `createWorkoutExercise` como opcionais.\n\n`trackingMode` é opcional: `FULL` (padrão) ou `SIMPLE`. Cada sessão copia o modo do treino ao iniciar."
           },
           "response": []
         },
@@ -1320,7 +1320,7 @@
                 "finish"
               ]
             },
-            "description": "Encerra a sessão enviando todas as séries de uma vez.\n\n**Body** (finishSessionSchema):\n- `sets` — array (obrigatório) de:\n  - `workoutSessionId` — inteiro positivo (obrigatório)\n  - `exerciseId` — inteiro positivo (obrigatório)\n  - `setNumber` — inteiro positivo (obrigatório)\n  - `actualReps` — inteiro ≥ 0 (obrigatório)\n  - `actualWeight` — número ≥ 0 (obrigatório)\n  - `equipmentWeight` — número ≥ 0, opcional\n  - `rpe` — número entre 1 e 10 (obrigatório)\n  - `userObservation` — string, opcional"
+            "description": "Encerra a sessão enviando todas as séries de uma vez.\n\n**Body** (finishSessionSchema):\n- `sets` — array (obrigatório) de:\n  - `workoutSessionId` — inteiro positivo (obrigatório)\n  - `exerciseId` — inteiro positivo (obrigatório)\n  - `setNumber` — inteiro positivo (obrigatório)\n  - `actualReps` — inteiro ≥ 0 (obrigatório)\n  - `actualWeight` — número ≥ 0 (obrigatório)\n  - `equipmentWeight` — número ≥ 0, opcional\n  - `rpe` — número entre 1 e 10 (obrigatório)\n  - `userObservation` — string, opcional\n\n`actualWeight` e `rpe` aceitam `null` só em sessão `SIMPLE`; em `FULL` isso responde `400`. Em `SIMPLE` o servidor descarta o RPE enviado e marca as séries com `excludedFromRecords`, então elas ficam fora de PR e progressão."
           },
           "response": []
         },

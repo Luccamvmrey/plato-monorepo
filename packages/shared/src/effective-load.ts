@@ -35,6 +35,9 @@ export const effectiveLoad = (
     exercise: LoadContext,
     bodyWeight: number | null
 ): number | null => {
+    // Peso corporal puro não lê o peso informado; todos os outros tipos dependem dele.
+    if (set.actualWeight === null && exercise.loadType !== "BODYWEIGHT") return null;
+
     const external = externalLoad(set);
 
     switch (exercise.loadType) {

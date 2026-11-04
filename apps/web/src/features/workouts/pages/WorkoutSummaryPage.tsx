@@ -38,8 +38,16 @@ const WorkoutSummaryPage = () => {
         );
     }
 
+    // No modo simplificado as reps são presumidas, e sem peso nenhum informado não há
+    // volume a mostrar. "0 kg" diria que a pessoa não levantou nada.
+    const isSimple = workoutSession.trackingMode === "SIMPLE";
+
     const metrics = [
-        { label: "Volume", value: formatWeight(stats.totalVolume), unit: null },
+        {
+            label: isSimple ? "Volume estimado" : "Volume",
+            value: isSimple && stats.totalVolume === 0 ? "—" : formatWeight(stats.totalVolume),
+            unit: null,
+        },
         { label: "Duração", value: formatDurationExtensive(stats.duration), unit: null },
         { label: "Sets", value: String(stats.totalSets), unit: null },
     ];

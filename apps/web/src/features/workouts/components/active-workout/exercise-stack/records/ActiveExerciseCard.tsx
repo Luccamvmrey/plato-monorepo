@@ -88,7 +88,7 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
     // tudo contra a prescrição corrente marcaria como desvio todo set anterior a uma
     // mudança de carga — inclusive a que o próprio set causou.
     const logDeviation = (log: SessionSet, index: number) =>
-        deviationAgainst(adviceChain[index], log.actualWeight);
+        log.actualWeight === null ? undefined : deviationAgainst(adviceChain[index], log.actualWeight);
 
     const typedWeight = parseFloat(weight.replace(",", "."));
     const isOverPrescribed = advice.verdict !== "INCREASE"

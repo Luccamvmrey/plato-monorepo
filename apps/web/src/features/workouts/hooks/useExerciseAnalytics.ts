@@ -4,6 +4,7 @@ import { WorkoutSessionService } from "@/features/workouts/services/workout-sess
 import { PersonalRecordService } from "@/features/workouts/services/personal-record.service";
 import { calculateE1RM, calculateSetVolume } from "@/features/workouts/utils/analytics";
 import { path } from "@/core/constants/path";
+import type { SessionSet } from "@/features/workouts/workout.types";
 
 interface GroupedData {
     date: Date;
@@ -27,11 +28,18 @@ export const useExerciseAnalytics = (exerciseId: number) => {
 
     const isLoading = sessionsLoading || recordsLoading;
 
+    // e1RM exige peso e RPE reais. Séries do modo simplificado não têm RPE, e suas reps
+    // são presumidas, então ficam fora dos gráficos em vez de virarem número inventado.
+    const measuredSets = (sets: SessionSet[]) => sets.filter(
+        (set): set is SessionSet & { actualWeight: number; rpe: number } =>
+            set.actualWeight !== null && set.rpe !== null
+    );
+
     // Flat list of all sets (for ExecutionHistoryList), sorted asc
     const exerciseData = sessions?.flatMap(session => {
         const date = session.completedAt ? new Date(session.completedAt) : new Date(session.startedAt);
         const sessionNote = session.sessionSet[0]?.userObservation ?? undefined;
-        return session.sessionSet.map(set => ({
+        return measuredSets(session.sessionSet).map(set => ({
             date,
             weight: set.actualWeight,
             reps: set.actualReps,
@@ -44,10 +52,10 @@ export const useExerciseAnalytics = (exerciseId: number) => {
 
     // One data point per session (not per day) — fixes grouping bug
     const chartData: GroupedData[] = (sessions ?? [])
-        .filter(session => session.sessionSet.length > 0)
+        .filter(session => measuredSets(session.sessionSet).length > 0)
         .map(session => {
             const date = session.completedAt ? new Date(session.completedAt) : new Date(session.startedAt);
-            const sets = session.sessionSet.map(set => ({
+            const sets = measuredSets(session.sessionSet).map(set => ({
                 date,
                 weight: set.actualWeight,
                 reps: set.actualReps,

@@ -32,7 +32,11 @@ const create = async (userId: number, payload: any) => {
 
     // O envelopamento estrutural obrigatório exigido pelo Prisma
     return prisma.sessionSet.create({
-        data: { ...payload, sessionExerciseId: sessionExercise?.id ?? null }
+        data: {
+            ...payload,
+            sessionExerciseId: sessionExercise?.id ?? null,
+            excludedFromRecords: workoutSession.trackingMode === "SIMPLE",
+        }
     });
 }
 

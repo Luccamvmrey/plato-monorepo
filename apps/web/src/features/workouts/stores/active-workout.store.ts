@@ -22,6 +22,10 @@ interface ActiveWorkoutState {
     activeSession: ActiveSession | null;
     lastSession: WorkoutSession | null;
     finalization: FinalizationState;
+    /** Quando o descanso atual termina. Timestamp, para sobreviver à tela apagada. */
+    restEndsAt: number | null;
+    /** Duração preferida, em segundos. Ajustar o descanso atual também muda esta. */
+    restDuration: number;
 }
 
 interface ActiveWorkoutActions {
@@ -33,7 +37,15 @@ interface ActiveWorkoutActions {
     setExerciseNote: (exerciseId: number, note: string) => void;
     addExtraSet: (exerciseId: number) => void;
     setExerciseOrder: (order: number[]) => void;
+    setExerciseWeight: (exerciseId: number, weight: number | null) => void;
+    startRest: () => void;
+    adjustRest: (deltaSeconds: number) => void;
+    dismissRest: () => void;
 }
+
+const DEFAULT_REST_SECONDS = 90;
+const MIN_REST_SECONDS = 15;
+const MAX_REST_SECONDS = 600;
 
 const IDLE_FINALIZATION: FinalizationState = { status: 'idle', sessionId: null, error: null, payload: null };
 
@@ -43,6 +55,8 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
             activeSession: null,
             lastSession: null,
             finalization: IDLE_FINALIZATION,
+            restEndsAt: null,
+            restDuration: DEFAULT_REST_SECONDS,
 
             setActiveSession: (session, lastSession = null) =>
                 set((state) => ({
@@ -58,7 +72,38 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
                     lastSession,
                 })),
 
-            clearState: () => set({ activeSession: null, lastSession: null }),
+            clearState: () => set({ activeSession: null, lastSession: null, restEndsAt: null }),
+
+            // Uma carga por exercício, no modo simplificado: vale para todas as séries.
+            setExerciseWeight: (exerciseId, weight) =>
+                set((state) => ({
+                    activeSession: state.activeSession
+                        ? {
+                            ...state.activeSession,
+                            pendingSets: state.activeSession.pendingSets.map((pending) =>
+                                pending.exerciseId === exerciseId
+                                    ? { ...pending, actualWeight: weight }
+                                    : pending
+                            ),
+                          }
+                        : state.activeSession,
+                })),
+
+            startRest: () =>
+                set((state) => ({ restEndsAt: Date.now() + state.restDuration * 1000 })),
+
+            adjustRest: (deltaSeconds) =>
+                set((state) => ({
+                    restDuration: Math.min(
+                        MAX_REST_SECONDS,
+                        Math.max(MIN_REST_SECONDS, state.restDuration + deltaSeconds)
+                    ),
+                    restEndsAt: state.restEndsAt === null
+                        ? null
+                        : state.restEndsAt + deltaSeconds * 1000,
+                })),
+
+            dismissRest: () => set({ restEndsAt: null }),
 
             addPendingSet: (payload) =>
                 set((state) => ({
@@ -110,6 +155,8 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
             partialize: (state) => ({
                 activeSession: state.activeSession,
                 lastSession: state.lastSession,
+                restEndsAt: state.restEndsAt,
+                restDuration: state.restDuration,
             }),
         }
     )

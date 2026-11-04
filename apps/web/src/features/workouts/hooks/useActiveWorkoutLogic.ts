@@ -5,6 +5,7 @@ import { useWorkouts } from "./useWorkouts";
 import { useExerciseStack } from "./useExerciseStack";
 import { useExerciseHistory } from "./useExerciseHistory";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
+import { useWakeLock } from "@/core/hooks/useWakeLock";
 
 export const useActiveWorkoutLogic = () => {
     const navigate = useLocation()[1];
@@ -19,6 +20,22 @@ export const useActiveWorkoutLogic = () => {
     } = useWorkoutSession();
     const { data: sessionData, isLoading: isLoadingSession } = findActiveSessionQuery;
     const activeSession = sessionData?.activeSession;
+    const lastSession = sessionData?.lastSession;
+
+    // O treino pode durar uma hora com o celular na mão e sem toque na tela.
+    useWakeLock(!!activeSession);
+
+    const lastWeights = useMemo(() => {
+        const weights: Record<number, number> = {};
+
+        for (const set of lastSession?.sessionSet ?? []) {
+            if (set.actualWeight !== null) {
+                weights[set.exerciseId] = Math.max(weights[set.exerciseId] ?? 0, set.actualWeight);
+            }
+        }
+
+        return weights;
+    }, [lastSession]);
 
     const { workoutByIdQuery } = useWorkouts(id);
     const { data: workout, isLoading: isLoadingWorkout } = workoutByIdQuery;
@@ -82,6 +99,7 @@ export const useActiveWorkoutLogic = () => {
         navigate,
         activeSession,
         exerciseHistory,
+        lastWeights,
         workout,
         exerciseStack,
         isLoading,

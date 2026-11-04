@@ -46,7 +46,13 @@ export const CompletedSetRow = ({
                         {deviation === "up" ? "↑" : "↓"}
                     </span>
                 )}
-                {formatWeightPtBr(log.actualWeight)}{UNITS.WEIGHT} · {log.actualReps}{UNITS.REPS} · RPE {log.rpe}
+                {/* != null e não truthiness: 0 kg é carga legítima. Null é o modo
+                    simplificado, em que peso e RPE podem não existir. */}
+                {[
+                    log.actualWeight != null ? `${formatWeightPtBr(log.actualWeight)}${UNITS.WEIGHT}` : null,
+                    `${log.actualReps}${UNITS.REPS}`,
+                    log.rpe != null ? `RPE ${log.rpe}` : null,
+                ].filter(Boolean).join(" · ")}
             </span>
         </motion.div>
     );

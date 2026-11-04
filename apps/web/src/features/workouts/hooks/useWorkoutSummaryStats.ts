@@ -99,13 +99,15 @@ export const useWorkoutSummaryStats = (
             .sort((a, b) => (planOrder.get(a.id) ?? Infinity) - (planOrder.get(b.id) ?? Infinity));
 
         const currentMaxByExercise: Record<number, number> = {};
-        sets.forEach(set => {
+        // Mesma regra do servidor: série marcada não conta para recorde, nem de um lado
+        // nem de outro da comparação.
+        sets.filter(set => !set.excludedFromRecords).forEach(set => {
             currentMaxByExercise[set.exerciseId] = Math.max(currentMaxByExercise[set.exerciseId] || 0, externalLoad(set));
         });
 
         const lastMaxByExercise: Record<number, number> = {};
         if (lastSession) {
-            lastSession.sessionSet.forEach(set => {
+            lastSession.sessionSet.filter(set => !set.excludedFromRecords).forEach(set => {
                 lastMaxByExercise[set.exerciseId] = Math.max(lastMaxByExercise[set.exerciseId] || 0, externalLoad(set));
             });
         }
