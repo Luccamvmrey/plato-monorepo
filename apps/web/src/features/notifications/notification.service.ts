@@ -8,6 +8,8 @@ export interface NotificationSettings {
     emailSummaryEnabled: boolean;
     reminderHour: number;
     shouldPrompt: boolean;
+    /** Só mostra a ferramenta; quem barra de verdade é o `requireAdmin` da rota. */
+    canDebug: boolean;
 }
 
 export type NotificationSettingsUpdate = Partial<

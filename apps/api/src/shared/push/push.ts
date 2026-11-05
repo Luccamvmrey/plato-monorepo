@@ -55,6 +55,19 @@ const SEND_TIMEOUT_MS = 10_000;
 const MESSAGE_TTL_SECONDS = 12 * 3600;
 const GONE_STATUS_CODES = [404, 410];
 
+/** Medido em produção: o FCM recusou com 404/410 uma inscrição criada 7s antes, e ela era válida. */
+const NEW_SUBSCRIPTION_GRACE_MS = 10 * 60_000;
+
+/** Inscrição recém-criada ganha carência: o serviço de push pode ainda não reconhecê-la. */
+export const shouldDropSubscription = (
+    statusCode: number | undefined,
+    createdAt: Date,
+    now = Date.now()
+): boolean =>
+    statusCode !== undefined &&
+    GONE_STATUS_CODES.includes(statusCode) &&
+    now - createdAt.getTime() >= NEW_SUBSCRIPTION_GRACE_MS;
+
 const statusCodeOf = (error: unknown): number | undefined =>
     error instanceof webpush.WebPushError ? error.statusCode : undefined;
 
@@ -79,11 +92,17 @@ export const sendPushToUser = async (userId: number, message: PushMessage): Prom
                 );
             } catch (error) {
                 const statusCode = statusCodeOf(error);
+                const detail = error instanceof webpush.WebPushError ? error.body : String(error);
 
-                if (statusCode !== undefined && GONE_STATUS_CODES.includes(statusCode)) {
+                // Sempre registra, inclusive o que apaga a inscrição: sem o corpo da resposta não
+                // há como saber por que o serviço recusou. O endpoint fica de fora por ser segredo.
+                console.error(
+                    `Push failed for subscription ${subscription.id} (${new URL(subscription.endpoint).hostname}): ` +
+                    `${statusCode ?? "network error"} ${String(detail).slice(0, 300)}`
+                );
+
+                if (shouldDropSubscription(statusCode, subscription.createdAt)) {
                     await prisma.pushSubscription.deleteMany({ where: { id: subscription.id } });
-                } else {
-                    console.error(`Push failed for subscription ${subscription.id}: ${statusCode ?? "network error"}`);
                 }
 
                 throw error;

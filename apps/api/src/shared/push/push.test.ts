@@ -2,7 +2,24 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@plato/database", () => ({ default: {} }));
 
-import { isAllowedPushEndpoint } from "./push";
+import { isAllowedPushEndpoint, shouldDropSubscription } from "./push";
+
+describe("shouldDropSubscription", () => {
+    const now = Date.parse("2026-11-05T12:00:00Z");
+    const minutesAgo = (minutes: number) => new Date(now - minutes * 60_000);
+
+    it.each([404, 410])("apaga inscrição antiga que recebe %i", (status) => {
+        expect(shouldDropSubscription(status, minutesAgo(60), now)).toBe(true);
+    });
+
+    it.each([404, 410])("mantém inscrição recém-criada que recebe %i", (status) => {
+        expect(shouldDropSubscription(status, minutesAgo(1), now)).toBe(false);
+    });
+
+    it.each([400, 403, 429, 500, undefined])("mantém a inscrição em outras falhas: %s", (status) => {
+        expect(shouldDropSubscription(status, minutesAgo(60), now)).toBe(false);
+    });
+});
 
 describe("isAllowedPushEndpoint", () => {
     it.each([

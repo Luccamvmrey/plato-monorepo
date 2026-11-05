@@ -59,7 +59,7 @@ export const NotificationSetting = () => {
 
     if (!settings) return null;
 
-    const hasError = settingsError || device.hasError;
+    const errorMessage = device.errorMessage ?? (settingsError ? "Não foi possível salvar. Tente novamente." : null);
 
     return (
         <>
@@ -148,24 +148,14 @@ export const NotificationSetting = () => {
                                     </Select>
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={() => device.sendTest()}
-                                        disabled={device.isTesting}
-                                        variant="secondary"
-                                        className="flex-1 h-11 font-medium"
-                                    >
-                                        {device.testSent ? "Teste enviado" : "Enviar teste"}
-                                    </Button>
-                                    <Button
-                                        onClick={() => device.disable()}
-                                        disabled={device.isDisabling}
-                                        variant="ghost"
-                                        className="flex-1 h-11 font-medium text-muted-foreground"
-                                    >
-                                        Desativar aqui
-                                    </Button>
-                                </div>
+                                <Button
+                                    onClick={() => device.disable()}
+                                    disabled={device.isDisabling}
+                                    variant="ghost"
+                                    className="w-full h-11 font-medium text-muted-foreground"
+                                >
+                                    Desativar neste aparelho
+                                </Button>
                             </>
                         )}
 
@@ -178,7 +168,21 @@ export const NotificationSetting = () => {
                             />
                         </div>
 
-                        {hasError && <InlineErrorBanner message="Não foi possível salvar. Tente novamente." />}
+                        {settings.canDebug && device.isSubscribed && (
+                            <div className="flex flex-col gap-2 border-t border-border pt-3">
+                                <p className="text-[13px] text-muted-foreground">Modo debug, só para admin</p>
+                                <Button
+                                    onClick={() => device.sendTest()}
+                                    disabled={device.isTesting}
+                                    variant="secondary"
+                                    className="w-full h-11 font-medium"
+                                >
+                                    {device.testSent ? "Teste enviado" : "Enviar teste"}
+                                </Button>
+                            </div>
+                        )}
+
+                        {errorMessage && <InlineErrorBanner message={errorMessage} />}
                     </div>
                 </SheetContent>
             </Sheet>
