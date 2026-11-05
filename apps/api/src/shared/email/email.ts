@@ -3,11 +3,12 @@ interface EmailMessage {
     subject: string;
     text: string;
     html: string;
+    headers?: Record<string, string>;
 }
 
 const DEFAULT_FROM = "Plato <nao-responda@plato-work-out.com>";
 
-const sendEmail = async ({ to, subject, text, html }: EmailMessage): Promise<void> => {
+const sendEmail = async ({ to, subject, text, html, headers }: EmailMessage): Promise<void> => {
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
@@ -32,6 +33,7 @@ const sendEmail = async ({ to, subject, text, html }: EmailMessage): Promise<voi
             subject,
             text,
             html,
+            ...(headers ? { headers } : {}),
         }),
     });
 

@@ -106,6 +106,10 @@ EMAIL_FROM=...            # opcional; padrão: Plato <nao-responda@plato-work-ou
 APP_URL=...               # opcional; base dos links nos e-mails. Padrão: https://plato-work-out.com
 ADMIN_USER_IDS=1,2        # ids que podem escrever no catálogo de exercícios; vazio = ninguém
 EMAIL_LOG_TO_CONSOLE=true # só em desenvolvimento: imprime o e-mail no console em vez de enviar
+VAPID_PUBLIC_KEY=...      # web push; gerar o par com `npx web-push generate-vapid-keys`
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=...         # opcional; padrão: https://plato-work-out.com
+SCHEDULER_ENABLED=true    # SÓ na VPS: liga lembretes e resumos. O DATABASE_URL local aponta para produção
 ```
 
 **`apps/web/.env`** (optional)

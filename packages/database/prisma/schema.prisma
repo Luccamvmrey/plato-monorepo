@@ -125,6 +125,9 @@ model User {
   oauthCode      OAuthAuthorizationCode[]
   oauthSession   OAuthSession[]
   passwordResetToken PasswordResetToken[]
+  pushSubscription PushSubscription[]
+  notificationPreference NotificationPreference?
+  notificationLog NotificationLog[]
 }
 
 /// Pedido de redefinição de senha, de uso único. Guardado só o hash: quem lê o banco
@@ -507,4 +510,75 @@ model PersonalRecord {
   exercise   Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([userId, exerciseId, type])
+}
+
+enum NotificationKind {
+  REMINDER
+  WEEKLY_SUMMARY
+  MONTHLY_SUMMARY
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+}
+
+enum NotificationStatus {
+  CLAIMED
+  SENT
+  FAILED
+}
+
+/// Um aparelho inscrito em web push. `endpoint` identifica a inscrição do navegador, então
+/// reinscrever o mesmo aparelho em outra conta transfere a linha em vez de duplicá-la.
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Sem linha, tudo fica desligado: a linha nasce quando a pessoa ativa ou recusa o convite.
+model NotificationPreference {
+  userId              Int       @id
+  remindersEnabled    Boolean   @default(true)
+  summariesEnabled    Boolean   @default(true)
+  /// Opt-in separado: o e-mail nunca liga junto com o push.
+  emailSummaryEnabled Boolean   @default(false)
+  /// Hora local, de 6 a 22. Um único horário vale para lembrete e resumos.
+  reminderHour        Int       @default(18)
+  timezone            String    @default("America/Sao_Paulo")
+  /// Fica no servidor porque, no iPhone, o app instalado e o Safari não dividem armazenamento.
+  promptDismissedAt   DateTime?
+  /// Última ativação. Reativar não dispara lembrete por um treino antigo.
+  activatedAt         DateTime?
+  unsubscribeToken    String    @unique
+  createdAt           DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Registro de cada envio. O índice único é o que garante envio único: o agendador insere
+/// antes de enviar, e o conflito significa que outra execução já pegou aquele envio.
+model NotificationLog {
+  id        Int                 @id @default(autoincrement())
+  userId    Int
+  kind      NotificationKind
+  channel   NotificationChannel
+  /// Data local do lembrete (2026-11-04), semana ISO (2026-W45) ou mês (2026-11).
+  periodKey String
+  status    NotificationStatus  @default(CLAIMED)
+  createdAt DateTime            @default(now())
+  openedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, channel, periodKey])
+  @@index([userId, createdAt])
 }

@@ -59,4 +59,41 @@ FROM "SharedPlan" p
 WHERE p."curatedKey" IS NOT NULL
 ORDER BY p."featuredOrder" NULLS LAST;
 
+\echo '=== Notificacoes: aparelhos e adocao ==='
+SELECT
+    count(*) FILTER (WHERE endpoint LIKE '%.push.apple.com/%') AS aparelhos_iphone,
+    count(*) FILTER (WHERE endpoint NOT LIKE '%.push.apple.com/%') AS aparelhos_outros,
+    count(DISTINCT "userId") AS usuarios_com_push,
+    count(DISTINCT "userId") FILTER (WHERE EXISTS (
+        SELECT 1 FROM "WorkoutSession" w
+        WHERE w."userId" = s."userId" AND w."completedAt" >= now() - interval '28 days'
+    )) AS ativos_28d_com_push,
+    (SELECT count(DISTINCT w."userId") FROM "WorkoutSession" w WHERE w."completedAt" >= now() - interval '28 days') AS ativos_28d,
+    (SELECT count(*) FROM "NotificationPreference" WHERE "promptDismissedAt" IS NOT NULL) AS convites_recusados,
+    (SELECT count(*) FROM "NotificationPreference" WHERE NOT "remindersEnabled") AS lembretes_desligados,
+    (SELECT count(*) FROM "NotificationPreference" WHERE "emailSummaryEnabled") AS resumo_por_email
+FROM "PushSubscription" s;
+
+\echo '=== Notificacoes: envios por tipo ==='
+SELECT
+    kind,
+    channel,
+    count(*) FILTER (WHERE status = 'SENT') AS enviadas,
+    count(*) FILTER (WHERE status = 'FAILED') AS falhas,
+    count(*) FILTER (WHERE "openedAt" IS NOT NULL) AS abertas
+FROM "NotificationLog"
+GROUP BY kind, channel
+ORDER BY kind, channel;
+
+\echo '=== Lembretes: voltou a treinar em ate 48h ==='
+SELECT
+    count(*) AS lembretes,
+    count(*) FILTER (WHERE EXISTS (
+        SELECT 1 FROM "WorkoutSession" w
+        WHERE w."userId" = l."userId"
+          AND w."completedAt" BETWEEN l."createdAt" AND l."createdAt" + interval '48 hours'
+    )) AS treinou_em_48h
+FROM "NotificationLog" l
+WHERE l.kind = 'REMINDER' AND l.status = 'SENT';
+
 ROLLBACK;
