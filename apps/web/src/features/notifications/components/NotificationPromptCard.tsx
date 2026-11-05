@@ -31,9 +31,9 @@ export const NotificationPromptCard = ({ completedAt }: NotificationPromptCardPr
                 className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3"
             >
                 <div>
-                    <h2 className="text-[15px] font-medium">Quer um lembrete quando passar da sua frequência?</h2>
+                    <h2 className="text-[15px] font-medium">Quer um lembrete para treinar?</h2>
                     <p className="text-[13px] text-muted-foreground mt-1">
-                        No máximo um por dia, no horário que você escolher.
+                        De segunda a sexta, no horário que você escolher.
                     </p>
                 </div>
 

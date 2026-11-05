@@ -19,8 +19,8 @@ import { sendPushToUser } from "../shared/push/push";
 import { getAppUrl } from "../shared/utils/app-url";
 
 const CYCLE_INTERVAL_MS = 5 * 60_000;
-/** Cobre o terceiro lembrete e o limite diário, sem carregar o histórico inteiro. */
-const LOG_LOOKBACK_MS = 60 * 86_400_000;
+/** Só o limite de um push por dia consulta o histórico: dois dias cobrem qualquer fuso. */
+const LOG_LOOKBACK_MS = 2 * 86_400_000;
 const NOTIFICATION_LANDING = { REMINDER: "/workouts", WEEKLY_SUMMARY: "/history", MONTHLY_SUMMARY: "/history" } as const;
 
 type DueKind = NotificationDecision["kind"];
@@ -112,8 +112,6 @@ interface DuePreference {
     remindersEnabled: boolean;
     summariesEnabled: boolean;
     emailSummaryEnabled: boolean;
-    activatedAt: Date | null;
-    createdAt: Date;
     unsubscribeToken: string;
     user: { email: string; _count: { pushSubscription: number } };
 }
@@ -134,7 +132,7 @@ const sendPushIfDue = async (preference: DuePreference, now: Date, completedAt: 
                 status: { in: ["CLAIMED", "SENT"] },
                 createdAt: { gte: new Date(now.getTime() - LOG_LOOKBACK_MS) },
             },
-            select: { kind: true, createdAt: true },
+            select: { createdAt: true },
         }),
     ]);
 
@@ -146,7 +144,6 @@ const sendPushIfDue = async (preference: DuePreference, now: Date, completedAt: 
         summariesEnabled: preference.summariesEnabled,
         completedAt,
         openSessionStartedAt: openSession?.startedAt ?? null,
-        activatedAt: preference.activatedAt ?? preference.createdAt,
         sentPushes,
     });
 
