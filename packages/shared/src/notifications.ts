@@ -6,7 +6,6 @@ import {
     toLocalDateStr,
     toLocalHour,
 } from "./dates";
-import { estimateSessionsPerWeek } from "./planned-volume";
 import type { VolumeSet } from "./types";
 import { calculateTotalVolume } from "./volume";
 
@@ -19,13 +18,8 @@ export const DEFAULT_REMINDER_HOUR = 18;
 /** Abaixo disso a mediana diz mais sobre um dia isolado do que sobre um hábito. */
 const MIN_SESSIONS_FOR_HABIT = 4;
 const OPEN_SESSION_WINDOW_MS = 6 * 3_600_000;
-
-const DEFAULT_REMINDER_AFTER_DAYS = 3;
-const MIN_REMINDER_AFTER_DAYS = 3;
-const MAX_REMINDER_AFTER_DAYS = 7;
-
-/** Espera antes do 2º e do 3º lembrete. Depois disso, silêncio até o próximo treino. */
-const FOLLOW_UP_WAIT_DAYS = [3, 7];
+/** Dias desde a segunda-feira a partir dos quais não há lembrete: sábado e domingo. */
+const FIRST_WEEKEND_OFFSET = 5;
 
 type DateLike = Date | string;
 
@@ -43,19 +37,6 @@ export const habitualHour = (startedAt: readonly DateLike[], timezone: string): 
     return Math.min(MAX_REMINDER_HOUR, Math.max(MIN_REMINDER_HOUR, median));
 };
 
-/**
- * Quantos dias sem treinar disparam o primeiro lembrete: dois a mais que o intervalo
- * habitual. Com um só, a simulação sobre o histórico real avisava quem treina bem toda
- * semana, e em quase todos os casos a pessoa voltaria em até 48h de qualquer forma.
- */
-export const reminderAfterDays = (sessionsPerWeek: number | null): number => {
-    if (sessionsPerWeek === null || sessionsPerWeek <= 0) return DEFAULT_REMINDER_AFTER_DAYS;
-
-    const days = Math.round(7 / sessionsPerWeek) + 2;
-
-    return Math.min(MAX_REMINDER_AFTER_DAYS, Math.max(MIN_REMINDER_AFTER_DAYS, days));
-};
-
 export interface NotificationDecisionInput {
     now: Date;
     timezone: string;
@@ -66,10 +47,8 @@ export interface NotificationDecisionInput {
     completedAt: readonly DateLike[];
     /** Início da sessão aberta mais recente, se houver. */
     openSessionStartedAt: DateLike | null;
-    /** Última ativação. Reativar não pode disparar lembrete por um treino antigo. */
-    activatedAt: DateLike;
-    /** Push enviados, com tipo e data. Só precisa cobrir as últimas semanas. */
-    sentPushes: readonly { kind: NotificationKindValue; createdAt: DateLike }[];
+    /** Push enviados. Só precisa cobrir os últimos dias, para o limite de um por dia. */
+    sentPushes: readonly { createdAt: DateLike }[];
 }
 
 export interface NotificationDecision {
@@ -93,48 +72,27 @@ export const monthlyPeriod = (today: string) => {
 /** No domingo, o resumo semanal está na hora. Também decide o envio por e-mail. */
 export const isSunday = (dateStr: string): boolean => mondayOfDateStr(dateStr) === addDaysToDateStr(dateStr, -6);
 
-const decideReminder = (
-    { now, timezone, completedAt, openSessionStartedAt, activatedAt, sentPushes }: NotificationDecisionInput,
-    today: string
-): NotificationDecision | null => {
-    if (
-        openSessionStartedAt !== null &&
-        now.getTime() - toDate(openSessionStartedAt).getTime() < OPEN_SESSION_WINDOW_MS
-    ) {
-        return null;
-    }
+const isWeekend = (dateStr: string): boolean =>
+    daysBetweenDateStrs(mondayOfDateStr(dateStr), dateStr) >= FIRST_WEEKEND_OFFSET;
 
-    const lastCompletedAt = completedAt.reduce<Date | null>((latest, value) => {
-        const date = toDate(value);
+const shouldRemind = (
+    { now, openSessionStartedAt }: NotificationDecisionInput,
+    today: string,
+    completedDates: readonly string[]
+): boolean => {
+    if (isWeekend(today) || completedDates.includes(today)) return false;
 
-        return latest === null || date > latest ? date : latest;
-    }, null);
-
-    if (lastCompletedAt !== null && toLocalDateStr(lastCompletedAt, timezone) === today) return null;
-
-    // A contagem parte do que veio por último: quem reativa depois de meses em silêncio
-    // não pode receber um lembrete no mesmo dia.
-    const activated = toDate(activatedAt);
-    const anchor = lastCompletedAt !== null && lastCompletedAt > activated ? lastCompletedAt : activated;
-
-    const reminders = sentPushes
-        .filter((push) => push.kind === "REMINDER" && toDate(push.createdAt) > anchor)
-        .map((push) => toDate(push.createdAt))
-        .sort((a, b) => a.getTime() - b.getTime());
-
-    if (reminders.length > FOLLOW_UP_WAIT_DAYS.length) return null;
-
-    const reference = reminders[reminders.length - 1] ?? anchor;
-    const daysSince = daysBetweenDateStrs(toLocalDateStr(reference, timezone), today);
-    const wait = reminders.length === 0
-        ? reminderAfterDays(estimateSessionsPerWeek(completedAt, 8, now.getTime()))
-        : FOLLOW_UP_WAIT_DAYS[reminders.length - 1];
-
-    return daysSince >= wait ? { kind: "REMINDER", periodKey: today } : null;
+    return (
+        openSessionStartedAt === null ||
+        now.getTime() - toDate(openSessionStartedAt).getTime() >= OPEN_SESSION_WINDOW_MS
+    );
 };
 
 /**
  * O que enviar por push agora, se algo. Prioridade: mensal, semanal, lembrete.
+ *
+ * O lembrete é diário de propósito, de segunda a sexta: serve para lembrar que o Plato existe,
+ * não para reagir à frequência de treino de cada um. Só fica de fora quem já treinou no dia.
  *
  * Só decide durante a hora escolhida: se a VPS ficar fora do ar, nada sai atrasado de
  * madrugada. O dono do envio único é o índice do `NotificationLog`, não esta função.
@@ -170,7 +128,9 @@ export const decideNotification = (input: NotificationDecisionInput): Notificati
         }
     }
 
-    return remindersEnabled ? decideReminder(input, today) : null;
+    return remindersEnabled && shouldRemind(input, today, completedDates)
+        ? { kind: "REMINDER", periodKey: today }
+        : null;
 };
 
 export interface SummarySession {

@@ -86,7 +86,7 @@ export const NotificationSetting = () => {
                     <SheetHeader className="pb-0 pr-12">
                         <SheetTitle className="text-[20px] font-semibold tracking-[-0.02em]">Notificações</SheetTitle>
                         <SheetDescription className="text-[14px]">
-                            No máximo uma por dia. Se você parar de treinar, são até 3 lembretes e depois silêncio.
+                            No máximo uma por dia, no horário que você escolher.
                         </SheetDescription>
                     </SheetHeader>
 
@@ -120,7 +120,7 @@ export const NotificationSetting = () => {
                             <>
                                 <SwitchRow
                                     label="Lembretes"
-                                    description="Quando passar da sua frequência de treino"
+                                    description="De segunda a sexta, se você ainda não treinou no dia"
                                     checked={settings.remindersEnabled}
                                     onChange={(remindersEnabled) => updateSettings({ remindersEnabled })}
                                 />

@@ -4,7 +4,6 @@ import {
     decideNotification,
     habitualHour,
     monthlyPeriod,
-    reminderAfterDays,
     reminderMessage,
     summarizePeriod,
     summaryMessage,
@@ -26,7 +25,6 @@ const input = (overrides: Partial<NotificationDecisionInput>): NotificationDecis
     summariesEnabled: true,
     completedAt: [],
     openSessionStartedAt: null,
-    activatedAt: sp("2026-09-01"),
     sentPushes: [],
     ...overrides,
 });
@@ -76,23 +74,6 @@ describe("habitualHour", () => {
     });
 });
 
-describe("reminderAfterDays", () => {
-    it("fica dois dias além do intervalo habitual", () => {
-        expect(reminderAfterDays(3.5)).toBe(4);
-        expect(reminderAfterDays(3)).toBe(4);
-        expect(reminderAfterDays(2)).toBe(6);
-    });
-
-    it("respeita os limites de 3 e 7 dias", () => {
-        expect(reminderAfterDays(7)).toBe(3);
-        expect(reminderAfterDays(0.5)).toBe(7);
-    });
-
-    it("usa 3 dias sem cadência conhecida", () => {
-        expect(reminderAfterDays(null)).toBe(3);
-    });
-});
-
 describe("decideNotification: lembrete", () => {
     it("não envia fora da hora escolhida", () => {
         const decision = decideNotification(input({
@@ -103,39 +84,32 @@ describe("decideNotification: lembrete", () => {
         expect(decision).toBeNull();
     });
 
-    it("dispara no terceiro dia com menos de 4 sessões, e não antes", () => {
-        expect(decideNotification(input({ completedAt: [sp("2026-11-02")] }))).toBeNull();
-        expect(decideNotification(input({ completedAt: [sp("2026-11-01")] }))).toEqual({
-            kind: "REMINDER",
-            periodKey: "2026-11-04",
-        });
+    it("envia todo dia de segunda a sexta, inclusive um dia depois de um treino", () => {
+        // 02/11/2026 é segunda-feira.
+        for (const date of ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06"]) {
+            expect(decideNotification(input({ now: sp(date), completedAt: [sp("2026-11-01")] }))).toEqual({
+                kind: "REMINDER",
+                periodKey: date,
+            });
+        }
     });
 
-    it("respeita a cadência de quem treina duas vezes por semana", () => {
-        // 2x por semana: dispara só em 6 dias sem treinar.
-        const completedAt = [sp("2026-10-10"), sp("2026-10-15"), sp("2026-10-19"), sp("2026-10-22"), sp("2026-10-26"), sp("2026-10-31")];
+    it("não envia lembrete no sábado nem no domingo", () => {
+        const completedAt = [sp("2026-10-20")];
 
-        expect(decideNotification(input({ now: sp("2026-11-05"), completedAt }))).toBeNull();
-        expect(decideNotification(input({ now: sp("2026-11-06"), completedAt }))).toEqual({
-            kind: "REMINDER",
-            periodKey: "2026-11-06",
-        });
+        expect(decideNotification(input({ now: sp("2026-11-07"), completedAt }))).toBeNull();
+        expect(decideNotification(input({ now: sp("2026-11-08"), completedAt }))).toBeNull();
     });
 
-    it("conta a partir da ativação para quem nunca treinou", () => {
-        const activatedAt = sp("2026-11-02");
+    it("usa o dia da semana do usuário, não o de UTC", () => {
+        // Sexta às 22h em São Paulo já é sábado em UTC.
+        const now = sp("2026-11-06", 22);
 
-        expect(decideNotification(input({ activatedAt }))).toBeNull();
-        expect(decideNotification(input({ now: sp("2026-11-05"), activatedAt }))?.kind).toBe("REMINDER");
+        expect(decideNotification(input({ now, reminderHour: 22 }))?.kind).toBe("REMINDER");
     });
 
-    it("não lembra no dia em que a pessoa reativou, por mais antigo que seja o treino", () => {
-        const decision = decideNotification(input({
-            completedAt: [sp("2026-06-01")],
-            activatedAt: sp("2026-11-04", 10),
-        }));
-
-        expect(decision).toBeNull();
+    it("lembra quem nunca treinou", () => {
+        expect(decideNotification(input({}))?.kind).toBe("REMINDER");
     });
 
     it("não envia se a pessoa já treinou hoje", () => {
@@ -151,38 +125,12 @@ describe("decideNotification: lembrete", () => {
         expect(decideNotification(input({ completedAt, openSessionStartedAt: sp("2026-10-30", 15) }))?.kind).toBe("REMINDER");
     });
 
-    it("espaça os lembretes e para depois do terceiro", () => {
-        const completedAt = [sp("2026-10-20")];
-        const reminder = (date: string) => ({ kind: "REMINDER" as const, createdAt: sp(date) });
-
-        const first = reminder("2026-10-23");
-        const second = reminder("2026-10-26");
-        const third = reminder("2026-11-02");
-
-        // 2º: 3 dias depois do 1º.
-        expect(decideNotification(input({ now: sp("2026-10-25"), summariesEnabled: false, completedAt, sentPushes: [first] }))).toBeNull();
-        expect(decideNotification(input({ now: sp("2026-10-26"), completedAt, sentPushes: [first] }))?.kind).toBe("REMINDER");
-
-        // 3º: 7 dias depois do 2º.
-        expect(decideNotification(input({ now: sp("2026-11-01"), summariesEnabled: false, completedAt, sentPushes: [first, second] }))).toBeNull();
-        expect(decideNotification(input({ now: sp("2026-11-02"), completedAt, sentPushes: [first, second] }))?.kind).toBe("REMINDER");
-
-        // Depois do 3º, silêncio.
-        expect(decideNotification(input({ now: sp("2026-11-25"), completedAt, sentPushes: [first, second, third] }))).toBeNull();
-    });
-
-    it("recomeça a contagem de lembretes depois de um treino", () => {
-        const sentPushes = ["2026-10-01", "2026-10-04", "2026-10-11"].map((date) => ({
-            kind: "REMINDER" as const,
+    it("não para depois de vários lembretes sem resposta", () => {
+        const sentPushes = ["2026-10-28", "2026-10-29", "2026-10-30", "2026-11-02", "2026-11-03"].map((date) => ({
             createdAt: sp(date),
         }));
 
-        const decision = decideNotification(input({
-            completedAt: [sp("2026-09-20"), sp("2026-11-01")],
-            sentPushes,
-        }));
-
-        expect(decision?.kind).toBe("REMINDER");
+        expect(decideNotification(input({ completedAt: [sp("2026-10-01")], sentPushes }))?.kind).toBe("REMINDER");
     });
 
     it("respeita lembretes desligados", () => {
@@ -201,13 +149,24 @@ describe("decideNotification: resumos e limite diário", () => {
         expect(decision).toEqual({ kind: "WEEKLY_SUMMARY", periodKey: "2026-W45" });
     });
 
-    it("não envia resumo sem treino no período, e cai na regra do lembrete", () => {
+    it("não envia nada no domingo sem treino na semana", () => {
         const decision = decideNotification(input({
             now: sp("2026-11-08"),
             completedAt: [sp("2026-10-20")],
         }));
 
-        expect(decision?.kind).toBe("REMINDER");
+        expect(decision).toBeNull();
+    });
+
+    it("no dia 1º em dia útil, o mensal ocupa o lugar do lembrete; sem treino, vale o lembrete", () => {
+        // 01/12/2026 é terça-feira.
+        const now = sp("2026-12-01");
+
+        expect(decideNotification(input({ now, completedAt: [sp("2026-11-20")] }))).toEqual({
+            kind: "MONTHLY_SUMMARY",
+            periodKey: "2026-11",
+        });
+        expect(decideNotification(input({ now, completedAt: [sp("2026-10-20")] }))?.kind).toBe("REMINDER");
     });
 
     it("dá prioridade ao mensal quando coincide com o semanal", () => {
@@ -223,7 +182,7 @@ describe("decideNotification: resumos e limite diário", () => {
         const decision = decideNotification(input({
             now: sp("2026-11-08", 18),
             completedAt: [sp("2026-11-03")],
-            sentPushes: [{ kind: "REMINDER", createdAt: sp("2026-11-08", 7) }],
+            sentPushes: [{ createdAt: sp("2026-11-08", 7) }],
         }));
 
         expect(decision).toBeNull();

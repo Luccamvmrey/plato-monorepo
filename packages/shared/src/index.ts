@@ -70,7 +70,6 @@ export {
     MAX_REMINDER_HOUR,
     DEFAULT_REMINDER_HOUR,
     habitualHour,
-    reminderAfterDays,
     decideNotification,
     isSunday,
     weeklyPeriod,
