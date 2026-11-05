@@ -79,7 +79,7 @@ export const PRIVACY: LegalDocument = {
         {
             heading: "Com quem compartilhamos",
             paragraphs: [
-                "Apenas com fornecedores necessários para operar o Plato: Supabase (banco de dados), Vultr (servidor) e Resend (envio de e-mails). Alguns deles podem tratar dados fora do Brasil.",
+                "Apenas com fornecedores necessários para operar o Plato: Supabase (banco de dados), Vultr (servidor), Resend (envio de e-mails) e os serviços de notificação da Apple, do Google e da Mozilla, conforme o seu aparelho. Alguns deles podem tratar dados fora do Brasil.",
                 "Se você criar um link de compartilhamento, o conteúdo descrito na seção abaixo fica acessível a quem tiver o link.",
             ],
         },
@@ -89,6 +89,14 @@ export const PRIVACY: LegalDocument = {
                 "Criar um link é uma escolha sua. Qualquer pessoa com o link, mesmo sem conta, vê o nome e a descrição do treino ou programa, os exercícios, as séries, as repetições e as observações. Seu nome e seu e-mail não aparecem. Evite colocar informações pessoais nesses campos.",
                 "O link mostra o conteúdo do momento em que foi criado. Você pode desativá-lo em Perfil > Configurações, e ele também deixa de funcionar quando a conta é apagada. Quem já adicionou o treino ou programa fica com a própria cópia, mesmo depois disso.",
                 "Contamos quantas vezes cada link foi aberto e adicionado, e registramos na conta nova o link que levou ao cadastro, para medir o uso do recurso.",
+            ],
+        },
+        {
+            heading: "Notificações",
+            paragraphs: [
+                "Notificações e o resumo por e-mail são opcionais e só começam depois que você os ativa. Você pode desativá-los em Perfil > Configurações > Notificações, e cada e-mail traz um link para parar de receber.",
+                "Para isso guardamos o endereço de envio do seu aparelho, as chaves desse envio, seu fuso horário, o horário escolhido e um registro de quais notificações foram enviadas e abertas. Esse registro serve para não repetir envios e para medir se elas são úteis.",
+                "O texto pode citar o nome do seu próximo treino e os totais do período, como quantidade de treinos, volume e recordes. Ele segue criptografado até o aparelho, mas pode aparecer na tela bloqueada, conforme os ajustes do aparelho.",
             ],
         },
         {
