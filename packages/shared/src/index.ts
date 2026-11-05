@@ -18,6 +18,15 @@ export type {
     RotationItem,
 } from "./exercise-groups";
 
+export type {
+    NotificationKindValue,
+    NotificationDecision,
+    NotificationDecisionInput,
+    NotificationMessage,
+    PeriodSummary,
+    SummarySession,
+} from "./notifications";
+
 export type { BodyWeightEntry } from "./body-weight";
 export type { LoadType, RepUnit, LoadContext } from "./effective-load";
 
@@ -47,6 +56,29 @@ export {
     isSafeReturnPath,
     shareTokenFromReturnPath,
 } from "./share-links";
+export {
+    isValidTimezone,
+    toLocalDateStr,
+    toLocalHour,
+    addDaysToDateStr,
+    daysBetweenDateStrs,
+    mondayOfDateStr,
+    isoWeekKey,
+} from "./dates";
+export {
+    MIN_REMINDER_HOUR,
+    MAX_REMINDER_HOUR,
+    DEFAULT_REMINDER_HOUR,
+    habitualHour,
+    reminderAfterDays,
+    decideNotification,
+    isSunday,
+    weeklyPeriod,
+    monthlyPeriod,
+    summarizePeriod,
+    reminderMessage,
+    summaryMessage,
+} from "./notifications";
 export { resolveBodyWeightAt } from "./body-weight";
 export { calculateE1RM } from "./e1rm";
 export {

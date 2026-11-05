@@ -117,9 +117,10 @@ const MIN_SESSIONS_FOR_CADENCE = 4;
  */
 export const estimateSessionsPerWeek = (
     completedAt: readonly (Date | string)[],
-    windowWeeks = 8
+    windowWeeks = 8,
+    now = Date.now()
 ): number | null => {
-    const cutoff = Date.now() - windowWeeks * MS_PER_WEEK;
+    const cutoff = now - windowWeeks * MS_PER_WEEK;
 
     const times = completedAt
         .map((date) => new Date(date).getTime())
