@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { NotificationService } from "../notification.service.ts";
 import { getDeviceSubscription, getPushSupport, subscribeDevice } from "../utils/push-support.ts";
 
 const DEVICE_QUERY_KEY = ["push-device"];
+
+const isDeviceLost = (error: unknown) => isAxiosError(error) && error.response?.status === 409;
 
 /** A inscrição deste aparelho. Mora no navegador, então cada aparelho responde por si. */
 export const usePushDevice = (publicKey: string | null | undefined, onChanged: () => void) => {
@@ -53,6 +56,16 @@ export const usePushDevice = (publicKey: string | null | undefined, onChanged: (
 
     const testMutation = useMutation({ mutationFn: NotificationService.sendTest });
 
+    const errorMessage = enableMutation.isError
+        ? "Não foi possível ativar. Tente novamente."
+        : disableMutation.isError
+            ? "Não foi possível desativar. Tente novamente."
+            : testMutation.isError
+                ? isDeviceLost(testMutation.error)
+                    ? "O serviço de push recusou o envio. Logo depois de ativar isso é normal: tente de novo em instantes."
+                    : "Não foi possível enviar o teste. Tente novamente."
+                : null;
+
     return {
         support,
         isSubscribed: !!deviceQuery.data,
@@ -64,6 +77,7 @@ export const usePushDevice = (publicKey: string | null | undefined, onChanged: (
         isDisabling: disableMutation.isPending,
         isTesting: testMutation.isPending,
         testSent: testMutation.isSuccess,
-        hasError: enableMutation.isError || disableMutation.isError || testMutation.isError,
+        hasError: errorMessage !== null,
+        errorMessage,
     };
 };

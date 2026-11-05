@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import prisma from "@plato/database";
 import { habitualHour, isValidTimezone } from "@plato/shared";
 import { AppError } from "../../shared/error/AppError";
+import { isAdminUser } from "../../shared/middleware/authMiddleware";
 import { getVapidPublicKey, isAllowedPushEndpoint, sendPushToUser } from "../../shared/push/push";
 import { ensureOwnership } from "../../shared/utils/auth";
 import { SubscribeInput, UpdateSettingsInput } from "./notification.schema";
@@ -51,6 +52,7 @@ const getSettings = async (userId: number, requestedTimezone?: string) => {
 
     return {
         publicKey: getVapidPublicKey(),
+        canDebug: isAdminUser(userId),
         remindersEnabled: preference?.remindersEnabled ?? true,
         summariesEnabled: preference?.summariesEnabled ?? true,
         emailSummaryEnabled: preference?.emailSummaryEnabled ?? false,

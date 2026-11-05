@@ -53,11 +53,13 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     next();
 };
 
-/** Usar depois de `authenticate`. Sem `ADMIN_USER_IDS` definido, ninguém é admin. */
-export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
-    const adminIds = (process.env.ADMIN_USER_IDS ?? "").split(",").map((id) => id.trim());
+/** Sem `ADMIN_USER_IDS` definido, ninguém é admin. */
+export const isAdminUser = (userId: number): boolean =>
+    (process.env.ADMIN_USER_IDS ?? "").split(",").map((id) => id.trim()).includes(String(userId));
 
-    if (!req.user || !adminIds.includes(String(req.user.id))) {
+/** Usar depois de `authenticate`. */
+export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !isAdminUser(req.user.id)) {
         return res.status(403).json({ error: "Admin access required" });
     }
 
