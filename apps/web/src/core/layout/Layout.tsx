@@ -3,11 +3,13 @@ import NavBar from "@/core/components/NavBar.tsx";
 import { useKeepFocusedFieldVisible } from "@/core/hooks/useKeepFocusedFieldVisible.ts";
 import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
 import { cn } from "@/lib/utils.ts";
+import { useNotificationLifecycle } from "@/features/notifications/hooks/useNotificationLifecycle.ts";
 import { ActiveSessionBanner } from "@/features/workouts/components/active-workout/components/ActiveSessionBanner.tsx";
 
 const Layout = ({ children }: PropsWithChildren) => {
     const isKeyboardOpen = useKeyboardOpen();
     useKeepFocusedFieldVisible();
+    useNotificationLifecycle();
 
     return (
         <main className={cn("min-h-dvh flex flex-1 flex-col", !isKeyboardOpen && "pb-navbar")}>

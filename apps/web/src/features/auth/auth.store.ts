@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { User } from "./auth.types";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { releaseDeviceOnLogout } from "@/features/notifications/utils/push-support.ts";
 
 interface AuthState {
     token: string | null;
@@ -22,6 +23,11 @@ export const useAuthStore = create<AuthState>()(
             setToken: (token) => set({ token }),
 
             logout: () => {
+                const { token } = get();
+
+                // Nada pode travar a saída da conta: sem rede, o próximo envio recebe 410.
+                if (token) void releaseDeviceOnLogout(token).catch(() => undefined);
+
                 set({ token: null, user: null });
             },
 

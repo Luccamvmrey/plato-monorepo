@@ -1,5 +1,5 @@
 import prisma from "@plato/database";
-import { calculateTotalVolume, setVolume } from "@plato/shared";
+import { addDaysToDateStr, calculateTotalVolume, mondayOfDateStr, setVolume, toLocalDateStr } from "@plato/shared";
 import { UpdateUserInput } from "../auth/auth.schema";
 
 const getById = async (id: number) => {
@@ -152,7 +152,11 @@ const getExportData = async (userId: number) => {
             },
             sharedPlan: {
                 include: { workouts: { include: { exercises: { include: { exercise: true } } } } }
-            }
+            },
+            // Sem as chaves da inscrição: são segredos do aparelho, não dados sobre a pessoa.
+            pushSubscription: { select: { endpoint: true, createdAt: true } },
+            notificationPreference: { omit: { unsubscribeToken: true } },
+            notificationLog: true,
         }
     });
 }
@@ -174,15 +178,15 @@ const getStreak = async (userId: number, timezone: string = 'UTC') => {
     });
 
     const trainedDates = new Set<string>(
-        sessions.map(s => _toDateStrTZ(s.completedAt!, timezone))
+        sessions.map(s => toLocalDateStr(s.completedAt!, timezone))
     );
 
     const now = new Date();
-    const today = _toDateStrTZ(now, timezone);
-    const weekMondayStr = _getMondayStrOf(now, timezone);
+    const today = toLocalDateStr(now, timezone);
+    const weekMondayStr = mondayOfDateStr(today);
 
     const weekDays = Array.from({ length: 7 }, (_, i) => {
-        const dateStr = _addDays(weekMondayStr, i);
+        const dateStr = addDaysToDateStr(weekMondayStr, i);
         const status = trainedDates.has(dateStr)
             ? 'trained'
             : dateStr < today
@@ -201,7 +205,7 @@ const getStreak = async (userId: number, timezone: string = 'UTC') => {
     let weekStartStr = weekMondayStr;
 
     while (true) {
-        const weekSundayStr = _addDays(weekStartStr, 6);
+        const weekSundayStr = addDaysToDateStr(weekStartStr, 6);
         const upperBoundStr = isFirstWeek ? today : weekSundayStr;
 
         const days = _getDaysBetweenStr(weekStartStr, upperBoundStr);
@@ -221,32 +225,10 @@ const getStreak = async (userId: number, timezone: string = 'UTC') => {
             isFirstWeek = false;
         }
 
-        weekStartStr = _addDays(weekStartStr, -7);
+        weekStartStr = addDaysToDateStr(weekStartStr, -7);
     }
 
     return { currentStreak: streak, restDaysUsedThisWeek, weekDays };
-};
-
-const _toDateStrTZ = (date: Date, tz: string): string =>
-    new Intl.DateTimeFormat('en-CA', {
-        timeZone: tz,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).format(date);
-
-const _addDays = (dateStr: string, days: number): string => {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const d = new Date(Date.UTC(year, month - 1, day + days));
-    return d.toISOString().split('T')[0];
-};
-
-const _getMondayStrOf = (date: Date, tz: string): string => {
-    const localDateStr = _toDateStrTZ(date, tz);
-    const [year, month, day] = localDateStr.split('-').map(Number);
-    const d = new Date(Date.UTC(year, month - 1, day));
-    const dow = d.getUTCDay();
-    return _addDays(localDateStr, dow === 0 ? -6 : 1 - dow);
 };
 
 const _getDaysBetweenStr = (startStr: string, endStr: string): string[] => {
@@ -254,7 +236,7 @@ const _getDaysBetweenStr = (startStr: string, endStr: string): string[] => {
     let cur = startStr;
     while (cur <= endStr) {
         days.push(cur);
-        cur = _addDays(cur, 1);
+        cur = addDaysToDateStr(cur, 1);
     }
     return days;
 };

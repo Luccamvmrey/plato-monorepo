@@ -25,3 +25,9 @@ export const shareReadLimiter = createLimiter(FIFTEEN_MINUTES, 120);
 export const createShareLimiter = createLimiter(ONE_HOUR, 30);
 
 export const addShareLimiter = createLimiter(ONE_HOUR, 30);
+
+/** Cada pedido envia uma notificação de verdade para os aparelhos da pessoa. */
+export const testPushLimiter = createLimiter(ONE_HOUR, 10);
+
+/** Rota pública, chamada a partir do link do e-mail. */
+export const unsubscribeLimiter = createLimiter(FIFTEEN_MINUTES, 20);

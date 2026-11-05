@@ -7,6 +7,7 @@ export const path = {
     PRIVACY: "/privacy",
     SHARED: "/s",
     SUGGESTED: "/suggested",
+    EMAIL_UNSUBSCRIBE: "/email/unsubscribe",
     WORKOUTS: "/workouts",
     WORKOUT_EDITOR: "/workout-editor",
     PROGRAMS: "/programs",

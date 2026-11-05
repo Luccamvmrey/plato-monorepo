@@ -3,6 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { WorkoutSummarySkeleton } from "../components/workout-summary/WorkoutSummarySkeleton";
 import { path } from "@/core/constants/path.ts";
+import { NotificationPromptCard } from "@/features/notifications/components/NotificationPromptCard.tsx";
 import { useWorkoutSummaryLogic } from "@/features/workouts/hooks/useWorkoutSummaryLogic.ts";
 import { useStreakData } from "@/features/user/hooks/useStreakData";
 import { formatDateShort } from "@/core/utils/formatters";
@@ -81,6 +82,7 @@ const WorkoutSummaryPage = () => {
 
             <SummaryPRBanner newPRs={stats.newPRs} />
             <SummaryMetricsGrid lead={lead} metrics={metrics} />
+            <NotificationPromptCard completedAt={workoutSession.completedAt} />
             <SummaryExerciseList exercises={stats.completedExercises} unexecuted={stats.unexecuted} />
             <SummaryVolumeChart volumeByGroup={stats.volumeByGroup} />
 

@@ -26,6 +26,7 @@ import ErrorBoundary from "@/core/components/ErrorBoundary";
 import NotFoundPage from "@/core/pages/NotFoundPage.tsx";
 import SharedPlanPage from "@/features/sharing/pages/SharedPlanPage.tsx";
 import SuggestedProgramsPage from "@/features/sharing/pages/SuggestedProgramsPage.tsx";
+import EmailUnsubscribePage from "@/features/notifications/pages/EmailUnsubscribePage.tsx";
 
 export function App() {
     useCheckSession();
@@ -45,6 +46,9 @@ export function App() {
                     </Route>
                     <Route path={path.SUGGESTED}>
                         <ErrorBoundary><SuggestedProgramsPage /></ErrorBoundary>
+                    </Route>
+                    <Route path={`${path.EMAIL_UNSUBSCRIBE}/:token`}>
+                        <ErrorBoundary><EmailUnsubscribePage /></ErrorBoundary>
                     </Route>
                     <Route path={`${path.WORKOUT_COMPLETE}/:id`} component={WorkoutCompletePage}/>
 

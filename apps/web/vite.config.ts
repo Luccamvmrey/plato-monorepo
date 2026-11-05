@@ -1,8 +1,17 @@
+import { createHash } from "crypto"
+import { readFileSync } from "fs"
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
+
+// Na URL do importScripts, para o `sw.js` mudar sempre que o handler de push mudar. Sem isso
+// o navegador não veria a atualização, porque compara só o `sw.js`.
+const pushHandlerVersion = createHash("sha256")
+    .update(readFileSync(path.resolve(__dirname, "public/push-handler.js")))
+    .digest("hex")
+    .slice(0, 8)
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -34,6 +43,7 @@ export default defineConfig({
                 ],
             },
             workbox: {
+                importScripts: [`/push-handler.js?v=${pushHandlerVersion}`],
                 navigateFallback: "/index.html",
                 // Rotas servidas pelo API/MCP via Nginx: a navegação tem que chegar ao servidor, não à SPA.
                 navigateFallbackDenylist: [/^\/oauth\//, /^\/\.well-known\//, /^\/mcp(\/|$)/, /^\/api\//],
