@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decideOpenSession, normalizeLastSetAt, resolveCompletedAt } from "./session-closing";
+import { decideOpenSession, normalizeLastSetAt, resolveCompletedAt, shouldSendDraft } from "./session-closing";
 
 const HOUR = 3_600_000;
 const NOW = Date.parse("2026-11-07T20:00:00Z");
@@ -25,6 +25,21 @@ describe("decideOpenSession", () => {
     it("descarta sessão sem séries só depois de 24h", () => {
         expect(decideOpenSession({ startedAt: hoursAgo(23), lastSetAt: null, draftSetCount: 0, now: NOW })).toBe("KEEP");
         expect(decideOpenSession({ startedAt: hoursAgo(24), lastSetAt: null, draftSetCount: 0, now: NOW })).toBe("DISCARD");
+    });
+});
+
+describe("shouldSendDraft", () => {
+    it("sempre envia quando o aparelho tem séries, mesmo em sessão antiga", () => {
+        expect(shouldSendDraft(1, hoursAgo(500), NOW)).toBe(true);
+    });
+
+    it("envia rascunho vazio em sessão recente", () => {
+        expect(shouldSendDraft(0, hoursAgo(1), NOW)).toBe(true);
+    });
+
+    it("não envia rascunho vazio em sessão antiga: as séries podem estar em outro aparelho", () => {
+        expect(shouldSendDraft(0, hoursAgo(3), NOW)).toBe(false);
+        expect(shouldSendDraft(0, hoursAgo(500), NOW)).toBe(false);
     });
 });
 

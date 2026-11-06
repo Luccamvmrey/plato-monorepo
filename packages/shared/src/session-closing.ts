@@ -22,6 +22,14 @@ export const decideOpenSession = ({ startedAt, lastSetAt, draftSetCount, now }: 
     return now - (lastSetAt ?? startedAt) >= AUTO_CLOSE_AFTER_MS ? "CLOSE" : "KEEP";
 };
 
+/**
+ * Rascunho vazio marca a sessão como acompanhada, o que permite descartá-la depois. Em sessão
+ * antiga isso é perigoso: se este aparelho não tem séries, elas podem estar em outro. No iPhone,
+ * por exemplo, o Safari e o app instalado não dividem armazenamento.
+ */
+export const shouldSendDraft = (setCount: number, startedAt: number, now: number): boolean =>
+    setCount > 0 || now - startedAt < AUTO_CLOSE_AFTER_MS;
+
 /** O horário vem do aparelho, que pode estar errado: fica sempre entre o início do treino e agora. */
 export const normalizeLastSetAt = (lastSetAt: number | null | undefined, startedAt: number, now: number): number | null =>
     lastSetAt === null || lastSetAt === undefined ? null : Math.min(now, Math.max(startedAt, lastSetAt));
