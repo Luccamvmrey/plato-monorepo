@@ -62,6 +62,7 @@ export {
     decideOpenSession,
     normalizeLastSetAt,
     resolveCompletedAt,
+    shouldSendDraft,
 } from "./session-closing";
 export type { OpenSessionAction } from "./session-closing";
 export { buildAdminMetrics, filterAdminUsers } from "./admin-metrics";

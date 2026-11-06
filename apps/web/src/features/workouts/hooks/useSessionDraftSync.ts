@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useIsAdmin } from "@/features/admin/hooks/useIsAdmin.ts";
+import { shouldSendDraft } from "@plato/shared";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store.ts";
 import { WorkoutSessionService } from "../services/workout-session/workout-session.service.ts";
 
@@ -13,23 +13,23 @@ import { WorkoutSessionService } from "../services/workout-session/workout-sessi
  */
 export const useSessionDraftSync = () => {
     const sessionId = useActiveWorkoutStore((state) => state.activeSession?.id);
+    const startedAt = useActiveWorkoutStore((state) => state.activeSession?.startedAt);
     const pendingSets = useActiveWorkoutStore((state) => state.activeSession?.pendingSets);
     const lastSetAt = useActiveWorkoutStore((state) => state.lastSetAt);
-
-    const canSync = useIsAdmin(sessionId !== undefined);
 
     const lastSent = useRef<string | null>(null);
     // Em fila: um envio antigo não pode chegar depois de um novo e apagar a última série.
     const queue = useRef<Promise<unknown>>(Promise.resolve());
 
     useEffect(() => {
-        if (!canSync || sessionId === undefined) return;
+        if (sessionId === undefined || startedAt === undefined) return;
 
         const sets = pendingSets ?? [];
         const signature = JSON.stringify([sessionId, sets]);
 
         const sync = () => {
             if (document.visibilityState !== "visible" || lastSent.current === signature) return;
+            if (!shouldSendDraft(sets.length, new Date(startedAt).getTime(), Date.now())) return;
 
             queue.current = queue.current
                 .then(async () => {
@@ -50,5 +50,5 @@ export const useSessionDraftSync = () => {
             window.removeEventListener("online", sync);
             document.removeEventListener("visibilitychange", sync);
         };
-    }, [canSync, sessionId, pendingSets, lastSetAt]);
+    }, [sessionId, startedAt, pendingSets, lastSetAt]);
 };

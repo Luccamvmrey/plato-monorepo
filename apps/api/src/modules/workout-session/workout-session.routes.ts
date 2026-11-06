@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, requireAdmin } from "../../shared/middleware/authMiddleware";
+import { authenticate } from "../../shared/middleware/authMiddleware";
 import * as workoutSessionController from "./workout-session.controller";
 import * as sessionSetController from "./session-set/session-set.controller"
 import * as sessionExerciseController from "./session-exercise/session-exercise.controller"
@@ -26,8 +26,7 @@ router.get("/:id/exercise-history", workoutSessionController.getSessionExerciseH
 router.get("/:id", workoutSessionController.listById);
 router.post("/", validateBody(createWorkoutSessionSchema), workoutSessionController.create);
 router.post("/:id/finish", validateBody(finishSessionSchema), workoutSessionController.finishSession);
-// Só admin por enquanto: sem rascunho o fechamento automático não toca na sessão.
-router.put("/:id/draft", requireAdmin, validateBody(saveDraftSchema), workoutSessionController.saveDraft);
+router.put("/:id/draft", validateBody(saveDraftSchema), workoutSessionController.saveDraft);
 router.delete("/:id", workoutSessionController.deleteSession);
 
 // --- Session Set Routes ---
