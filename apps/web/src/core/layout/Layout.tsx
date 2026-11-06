@@ -5,6 +5,7 @@ import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
 import { cn } from "@/lib/utils.ts";
 import { useNotificationLifecycle } from "@/features/notifications/hooks/useNotificationLifecycle.ts";
 import { useRestAlert } from "@/features/notifications/hooks/useRestAlert.ts";
+import { useSessionDraftSync } from "@/features/workouts/hooks/useSessionDraftSync.ts";
 import { ActiveSessionBanner } from "@/features/workouts/components/active-workout/components/ActiveSessionBanner.tsx";
 
 const Layout = ({ children }: PropsWithChildren) => {
@@ -12,6 +13,7 @@ const Layout = ({ children }: PropsWithChildren) => {
     useKeepFocusedFieldVisible();
     useNotificationLifecycle();
     useRestAlert();
+    useSessionDraftSync();
 
     return (
         <main className={cn("min-h-dvh flex flex-1 flex-col", !isKeyboardOpen && "pb-navbar")}>

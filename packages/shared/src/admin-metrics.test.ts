@@ -47,6 +47,7 @@ describe("buildAdminMetrics: resumo", () => {
             active28d: 0,
             sessionsThisWeek: 0,
             completionRate28d: null,
+            autoCompleted28d: 0,
             usersWithOpenSession: 0,
         });
     });
@@ -65,6 +66,7 @@ describe("buildAdminMetrics: semanas", () => {
             signups: 0,
             started: 0,
             startedAndCompleted: 0,
+            autoCompleted: 0,
             completionRate: null,
         });
     });
@@ -213,6 +215,18 @@ describe("buildAdminMetrics: taxa de conclusão", () => {
 
         expect(weekly[24]).toMatchObject({ started: 1, startedAndCompleted: 1, completionRate: 100, sessions: 0 });
         expect(weekly[25]).toMatchObject({ started: 0, startedAndCompleted: 0, completionRate: null, sessions: 1 });
+    });
+
+    it("conta como concluído o treino que o app fechou, mas separa esse número", () => {
+        const { weekly, summary } = build({
+            completedSessions: [
+                { userId: 1, startedAt: daysAgo(1), completedAt: daysAgo(1) },
+                { userId: 2, startedAt: daysAgo(2), completedAt: daysAgo(2), autoCompleted: true },
+            ],
+        });
+
+        expect(weekly[25]).toMatchObject({ startedAndCompleted: 2, autoCompleted: 1, completionRate: 100 });
+        expect(summary.autoCompleted28d).toBe(1);
     });
 
     it("não inventa 0% quando ninguém iniciou treino", () => {

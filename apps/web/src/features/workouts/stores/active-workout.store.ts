@@ -26,6 +26,8 @@ interface ActiveWorkoutState {
     restEndsAt: number | null;
     /** Duração preferida, em segundos. Ajustar o descanso atual também muda esta. */
     restDuration: number;
+    /** Quando a última série foi registrada. É o horário que vale para quem esquece de concluir. */
+    lastSetAt: number | null;
 }
 
 interface ActiveWorkoutActions {
@@ -58,6 +60,7 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
             finalization: IDLE_FINALIZATION,
             restEndsAt: null,
             restDuration: DEFAULT_REST_SECONDS,
+            lastSetAt: null,
 
             setActiveSession: (session, lastSession = null) =>
                 set((state) => ({
@@ -71,9 +74,10 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
                           }
                         : null,
                     lastSession,
+                    lastSetAt: session && session.id === state.activeSession?.id ? state.lastSetAt : null,
                 })),
 
-            clearState: () => set({ activeSession: null, lastSession: null, restEndsAt: null }),
+            clearState: () => set({ activeSession: null, lastSession: null, restEndsAt: null, lastSetAt: null }),
 
             // Uma carga por exercício, no modo simplificado: vale para todas as séries.
             setExerciseWeight: (exerciseId, weight) =>
@@ -127,6 +131,7 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
 
             addPendingSet: (payload) =>
                 set((state) => ({
+                    lastSetAt: Date.now(),
                     activeSession: state.activeSession
                         ? {
                             ...state.activeSession,
@@ -177,6 +182,7 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
                 lastSession: state.lastSession,
                 restEndsAt: state.restEndsAt,
                 restDuration: state.restDuration,
+                lastSetAt: state.lastSetAt,
             }),
         }
     )

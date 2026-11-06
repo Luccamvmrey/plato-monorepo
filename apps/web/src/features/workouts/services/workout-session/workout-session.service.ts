@@ -1,5 +1,5 @@
 import api from "@/core/api";
-import type { ExerciseHistoryMap, WorkoutSession } from "@/features/workouts/workout.types.ts";
+import type { ExerciseHistoryMap, FinishSessionPayload, WorkoutSession } from "@/features/workouts/workout.types.ts";
 
 export interface WorkoutSessionPayload {
     workoutId: number;
@@ -57,6 +57,10 @@ export const WorkoutSessionService = {
     finish: async (id: number) => {
         const { data } = await api.post<WorkoutSession>(`/sessions/${id}/finish`);
         return data;
+    },
+
+    saveDraft: async (id: number, payload: FinishSessionPayload) => {
+        await api.put(`/sessions/${id}/draft`, payload);
     },
 
     delete: async (id: number) => {

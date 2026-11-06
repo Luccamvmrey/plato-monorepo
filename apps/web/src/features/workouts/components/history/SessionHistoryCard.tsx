@@ -55,6 +55,7 @@ export const SessionHistoryCard = ({ session, sessionPrMap, navigate }: SessionH
                             {completedAt ? formatDateShort(completedAt) : "Em andamento"}
                             {duration > 0 && ` · ${formatDurationExtensive(duration)}`}
                             {isArchived && " · arquivado"}
+                            {session.autoCompleted && " · salvo automaticamente"}
                         </p>
                     </div>
                     {prCount > 0 && (

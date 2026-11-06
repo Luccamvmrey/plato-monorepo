@@ -51,12 +51,16 @@ const AdminDashboardPage = () => {
                             {
                                 label: "Treinos concluídos em 28 dias",
                                 value: metrics.summary.completionRate28d === null ? "—" : `${metrics.summary.completionRate28d}%`,
+                                detail: metrics.summary.autoCompleted28d > 0
+                                    ? `${metrics.summary.autoCompleted28d} fechados pelo app`
+                                    : undefined,
                             },
                             { label: "Pessoas com treino em aberto", value: metrics.summary.usersWithOpenSession },
-                        ].map(({ label, value }) => (
+                        ].map(({ label, value, detail }: { label: string; value: number | string; detail?: string }) => (
                             <div key={label} className="bg-card border border-border rounded-xl p-4">
                                 <p className="text-[32px] font-semibold tracking-[-0.04em] leading-none tabular-nums">{value}</p>
                                 <p className="text-[13px] text-muted-foreground mt-2">{label}</p>
+                                {detail && <p className="text-[13px] text-muted-foreground mt-0.5">{detail}</p>}
                             </div>
                         ))}
                     </section>

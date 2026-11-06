@@ -19,6 +19,7 @@ import adminRoutes from "./modules/admin/admin.routes";
 import * as shareController from "./modules/share/share.controller";
 import { shareReadLimiter } from "./shared/middleware/rateLimitMiddleware";
 import { startNotificationScheduler } from "./jobs/notification-scheduler";
+import { startSessionAutoClose } from "./jobs/session-auto-close";
 
 // --- Server Setup ---
 const app = express();
@@ -88,4 +89,5 @@ app.use(globalErrorHandler);
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     startNotificationScheduler();
+    startSessionAutoClose();
 });

@@ -124,6 +124,8 @@ export interface SessionSetPayload {
 
 export interface FinishSessionPayload {
   sets: SessionSetPayload[]
+  /** Horário da última série no relógio do aparelho. Null em sessão anterior a este campo. */
+  lastSetAt?: number | null
 }
 
 /**

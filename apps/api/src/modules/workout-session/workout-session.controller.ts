@@ -60,6 +60,12 @@ const finishSession = async (req: Request, res: Response) => {
     res.json(result);
 }
 
+const saveDraft = async (req: Request, res: Response) => {
+    await workoutSessionService.saveDraft(getUserId(req), extractId(req), req.body);
+
+    res.status(204).send();
+}
+
 const listByExerciseId = async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const exerciseId = extractId(req);
@@ -120,4 +126,4 @@ const deleteSession = async (req: Request, res: Response) => {
     res.status(204).send();
 }
 
-export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, getExerciseHistory, getSessionExerciseHistory, deleteSession };
+export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, saveDraft, listByExerciseId, getExerciseHistory, getSessionExerciseHistory, deleteSession };
