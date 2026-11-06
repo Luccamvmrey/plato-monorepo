@@ -3,7 +3,7 @@ import { buildAdminMetrics } from "@plato/shared";
 
 /** Só leitura. Traz o nome para o painel, e de propósito não traz e-mail nem dado de treino. */
 const getMetrics = async () => {
-    const [users, completedSessions, copiedPlans, pushLogs] = await Promise.all([
+    const [users, completedSessions, openSessions, copiedPlans, pushLogs] = await Promise.all([
         prisma.user.findMany({
             select: {
                 id: true,
@@ -23,7 +23,11 @@ const getMetrics = async () => {
         }),
         prisma.workoutSession.findMany({
             where: { completedAt: { not: null } },
-            select: { userId: true, completedAt: true },
+            select: { userId: true, startedAt: true, completedAt: true },
+        }),
+        prisma.workoutSession.findMany({
+            where: { completedAt: null },
+            select: { userId: true, startedAt: true },
         }),
         prisma.workout.findMany({
             where: { sourcePlanId: { not: null } },
@@ -48,8 +52,10 @@ const getMetrics = async () => {
             })),
             completedSessions: completedSessions.map((session) => ({
                 userId: session.userId,
+                startedAt: session.startedAt,
                 completedAt: session.completedAt!,
             })),
+            openSessions,
             copiedPlanUserIds: copiedPlans.map((workout) => workout.userId),
             pushLogs,
         },

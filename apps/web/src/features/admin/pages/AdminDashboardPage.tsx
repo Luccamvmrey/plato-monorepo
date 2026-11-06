@@ -9,7 +9,7 @@ import { WeeklyChart } from "../components/WeeklyChart.tsx";
 import { useAdminDashboard } from "../hooks/useAdminDashboard.ts";
 
 const AdminDashboardPage = () => {
-    const { metrics, isLoading, isForbidden, hasError, retry, metric, setMetric, goBack } = useAdminDashboard();
+    const { metrics, isLoading, isForbidden, hasError, retry, goBack, chart, userList } = useAdminDashboard();
 
     // Para quem não é admin, esta tela simplesmente não existe.
     if (isForbidden) return <NotFoundPage />;
@@ -48,6 +48,11 @@ const AdminDashboardPage = () => {
                             { label: "Ativos em 28 dias", value: metrics.summary.active28d },
                             { label: "Treinos nesta semana", value: metrics.summary.sessionsThisWeek },
                             { label: "Contas criadas", value: metrics.summary.users },
+                            {
+                                label: "Treinos concluídos em 28 dias",
+                                value: metrics.summary.completionRate28d === null ? "—" : `${metrics.summary.completionRate28d}%`,
+                            },
+                            { label: "Pessoas com treino em aberto", value: metrics.summary.usersWithOpenSession },
                         ].map(({ label, value }) => (
                             <div key={label} className="bg-card border border-border rounded-xl p-4">
                                 <p className="text-[32px] font-semibold tracking-[-0.04em] leading-none tabular-nums">{value}</p>
@@ -56,8 +61,26 @@ const AdminDashboardPage = () => {
                         ))}
                     </section>
 
-                    <WeeklyChart weekly={metrics.weekly} metric={metric} onMetricChange={setMetric} />
-                    <UserActivityList users={metrics.users} />
+                    <WeeklyChart
+                        weekly={chart.data}
+                        metric={chart.metric}
+                        onMetricChange={chart.setMetric}
+                        weeks={chart.weeks}
+                        onWeeksChange={chart.setWeeks}
+                    />
+                    <UserActivityList
+                        users={userList.users}
+                        totalUsers={userList.totalUsers}
+                        status={userList.status}
+                        onStatusChange={userList.setStatus}
+                        statusCounts={userList.statusCounts}
+                        feature={userList.feature}
+                        onFeatureChange={userList.setFeature}
+                        search={userList.search}
+                        onSearchChange={userList.setSearch}
+                        hasFilters={userList.hasFilters}
+                        onClearFilters={userList.clearFilters}
+                    />
                     <FeatureUsage features={metrics.features} totalUsers={metrics.summary.users} />
                     <NotificationStats notifications={metrics.notifications} />
                 </>
