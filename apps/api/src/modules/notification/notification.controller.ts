@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as notificationService from "./notification.service";
+import * as restAlert from "./rest-alert";
 import { extractId, getUserId } from "../../shared/utils/request";
 
 const getSettings = async (req: Request, res: Response) => {
@@ -42,6 +43,20 @@ const sendTest = async (req: Request, res: Response) => {
     res.status(204).send();
 };
 
+const scheduleRestAlert = async (req: Request, res: Response) => {
+    const { endpoint, remainingMs, measureFrom } = req.body;
+
+    restAlert.scheduleRestAlert(getUserId(req), endpoint, remainingMs, measureFrom);
+
+    res.status(204).send();
+};
+
+const cancelRestAlert = async (req: Request, res: Response) => {
+    restAlert.cancelRestAlert(getUserId(req));
+
+    res.status(204).send();
+};
+
 const unsubscribeEmail = async (req: Request, res: Response) => {
     await notificationService.unsubscribeEmail(req.params.token as string);
 
@@ -56,5 +71,7 @@ export {
     dismissPrompt,
     markOpened,
     sendTest,
+    scheduleRestAlert,
+    cancelRestAlert,
     unsubscribeEmail,
 };

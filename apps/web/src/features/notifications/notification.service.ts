@@ -56,6 +56,14 @@ export const NotificationService = {
         await api.post("/notifications/test");
     },
 
+    scheduleRestAlert: async (endpoint: string, remainingMs: number, measureFrom: number) => {
+        await api.post("/notifications/rest-alert", { endpoint, remainingMs, measureFrom });
+    },
+
+    cancelRestAlert: async () => {
+        await api.delete("/notifications/rest-alert");
+    },
+
     unsubscribeEmail: async (token: string) => {
         await api.post(`/notifications/unsubscribe/${token}`);
     },

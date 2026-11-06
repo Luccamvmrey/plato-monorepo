@@ -5,6 +5,17 @@ export interface PushMessage {
     title: string;
     body: string;
     url: string;
+    /** Notificação com a mesma etiqueta substitui a anterior em vez de empilhar. */
+    tag?: string;
+    /** Instante no relógio do aparelho contra o qual o handler mede o atraso de entrega. */
+    measureFrom?: number;
+}
+
+export interface PushDelivery {
+    /** Envia só para este aparelho. Sem ele, vai para todos os aparelhos da pessoa. */
+    endpoint?: string;
+    ttlSeconds?: number;
+    urgency?: webpush.Urgency;
 }
 
 /**
@@ -75,8 +86,14 @@ const statusCodeOf = (error: unknown): number | undefined =>
  * Envia para todos os aparelhos da pessoa e devolve em quantos foi aceito. Inscrição que o
  * serviço diz não existir mais é apagada: é assim que aparelhos abandonados saem do ciclo.
  */
-export const sendPushToUser = async (userId: number, message: PushMessage): Promise<number> => {
-    const subscriptions = await prisma.pushSubscription.findMany({ where: { userId } });
+export const sendPushToUser = async (
+    userId: number,
+    message: PushMessage,
+    { endpoint, ttlSeconds = MESSAGE_TTL_SECONDS, urgency }: PushDelivery = {}
+): Promise<number> => {
+    const subscriptions = await prisma.pushSubscription.findMany({
+        where: { userId, ...(endpoint ? { endpoint } : {}) },
+    });
     const vapidDetails = getVapidDetails();
 
     const results = await Promise.allSettled(
@@ -88,7 +105,7 @@ export const sendPushToUser = async (userId: number, message: PushMessage): Prom
                         keys: { p256dh: subscription.p256dh, auth: subscription.auth },
                     },
                     JSON.stringify(message),
-                    { vapidDetails, TTL: MESSAGE_TTL_SECONDS, timeout: SEND_TIMEOUT_MS }
+                    { vapidDetails, TTL: ttlSeconds, timeout: SEND_TIMEOUT_MS, ...(urgency ? { urgency } : {}) }
                 );
             } catch (error) {
                 const statusCode = statusCodeOf(error);

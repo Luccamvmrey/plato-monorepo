@@ -1,9 +1,9 @@
 import { Router } from "express";
 import * as notificationController from "./notification.controller";
 import { authenticate, requireAdmin } from "../../shared/middleware/authMiddleware";
-import { testPushLimiter, unsubscribeLimiter } from "../../shared/middleware/rateLimitMiddleware";
+import { restAlertLimiter, testPushLimiter, unsubscribeLimiter } from "../../shared/middleware/rateLimitMiddleware";
 import { validateBody } from "../../shared/middleware/validationMiddleware";
-import { subscribeSchema, unsubscribeDeviceSchema, updateSettingsSchema } from "./notification.schema";
+import { scheduleRestAlertSchema, subscribeSchema, unsubscribeDeviceSchema, updateSettingsSchema } from "./notification.schema";
 
 const router = Router();
 
@@ -16,6 +16,9 @@ router.post("/subscriptions", authenticate, validateBody(subscribeSchema), notif
 router.delete("/subscriptions", authenticate, validateBody(unsubscribeDeviceSchema), notificationController.removeDevice);
 router.post("/prompt-dismissed", authenticate, notificationController.dismissPrompt);
 router.post("/test", testPushLimiter, authenticate, requireAdmin, notificationController.sendTest);
-router.post("/:id/opened", authenticate, notificationController.markOpened);
+// Só admin por enquanto: primeiro medir o atraso real em aparelho, depois liberar para todos.
+router.post("/rest-alert", restAlertLimiter, authenticate, requireAdmin, validateBody(scheduleRestAlertSchema), notificationController.scheduleRestAlert);
+router.delete("/rest-alert", restAlertLimiter, authenticate, requireAdmin, notificationController.cancelRestAlert);
+router.post("/:id/opened",authenticate, notificationController.markOpened);
 
 export default router;
