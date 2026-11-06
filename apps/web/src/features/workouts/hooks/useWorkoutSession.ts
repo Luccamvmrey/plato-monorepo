@@ -63,6 +63,7 @@ export const useWorkoutSession = (workoutId?: string) => {
         const sessionId = activeSession.id;
         const payload: FinishSessionPayload = {
             sets: activeSession.pendingSets ?? [],
+            lastSetAt: useActiveWorkoutStore.getState().lastSetAt ?? null,
         };
 
         // Limpa o cache antes de navegar: a sessão já acabou, e a faixa de treino em

@@ -56,6 +56,14 @@ export {
     isSafeReturnPath,
     shareTokenFromReturnPath,
 } from "./share-links";
+export {
+    AUTO_CLOSE_AFTER_MS,
+    EMPTY_DISCARD_AFTER_MS,
+    decideOpenSession,
+    normalizeLastSetAt,
+    resolveCompletedAt,
+} from "./session-closing";
+export type { OpenSessionAction } from "./session-closing";
 export { buildAdminMetrics, filterAdminUsers } from "./admin-metrics";
 export type {
     AdminFeature,

@@ -1,13 +1,11 @@
 import { useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/auth.store.ts";
+import { useIsAdmin } from "@/features/admin/hooks/useIsAdmin.ts";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store.ts";
 import { NotificationService } from "../notification.service.ts";
 import { getDeviceSubscription } from "../utils/push-support.ts";
 
 /** Com o app aberto, o aviso na tela basta: cancela o push pouco antes do fim. */
 const CANCEL_LEAD_MS = 3000;
-const SETTINGS_STALE_MS = 5 * 60_000;
 
 /**
  * O navegador suspende os timers em segundo plano, então quem avisa do fim do descanso é o
@@ -15,17 +13,9 @@ const SETTINGS_STALE_MS = 5 * 60_000;
  * o app pode nem chegar a sair, principalmente no iPhone.
  */
 export const useRestAlert = () => {
-    const userId = useAuthStore((state) => state.user?.id);
     const restEndsAt = useActiveWorkoutStore((state) => state.restEndsAt);
 
-    // A mesma chave da tela de notificações, mas só busca quando há um descanso em andamento.
-    const { data: canAlert = false } = useQuery({
-        queryKey: ["notification-settings", userId],
-        queryFn: NotificationService.getSettings,
-        enabled: userId !== undefined && restEndsAt !== null,
-        staleTime: SETTINGS_STALE_MS,
-        select: (settings) => settings.canDebug,
-    });
+    const canAlert = useIsAdmin(restEndsAt !== null);
 
     const hasScheduled = useRef(false);
     // Em fila: um cancelamento não pode ultrapassar o agendamento que veio antes dele.

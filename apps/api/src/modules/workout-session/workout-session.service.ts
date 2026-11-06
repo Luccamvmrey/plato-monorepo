@@ -1,8 +1,10 @@
-import prisma from "@plato/database";
+import prisma, { Prisma } from "@plato/database";
+import { decideOpenSession, normalizeLastSetAt, resolveCompletedAt } from "@plato/shared";
 import { AppError } from "../../shared/error/AppError";
 import { ensureOwnership } from "../../shared/utils/auth";
 import { scanForRecords } from "./personal-record.service";
 import { findActiveProgramIdForWorkout } from "../program/program.service";
+import { sessionSetsSchema, type SaveDraftInput, type SessionSetsInput } from "./workout-session.schema";
 
 /**
  * O snapshot entra em TODOS os caminhos de leitura de sessão, inclusive os que
@@ -177,16 +179,121 @@ const findActiveSession = async (userId: number) => {
     };
 }
 
-const finishSession = async (userId: number, workoutSessionId: number, body: { sets: Array<{
-    workoutSessionId: number;
-    exerciseId: number;
-    setNumber: number;
-    actualReps: number;
-    actualWeight: number | null;
-    equipmentWeight?: number;
-    rpe: number | null;
-    userObservation?: string;
-}> }) => {
+type SessionForClosing = { id: number; userId: number; trackingMode: "FULL" | "SIMPLE" };
+
+const parseDraft = (draft: unknown): SessionSetsInput => sessionSetsSchema.parse(draft ?? []);
+
+const ensureSetsMatchMode = (isSimple: boolean, sets: SessionSetsInput) => {
+    if (!isSimple && sets.some((set) => set.actualWeight === null || set.rpe === null)) {
+        throw new AppError("Weight and RPE are required in full tracking mode", 400);
+    }
+};
+
+const writeSets = async (tx: Prisma.TransactionClient, session: SessionForClosing, sets: SessionSetsInput) => {
+    if (sets.length === 0) return;
+
+    // O modo vem da sessão, nunca do cliente: é ele que decide o que entra em PR e
+    // progressão, e um campo enviado pelo cliente poderia contaminar os dois.
+    const isSimple = session.trackingMode === "SIMPLE";
+
+    const snapshot = await tx.sessionExercise.findMany({
+        where:   { workoutSessionId: session.id },
+        orderBy: { orderIndex: "asc" },
+        select:  { id: true, exerciseId: true },
+    });
+
+    // Um exercício não se repete dentro de um treino (verificado: zero casos
+    // em produção), e a própria tela de sessão agrupa as séries por
+    // exerciseId — então um plano com repetição já estaria quebrado antes
+    // daqui. Se aparecer, a primeira posição vence, de forma determinística.
+    const sessionExerciseByExercise = new Map<number, number>();
+    for (const row of snapshot) {
+        if (!sessionExerciseByExercise.has(row.exerciseId)) {
+            sessionExerciseByExercise.set(row.exerciseId, row.id);
+        }
+    }
+
+    await tx.sessionSet.createMany({
+        data: sets.map((set) => ({
+            workoutSessionId: session.id,
+            exerciseId:      set.exerciseId,
+            // null aqui significa coisas diferentes conforme a sessão tenha ou
+            // não snapshot: sessão legada vs. série fora do plano.
+            sessionExerciseId: sessionExerciseByExercise.get(set.exerciseId) ?? null,
+            setNumber:       set.setNumber,
+            actualReps:      set.actualReps,
+            actualWeight:    set.actualWeight,
+            equipmentWeight: set.equipmentWeight ?? null,
+            rpe:             isSimple ? null : set.rpe,
+            userObservation: set.userObservation ?? null,
+            // As reps do modo simplificado são presumidas, não medidas.
+            excludedFromRecords: isSimple,
+        })),
+    });
+};
+
+const scanInBackground = (userId: number, workoutSessionId: number) => {
+    scanForRecords(userId, workoutSessionId).catch((err) =>
+        console.error("PR Scanning background error:", err)
+    );
+};
+
+/**
+ * O único caminho que conclui uma sessão, seja a pessoa ou o agendador. A condição em
+ * `completedAt` é o que impede os dois de gravarem as séries em dobro: quem chega depois não
+ * altera nada e devolve `false`.
+ */
+const completeSession = async (
+    session: SessionForClosing,
+    sets: SessionSetsInput,
+    completedAt: Date,
+    autoCompleted: boolean
+): Promise<boolean> => {
+    const didComplete = await prisma.$transaction(async (tx) => {
+        const { count } = await tx.workoutSession.updateMany({
+            where: { id: session.id, completedAt: null },
+            data:  { completedAt, autoCompleted, draftSets: Prisma.DbNull },
+        });
+
+        if (count === 0) return false;
+
+        await writeSets(tx, session, sets);
+
+        return true;
+    });
+
+    if (didComplete) scanInBackground(session.userId, session.id);
+
+    return didComplete;
+};
+
+/**
+ * O agendador fecha com o que o servidor tem. Se o aparelho estava sem rede, ele chega depois
+ * com mais séries, e são elas que valem: sem isso, parte do treino se perderia.
+ */
+const applyLateSets = async (
+    session: SessionForClosing & { autoCompleted: boolean; sessionSet: unknown[] },
+    sets: SessionSetsInput,
+    lastSetAt: number | null
+) => {
+    if (!session.autoCompleted || sets.length <= session.sessionSet.length) return;
+
+    await prisma.$transaction(async (tx) => {
+        await tx.sessionSet.deleteMany({ where: { workoutSessionId: session.id } });
+        await writeSets(tx, session, sets);
+
+        if (lastSetAt !== null) {
+            await tx.workoutSession.update({ where: { id: session.id }, data: { completedAt: new Date(lastSetAt) } });
+        }
+    });
+
+    scanInBackground(session.userId, session.id);
+};
+
+const finishSession = async (userId: number, workoutSessionId: number, body: {
+    sets: SessionSetsInput;
+    lastSetAt?: number | null;
+}) => {
     const existing = await prisma.workoutSession.findUnique({
         where: { id: workoutSessionId, userId },
         include: SESSION_INCLUDE,
@@ -194,71 +301,96 @@ const finishSession = async (userId: number, workoutSessionId: number, body: { s
 
     if (!existing) throw new AppError("Workout session not found", 404);
 
+    const now = Date.now();
+    const startedAt = existing.startedAt.getTime();
+    const lastSetAt = normalizeLastSetAt(body.lastSetAt ?? existing.lastSetAt?.getTime(), startedAt, now);
+
+    ensureSetsMatchMode(existing.trackingMode === "SIMPLE", body.sets);
+
     // Idempotency: if already completed, return without creating duplicate sets
-    if (existing.completedAt !== null) return existing;
+    if (existing.completedAt !== null) {
+        await applyLateSets(existing, body.sets, lastSetAt);
+    } else {
+        // Sem séries no aparelho (outro celular, dados limpos), vale o que já foi enviado.
+        const sets = body.sets.length > 0 ? body.sets : parseDraft(existing.draftSets);
 
-    // O modo vem da sessão, nunca do cliente: é ele que decide o que entra em PR e
-    // progressão, e um campo enviado pelo cliente poderia contaminar os dois.
-    const isSimple = existing.trackingMode === "SIMPLE";
-
-    if (!isSimple && body.sets.some((set) => set.actualWeight === null || set.rpe === null)) {
-        throw new AppError("Weight and RPE are required in full tracking mode", 400);
+        await completeSession(existing, sets, new Date(resolveCompletedAt(startedAt, lastSetAt, now)), false);
     }
 
-    const now = new Date();
+    return prisma.workoutSession.findUniqueOrThrow({
+        where: { id: workoutSessionId, userId },
+        include: SESSION_INCLUDE,
+    });
+}
 
-    const result = await prisma.$transaction(async (tx) => {
-        if (body.sets.length > 0) {
-            const snapshot = await tx.sessionExercise.findMany({
-                where:   { workoutSessionId },
-                orderBy: { orderIndex: "asc" },
-                select:  { id: true, exerciseId: true },
-            });
-
-            // Um exercício não se repete dentro de um treino (verificado: zero casos
-            // em produção), e a própria tela de sessão agrupa as séries por
-            // exerciseId — então um plano com repetição já estaria quebrado antes
-            // daqui. Se aparecer, a primeira posição vence, de forma determinística.
-            const sessionExerciseByExercise = new Map<number, number>();
-            for (const row of snapshot) {
-                if (!sessionExerciseByExercise.has(row.exerciseId)) {
-                    sessionExerciseByExercise.set(row.exerciseId, row.id);
-                }
-            }
-
-            await tx.sessionSet.createMany({
-                data: body.sets.map((set) => ({
-                    workoutSessionId,
-                    exerciseId:      set.exerciseId,
-                    // null aqui significa coisas diferentes conforme a sessão tenha ou
-                    // não snapshot: sessão legada vs. série fora do plano.
-                    sessionExerciseId: sessionExerciseByExercise.get(set.exerciseId) ?? null,
-                    setNumber:       set.setNumber,
-                    actualReps:      set.actualReps,
-                    actualWeight:    set.actualWeight,
-                    equipmentWeight: set.equipmentWeight ?? null,
-                    rpe:             isSimple ? null : set.rpe,
-                    userObservation: set.userObservation ?? null,
-                    // As reps do modo simplificado são presumidas, não medidas.
-                    excludedFromRecords: isSimple,
-                })),
-            });
-        }
-
-        return tx.workoutSession.update({
-            where: { id: workoutSessionId, userId },
-            data:  { completedAt: now },
-            include: SESSION_INCLUDE,
-        });
+const saveDraft = async (userId: number, workoutSessionId: number, { sets, lastSetAt }: SaveDraftInput) => {
+    const existing = await prisma.workoutSession.findUnique({
+        where: { id: workoutSessionId, userId },
+        include: { sessionSet: { select: { id: true } } },
     });
 
-    // Fire and forget PR scanning
-    scanForRecords(userId, workoutSessionId).catch((err) =>
-        console.error("PR Scanning background error:", err)
-    );
+    if (!existing) throw new AppError("Workout session not found", 404);
 
-    return result;
-}
+    ensureSetsMatchMode(existing.trackingMode === "SIMPLE", sets);
+
+    const normalized = normalizeLastSetAt(lastSetAt, existing.startedAt.getTime(), Date.now());
+
+    if (existing.completedAt !== null) {
+        await applyLateSets(existing, sets, normalized);
+        return;
+    }
+
+    await prisma.workoutSession.updateMany({
+        where: { id: workoutSessionId, completedAt: null },
+        data: {
+            draftSets: sets,
+            ...(normalized !== null ? { lastSetAt: new Date(normalized) } : {}),
+        },
+    });
+};
+
+/**
+ * Fecha quem esqueceu de concluir e descarta quem nunca registrou uma série. Só olha sessões
+ * com rascunho: nas outras, as séries podem estar só no aparelho. Devolve as que fechou.
+ */
+const closeIdleSessions = async (now: Date) => {
+    const sessions = await prisma.workoutSession.findMany({
+        where: { completedAt: null, draftSets: { not: Prisma.DbNull } },
+        select: { id: true, userId: true, trackingMode: true, startedAt: true, lastSetAt: true, draftSets: true },
+    });
+
+    const closed: { userId: number; setCount: number }[] = [];
+
+    for (const session of sessions) {
+        try {
+            const sets = parseDraft(session.draftSets);
+            const lastSetAt = session.lastSetAt?.getTime() ?? null;
+            const action = decideOpenSession({
+                startedAt: session.startedAt.getTime(),
+                lastSetAt,
+                draftSetCount: sets.length,
+                now: now.getTime(),
+            });
+
+            if (action === "DISCARD") {
+                // `lastSetAt: null` cobre a série que tenha chegado depois da leitura acima.
+                await prisma.workoutSession.deleteMany({ where: { id: session.id, completedAt: null, lastSetAt: null } });
+            }
+
+            if (action === "CLOSE") {
+                const completedAt = new Date(lastSetAt ?? session.startedAt.getTime());
+
+                if (await completeSession(session, sets, completedAt, true)) {
+                    closed.push({ userId: session.userId, setCount: sets.length });
+                }
+            }
+        } catch (error) {
+            console.error(`Could not close session ${session.id}`, error);
+        }
+    }
+
+    return closed;
+};
 
 /**
  * Últimas N execuções completas de cada exercício do treino, agrupadas por exerciseId.
@@ -441,4 +573,4 @@ const deleteSession = async (userId: number, workoutSessionId: number) => {
     });
 }
 
-export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, listByExerciseId, getExerciseHistoryByWorkout, getExerciseHistoryForSession, deleteSession };
+export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, saveDraft, closeIdleSessions, listByExerciseId, getExerciseHistoryByWorkout, getExerciseHistoryForSession, deleteSession };

@@ -21,7 +21,8 @@ const METRICS: { key: WeeklyMetric; tab: string; describe: (week: WeekRow) => st
         tab: "Conclusão",
         describe: (w) => w.completionRate === null
             ? "Nenhum treino iniciado"
-            : `${w.completionRate}% · ${w.startedAndCompleted} de ${w.started} concluídos`,
+            : `${w.completionRate}% · ${w.startedAndCompleted} de ${w.started} concluídos`
+                + (w.autoCompleted > 0 ? ` · ${w.autoCompleted} pelo app` : ""),
     },
 ];
 

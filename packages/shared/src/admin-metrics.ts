@@ -31,7 +31,7 @@ export interface AdminMetricsInput {
         bodyWeightLogs: number;
         mcpSessions: number;
     }[];
-    completedSessions: readonly { userId: number; startedAt: Date; completedAt: Date }[];
+    completedSessions: readonly { userId: number; startedAt: Date; completedAt: Date; autoCompleted?: boolean }[];
     /** Sessões sem `completedAt`. As séries delas só chegam ao banco quando a pessoa conclui. */
     openSessions: readonly { userId: number; startedAt: Date }[];
     /** Quem tem ao menos um treino copiado de um link. */
@@ -51,6 +51,8 @@ export interface AdminMetrics {
         sessionsThisWeek: number;
         /** Treinos iniciados nos últimos 28 dias que foram concluídos, de 0 a 100. Null sem treinos. */
         completionRate28d: number | null;
+        /** Treinos iniciados nos últimos 28 dias que a pessoa esqueceu e o app fechou. */
+        autoCompleted28d: number;
         usersWithOpenSession: number;
     };
     /** Da semana mais antiga para a atual. `weekStart` é a segunda-feira, em `YYYY-MM-DD`. */
@@ -64,6 +66,8 @@ export interface AdminMetrics {
         started: number;
         /** Quantos dos `started` foram concluídos, mesmo que em outra semana. */
         startedAndCompleted: number;
+        /** Quantos dos `startedAndCompleted` a pessoa esqueceu e o app fechou. */
+        autoCompleted: number;
         /** De 0 a 100. Null em semana sem treino iniciado: 0% diria que todos desistiram. */
         completionRate: number | null;
     }[];
@@ -164,7 +168,8 @@ export const buildAdminMetrics = (
     const weekly = Array.from({ length: WEEKS_SHOWN }, (_, index) => {
         const weekStart = addDaysToDateStr(currentWeek, (index - WEEKS_SHOWN + 1) * 7);
         const sessions = completedSessions.filter((s) => weekOf(s.completedAt) === weekStart);
-        const startedAndCompleted = completedSessions.filter((s) => weekOf(s.startedAt) === weekStart).length;
+        const startedInWeek = completedSessions.filter((s) => weekOf(s.startedAt) === weekStart);
+        const startedAndCompleted = startedInWeek.length;
         const abandoned = abandonedSessions.filter((s) => weekOf(s.startedAt) === weekStart).length;
 
         return {
@@ -174,6 +179,7 @@ export const buildAdminMetrics = (
             signups: users.filter((user) => weekOf(user.createdAt) === weekStart).length,
             started: startedAndCompleted + abandoned,
             startedAndCompleted,
+            autoCompleted: startedInWeek.filter((s) => s.autoCompleted).length,
             completionRate: completionRate(startedAndCompleted, abandoned),
         };
     });
@@ -229,6 +235,7 @@ export const buildAdminMetrics = (
                 completedSessions.filter((s) => isWithin(s.startedAt, 28)).length,
                 abandonedSessions.filter((s) => isWithin(s.startedAt, 28)).length
             ),
+            autoCompleted28d: completedSessions.filter((s) => s.autoCompleted && isWithin(s.startedAt, 28)).length,
             usersWithOpenSession: new Set(openSessions.map((s) => s.userId)).size,
         },
         weekly,

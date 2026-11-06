@@ -23,7 +23,7 @@ const getMetrics = async () => {
         }),
         prisma.workoutSession.findMany({
             where: { completedAt: { not: null } },
-            select: { userId: true, startedAt: true, completedAt: true },
+            select: { userId: true, startedAt: true, completedAt: true, autoCompleted: true },
         }),
         prisma.workoutSession.findMany({
             where: { completedAt: null },
@@ -54,6 +54,7 @@ const getMetrics = async () => {
                 userId: session.userId,
                 startedAt: session.startedAt,
                 completedAt: session.completedAt!,
+                autoCompleted: session.autoCompleted,
             })),
             openSessions,
             copiedPlanUserIds: copiedPlans.map((workout) => workout.userId),
