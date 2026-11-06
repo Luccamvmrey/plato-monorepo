@@ -4,6 +4,7 @@ import { useUserSettings } from "../hooks/useUserSettings";
 import { TrackingModeSetting } from "./TrackingModeSetting";
 import { NotificationSetting } from "@/features/notifications/components/NotificationSetting.tsx";
 import { SharedLinksSetting } from "@/features/sharing/components/SharedLinksSetting.tsx";
+import { AdminDashboardLink } from "@/features/admin/components/AdminDashboardLink.tsx";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -55,6 +56,8 @@ export const GovernanceSettings = () => {
                 <NotificationSetting />
 
                 <SharedLinksSetting />
+
+                <AdminDashboardLink />
 
                 {/* Aparência */}
                 <button

@@ -18,4 +18,5 @@ export const path = {
     HISTORY: "/history",
     EXERCISE_ANALYTICS: "/exercise-analytics",
     USER_PROFILE: "/profile",
+    ADMIN: "/admin",
 } as const
