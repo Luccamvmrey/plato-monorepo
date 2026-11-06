@@ -27,6 +27,7 @@ import NotFoundPage from "@/core/pages/NotFoundPage.tsx";
 import SharedPlanPage from "@/features/sharing/pages/SharedPlanPage.tsx";
 import SuggestedProgramsPage from "@/features/sharing/pages/SuggestedProgramsPage.tsx";
 import EmailUnsubscribePage from "@/features/notifications/pages/EmailUnsubscribePage.tsx";
+import AdminDashboardPage from "@/features/admin/pages/AdminDashboardPage.tsx";
 
 export function App() {
     useCheckSession();
@@ -100,6 +101,10 @@ export function App() {
 
                                 <Route path={path.USER_PROFILE}>
                                     <ErrorBoundary><UserProfilePage /></ErrorBoundary>
+                                </Route>
+
+                                <Route path={path.ADMIN}>
+                                    <ErrorBoundary><AdminDashboardPage /></ErrorBoundary>
                                 </Route>
 
                                 <Route component={NotFoundPage}/>

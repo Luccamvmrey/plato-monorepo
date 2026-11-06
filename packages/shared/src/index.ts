@@ -56,6 +56,8 @@ export {
     isSafeReturnPath,
     shareTokenFromReturnPath,
 } from "./share-links";
+export { buildAdminMetrics } from "./admin-metrics";
+export type { AdminFeature, AdminMetrics, AdminMetricsInput } from "./admin-metrics";
 export {
     isValidTimezone,
     toLocalDateStr,
