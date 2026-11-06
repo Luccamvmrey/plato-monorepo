@@ -24,5 +24,12 @@ export const updateSettingsSchema = z.object({
     timezone: timezoneSchema.optional(),
 });
 
-export type SubscribeInput = z.infer<typeof subscribeSchema>;
+export const scheduleRestAlertSchema = z.object({
+    endpoint: z.string().url().max(2048),
+    // Tempo restante, e não o horário final: o relógio do aparelho pode divergir do servidor.
+    remainingMs: z.number().int().positive().max(15 * 60_000),
+    measureFrom: z.number().int().positive(),
+});
+
+export type SubscribeInput =z.infer<typeof subscribeSchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;

@@ -29,5 +29,8 @@ export const addShareLimiter = createLimiter(ONE_HOUR, 30);
 /** Cada pedido envia uma notificação de verdade para os aparelhos da pessoa. */
 export const testPushLimiter = createLimiter(ONE_HOUR, 10);
 
+/** Folgado: cada série gera alguns pedidos, e reagendar só substitui o aviso anterior. */
+export const restAlertLimiter = createLimiter(FIFTEEN_MINUTES, 120);
+
 /** Rota pública, chamada a partir do link do e-mail. */
 export const unsubscribeLimiter = createLimiter(FIFTEEN_MINUTES, 20);

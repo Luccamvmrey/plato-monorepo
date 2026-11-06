@@ -10,16 +10,22 @@ const parseMessage = (event) => {
     }
 };
 
+// Provisório, enquanto o aviso de descanso é só para admin: mostra o atraso real de entrega.
+const withDelay = (body, measureFrom) =>
+    measureFrom ? `${body} (atraso de ${((Date.now() - measureFrom) / 1000).toFixed(1)}s)` : body;
+
 self.addEventListener("push", (event) => {
-    const { title, body, url } = parseMessage(event);
+    const { title, body, url, tag, measureFrom } = parseMessage(event);
 
     // Sempre mostra algo: o iOS cancela a inscrição de quem recebe push sem exibir nada.
     event.waitUntil(
         self.registration.showNotification(title, {
-            body,
+            body: withDelay(body, measureFrom),
             icon: "/pwa-192x192.png",
             badge: "/pwa-64x64.png",
             data: { url },
+            // `renotify` faz a notificação que substitui outra alertar de novo, em vez de vir muda.
+            ...(tag ? { tag, renotify: true, vibrate: [200, 100, 200] } : {}),
         })
     );
 });
