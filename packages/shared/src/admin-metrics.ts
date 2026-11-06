@@ -3,8 +3,12 @@ import type { NotificationKindValue } from "./notifications";
 
 /** Fuso único para as semanas do painel: os usuários estão no Brasil. */
 const METRICS_TIMEZONE = "America/Sao_Paulo";
-const WEEKS_SHOWN = 12;
+/** O maior período do gráfico. A tela escolhe quantas semanas mostrar a partir desta lista. */
+const WEEKS_SHOWN = 26;
 const DAY_MS = 86_400_000;
+const NEW_ACCOUNT_DAYS = 7;
+/** Sessão aberta há menos que isso pode estar em andamento: ainda não conta como não concluída. */
+const IN_PROGRESS_MS = 6 * 3_600_000;
 
 export type AdminFeature =
     | "PROGRAM"
@@ -27,7 +31,9 @@ export interface AdminMetricsInput {
         bodyWeightLogs: number;
         mcpSessions: number;
     }[];
-    completedSessions: readonly { userId: number; completedAt: Date }[];
+    completedSessions: readonly { userId: number; startedAt: Date; completedAt: Date }[];
+    /** Sessões sem `completedAt`. As séries delas só chegam ao banco quando a pessoa conclui. */
+    openSessions: readonly { userId: number; startedAt: Date }[];
     /** Quem tem ao menos um treino copiado de um link. */
     copiedPlanUserIds: readonly number[];
     pushLogs: readonly {
@@ -43,23 +49,86 @@ export interface AdminMetrics {
         active7d: number;
         active28d: number;
         sessionsThisWeek: number;
+        /** Treinos iniciados nos últimos 28 dias que foram concluídos, de 0 a 100. Null sem treinos. */
+        completionRate28d: number | null;
+        usersWithOpenSession: number;
     };
     /** Da semana mais antiga para a atual. `weekStart` é a segunda-feira, em `YYYY-MM-DD`. */
-    weekly: { weekStart: string; activeUsers: number; sessions: number; signups: number }[];
+    weekly: {
+        weekStart: string;
+        activeUsers: number;
+        /** Concluídos na semana, seja qual for o dia em que começaram. */
+        sessions: number;
+        signups: number;
+        /** Iniciados na semana, sem contar os que ainda podem estar em andamento. */
+        started: number;
+        /** Quantos dos `started` foram concluídos, mesmo que em outra semana. */
+        startedAndCompleted: number;
+        /** De 0 a 100. Null em semana sem treino iniciado: 0% diria que todos desistiram. */
+        completionRate: number | null;
+    }[];
     /** Da mais usada para a menos usada. */
     features: { feature: AdminFeature; users: number }[];
-    /** Quem treinou por último vem primeiro; quem nunca treinou, no fim, do cadastro mais novo. */
-    users: {
-        id: number;
-        name: string | null;
-        createdAt: string;
-        lastWorkoutAt: string | null;
-        totalSessions: number;
-        sessions28d: number;
-        features: AdminFeature[];
-    }[];
+    /** Atividade mais recente primeiro, concluída ou aberta. Sem nenhuma, do cadastro mais novo. */
+    users: AdminUserRow[];
     notifications: { kind: NotificationKindValue; sent: number; failed: number; opened: number }[];
 }
+
+export interface AdminUserRow {
+    id: number;
+    name: string | null;
+    createdAt: string;
+    lastWorkoutAt: string | null;
+    /** Início da sessão aberta mais recente, se houver. */
+    openSessionStartedAt: string | null;
+    totalSessions: number;
+    sessions28d: number;
+    features: AdminFeature[];
+}
+
+export type AdminUserStatus = "ALL" | "ACTIVE" | "INACTIVE" | "OPEN_SESSION" | "NEVER_TRAINED" | "NEW";
+
+export interface AdminUserFilters {
+    status: AdminUserStatus;
+    feature: AdminFeature | "ALL";
+    search: string;
+}
+
+const normalizeText = (value: string) =>
+    value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+
+const matchesStatus = (user: AdminUserRow, status: AdminUserStatus, now: Date): boolean => {
+    switch (status) {
+        case "ALL":
+            return true;
+        case "ACTIVE":
+            return user.sessions28d > 0;
+        case "INACTIVE":
+            return user.lastWorkoutAt !== null && user.sessions28d === 0;
+        case "OPEN_SESSION":
+            return user.openSessionStartedAt !== null;
+        case "NEVER_TRAINED":
+            // Com sessão aberta a pessoa começou a treinar, então "nunca" seria falso.
+            return user.lastWorkoutAt === null && user.openSessionStartedAt === null;
+        case "NEW":
+            return now.getTime() - new Date(user.createdAt).getTime() <= NEW_ACCOUNT_DAYS * DAY_MS;
+    }
+};
+
+/** A busca ignora maiúsculas e acentos, e também acha pelo número da conta sem nome. */
+export const filterAdminUsers = (
+    users: readonly AdminUserRow[],
+    { status, feature, search }: AdminUserFilters,
+    now: Date
+): AdminUserRow[] => {
+    const term = normalizeText(search).replace(/^#/, "");
+
+    return users.filter((user) =>
+        matchesStatus(user, status, now) &&
+        (feature === "ALL" || user.features.includes(feature)) &&
+        (term === "" || normalizeText(user.name ?? "").includes(term) || String(user.id) === term)
+    );
+};
 
 const FEATURE_ORDER: readonly AdminFeature[] = [
     "PROGRAM",
@@ -75,8 +144,11 @@ const NOTIFICATION_KINDS: readonly NotificationKindValue[] = ["REMINDER", "WEEKL
 
 const weekOf = (date: Date) => mondayOfDateStr(toLocalDateStr(date, METRICS_TIMEZONE));
 
+const completionRate = (completed: number, abandoned: number): number | null =>
+    completed + abandoned === 0 ? null : Math.round((completed / (completed + abandoned)) * 100);
+
 export const buildAdminMetrics = (
-    { users, completedSessions, copiedPlanUserIds, pushLogs }: AdminMetricsInput,
+    { users, completedSessions, openSessions, copiedPlanUserIds, pushLogs }: AdminMetricsInput,
     now: Date
 ): AdminMetrics => {
     const copiedPlan = new Set(copiedPlanUserIds);
@@ -86,16 +158,23 @@ export const buildAdminMetrics = (
     const usersWithin = (days: number) =>
         new Set(completedSessions.filter((s) => isWithin(s.completedAt, days)).map((s) => s.userId)).size;
 
+    const abandonedSessions = openSessions.filter((s) => now.getTime() - s.startedAt.getTime() >= IN_PROGRESS_MS);
+
     const currentWeek = weekOf(now);
     const weekly = Array.from({ length: WEEKS_SHOWN }, (_, index) => {
         const weekStart = addDaysToDateStr(currentWeek, (index - WEEKS_SHOWN + 1) * 7);
         const sessions = completedSessions.filter((s) => weekOf(s.completedAt) === weekStart);
+        const startedAndCompleted = completedSessions.filter((s) => weekOf(s.startedAt) === weekStart).length;
+        const abandoned = abandonedSessions.filter((s) => weekOf(s.startedAt) === weekStart).length;
 
         return {
             weekStart,
             activeUsers: new Set(sessions.map((s) => s.userId)).size,
             sessions: sessions.length,
             signups: users.filter((user) => weekOf(user.createdAt) === weekStart).length,
+            started: startedAndCompleted + abandoned,
+            startedAndCompleted,
+            completionRate: completionRate(startedAndCompleted, abandoned),
         };
     });
 
@@ -105,6 +184,9 @@ export const buildAdminMetrics = (
             (latest, s) => (latest === null || s.completedAt > latest ? s.completedAt : latest),
             null
         );
+        const openSession = openSessions
+            .filter((s) => s.userId === user.id)
+            .reduce<Date | null>((latest, s) => (latest === null || s.startedAt > latest ? s.startedAt : latest), null);
         const enabled: Record<AdminFeature, boolean> = {
             PROGRAM: user.activePrograms > 0,
             SIMPLE_MODE: user.trackingMode === "SIMPLE",
@@ -120,15 +202,21 @@ export const buildAdminMetrics = (
             name: user.name,
             createdAt: user.createdAt.toISOString(),
             lastWorkoutAt: lastWorkout?.toISOString() ?? null,
+            openSessionStartedAt: openSession?.toISOString() ?? null,
             totalSessions: sessions.length,
             sessions28d: sessions.filter((s) => isWithin(s.completedAt, 28)).length,
             features: FEATURE_ORDER.filter((feature) => enabled[feature]),
         };
     });
 
+    // As datas estão em ISO, então a ordem do texto é a ordem do tempo.
+    const lastActivity = (row: AdminUserRow) =>
+        (row.lastWorkoutAt ?? "") > (row.openSessionStartedAt ?? "")
+            ? row.lastWorkoutAt ?? ""
+            : row.openSessionStartedAt ?? "";
+
     userRows.sort((a, b) =>
-        // As datas estão em ISO, então a ordem do texto é a ordem do tempo.
-        (b.lastWorkoutAt ?? "").localeCompare(a.lastWorkoutAt ?? "") || b.createdAt.localeCompare(a.createdAt)
+        lastActivity(b).localeCompare(lastActivity(a)) || b.createdAt.localeCompare(a.createdAt)
     );
 
     return {
@@ -137,6 +225,11 @@ export const buildAdminMetrics = (
             active7d: usersWithin(7),
             active28d: usersWithin(28),
             sessionsThisWeek: weekly[weekly.length - 1].sessions,
+            completionRate28d: completionRate(
+                completedSessions.filter((s) => isWithin(s.startedAt, 28)).length,
+                abandonedSessions.filter((s) => isWithin(s.startedAt, 28)).length
+            ),
+            usersWithOpenSession: new Set(openSessions.map((s) => s.userId)).size,
         },
         weekly,
         features: FEATURE_ORDER
