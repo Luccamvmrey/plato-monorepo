@@ -67,17 +67,23 @@ const ActiveWorkoutPage = () => {
         );
     }
 
+    // O pb dá folga para o último card passar acima do rodapé fixo, que agora é
+    // uma linha só e sem NavBar embaixo.
     return (
         <motion.div
             variants={enterAnimation}
             initial="hidden"
             animate="show"
-            className={cn("flex flex-col gap-3", isKeyboardOpen ? "pb-6" : "pb-[320px]")}
+            className={cn("flex flex-col gap-3", isKeyboardOpen ? "pb-6" : "pb-[calc(var(--safe-bottom)+120px)]")}
         >
+            {/* Sem NavBar na sessão, o "<" é a saída: deixa o treino aberto e o
+                ActiveSessionBanner traz de volta. Cancelar fica no menu. */}
             <ActiveWorkoutHeader
                 workout={workout}
                 session={activeSession}
-                onBackClick={() => setIsCancelOpen(true)}
+                onBackClick={() => navigate(path.WORKOUTS)}
+                onCancelClick={() => setIsCancelOpen(true)}
+                isCancelPending={isCancelPending}
             />
 
             <SessionProgress exerciseStack={exerciseStack} />
@@ -93,7 +99,6 @@ const ActiveWorkoutPage = () => {
 
             <ActiveWorkoutActions
                 onFinishClick={handleFinishClick}
-                onCancelClick={() => setIsCancelOpen(true)}
                 isFinishPending={false}
                 isCancelPending={isCancelPending}
                 isAllCompleted={isAllCompleted}
