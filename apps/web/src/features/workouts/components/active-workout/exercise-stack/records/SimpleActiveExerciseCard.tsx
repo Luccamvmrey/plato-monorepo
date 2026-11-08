@@ -13,6 +13,7 @@ import type { EnrichedExerciseRecord } from "@/features/workouts/workout.types.t
 import SessionGroupBadge from "../../components/SessionGroupBadge";
 import ExerciseWeightField from "./ExerciseWeightField";
 import SetTiles from "./SetTiles";
+import SkipExerciseButton from "./SkipExerciseButton";
 
 type SimpleActiveExerciseCardProps = {
     record: EnrichedExerciseRecord;
@@ -67,11 +68,6 @@ const SimpleActiveExerciseCard = ({ record, sessionId, lastWeight }: SimpleActiv
                             <DropdownMenuItem onSelect={openAlternatives} disabled={isChangingPlan}>
                                 Trocar exercício
                             </DropdownMenuItem>
-                            {record.logs.length === 0 && (
-                                <DropdownMenuItem onSelect={handleSkip} disabled={isChangingPlan}>
-                                    Pular exercício
-                                </DropdownMenuItem>
-                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
@@ -94,6 +90,11 @@ const SimpleActiveExerciseCard = ({ record, sessionId, lastWeight }: SimpleActiv
                     onRepeat={weight.handleRepeat}
                     lastWeight={lastWeight}
                 />
+            )}
+
+            {/* Mesmo pular do modo completo, à vista em vez de no menu. */}
+            {canChangePlan && record.logs.length === 0 && (
+                <SkipExerciseButton onSkip={handleSkip} disabled={isChangingPlan} />
             )}
 
             <AlternativesSheet

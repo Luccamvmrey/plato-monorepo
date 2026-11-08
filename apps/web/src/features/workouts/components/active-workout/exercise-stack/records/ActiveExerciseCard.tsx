@@ -8,6 +8,7 @@ import { CompletedSetRow } from "./CompletedSetRow";
 import { RpeSelector } from "../../components/RpeSelector";
 import { ProgressionChip } from "../../components/ProgressionChip";
 import SessionGroupBadge from "../../components/SessionGroupBadge";
+import SkipExerciseButton from "./SkipExerciseButton";
 import { Textarea } from "@/components/ui/textarea";
 import {
     DropdownMenu,
@@ -150,20 +151,12 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                                 {noteVisible ? "Ocultar nota" : "Adicionar nota"}
                             </DropdownMenuItem>
                             {/* Só com snapshot: sessão legada não tem SessionExercise
-                                para referenciar no servidor. */}
+                                para referenciar no servidor. Pular saiu daqui para
+                                baixo do card: no menu, só achava quem já sabia. */}
                             {canChangePlan && (
-                                <>
-                                    <DropdownMenuItem onSelect={openAlternatives} disabled={isChangingPlan}>
-                                        Trocar exercício
-                                    </DropdownMenuItem>
-                                    {/* Pular só faz sentido antes da primeira série —
-                                        o servidor recusa com série registrada. */}
-                                    {record.logs.length === 0 && (
-                                        <DropdownMenuItem onSelect={handleSkip} disabled={isChangingPlan}>
-                                            Pular exercício
-                                        </DropdownMenuItem>
-                                    )}
-                                </>
+                                <DropdownMenuItem onSelect={openAlternatives} disabled={isChangingPlan}>
+                                    Trocar exercício
+                                </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -255,24 +248,29 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                     </p>
                 )}
 
-                {/* Equipment weight (optional) */}
+                {/* Equipment weight (optional). Uma linha compacta e não um campo do
+                    tamanho de Carga/Reps: é um valor de montagem que quase nunca muda
+                    entre séries. text-[16px] no input: abaixo disso o iOS dá zoom. */}
                 {showEquipmentWeight && (
-                    <div className="flex flex-col gap-1">
-                        <span className={FIELD_LABEL}>Peso da barra ({UNITS.WEIGHT})</span>
-                        <input
-                            ref={equipmentRef}
-                            type="text"
-                            inputMode="decimal"
-                            enterKeyHint="done"
-                            aria-label="Peso da barra"
-                            placeholder={UNITS.WEIGHT}
-                            value={equipmentWeight}
-                            onChange={(e) => setEquipmentWeight(e.target.value)}
-                            onKeyDown={handleFieldKeyDown("equipment")}
-                            disabled={isPending || wasSubmitted}
-                            className="input-workout"
-                        />
-                    </div>
+                    <label className="flex items-center justify-between gap-3 h-11 px-3 rounded-md bg-muted/50">
+                        <span className="text-[13px] text-muted-foreground">Peso da barra</span>
+                        <span className="flex items-center gap-1.5">
+                            <input
+                                ref={equipmentRef}
+                                type="text"
+                                inputMode="decimal"
+                                enterKeyHint="done"
+                                aria-label="Peso da barra"
+                                placeholder="0"
+                                value={equipmentWeight}
+                                onChange={(e) => setEquipmentWeight(e.target.value)}
+                                onKeyDown={handleFieldKeyDown("equipment")}
+                                disabled={isPending || wasSubmitted}
+                                className="w-16 h-8 rounded-md bg-muted border border-border text-center text-[16px] font-medium tabular-nums text-foreground focus:outline-none focus:border-primary"
+                            />
+                            <span className="text-[13px] text-muted-foreground">{UNITS.WEIGHT}</span>
+                        </span>
+                    </label>
                 )}
 
                 {/* RPE selector */}
@@ -314,6 +312,14 @@ const ActiveExerciseCard = ({ record, sessionId, history }: ActiveExerciseCardPr
                     )}
                 </motion.button>
             </motion.div>
+
+            {/* Fora do card de propósito: dentro ele aumentaria o
+                [data-keyboard-anchor] e empurraria o Confirmar para fora da tela
+                com o teclado aberto. Pular só antes da primeira série — o servidor
+                recusa com série registrada. */}
+            {canChangePlan && record.logs.length === 0 && (
+                <SkipExerciseButton onSkip={handleSkip} disabled={isChangingPlan} />
+            )}
 
             {/* Mesma sheet do editor de treino: aqui a escolha vira uma chamada de
                 API, lá vira troca no rascunho. */}
