@@ -17,6 +17,7 @@ const JamJoinPage = () => {
         hasLoadError,
         retry,
         isAuthenticated,
+        needsInstallForPush,
         handleSignup,
         handleLogin,
         goHome,
@@ -95,6 +96,13 @@ const JamJoinPage = () => {
                 Cada um registra o próprio treino, com as próprias cargas. O Plato mostra onde cada um
                 está e, quando vocês dividem um aparelho, de quem é a vez.
             </p>
+
+            {needsInstallForPush && (
+                <p className="text-[13px] text-muted-foreground rounded-xl bg-card border border-border px-4 py-3">
+                    No iPhone, o aviso de "sua vez" com a tela apagada só chega com o Plato na tela de
+                    início: toque em Compartilhar e depois em "Adicionar à Tela de Início".
+                </p>
+            )}
 
             {isAuthenticated ? (
                 <JamJoinActions token={token} hostName={preview.hostName} />

@@ -153,3 +153,57 @@ export const jamMemberProgress = (member: JamMemberState): JamMemberProgress => 
         targetSets: current.targetSets,
     };
 };
+
+/**
+ * De quem é a vez neste exercício, lendo o estado da jam. Só quem continua na jam e tem
+ * treino aberto entra no rodízio; "está aqui" é o exercício onde a pessoa está (presença ou
+ * palpite pelas séries). Não olha o modo: quem chama decide se o exercício está em revezamento.
+ */
+export const jamTurnForExercise = (state: Pick<JamState, "members">, exerciseId: number): number | null => {
+    const candidates: JamTurnCandidate[] = state.members
+        .filter((member) => member.leftAt === null && member.session !== null && member.session.completedAt === null)
+        .map((member) => {
+            const progress = jamMemberProgress(member);
+            const isHere = progress.kind === "TRAINING" && progress.exerciseId === exerciseId;
+
+            return {
+                userId: member.userId,
+                joinedAt: new Date(member.joinedAt).getTime(),
+                isHere,
+                setsDone: isHere ? progress.setsDone : 0,
+                targetSets: isHere ? progress.targetSets : 0,
+            };
+        });
+
+    return resolveJamTurn(candidates);
+};
+
+/** Carga da última série da pessoa neste exercício. Null sem série ou sem carga registrada. */
+export const jamLastWeight = (member: JamMemberState, exerciseId: number): number | null => {
+    const sets = (member.session?.sets ?? []).filter((set) => set.exerciseId === exerciseId);
+    const last = sets.reduce<(typeof sets)[number] | null>(
+        (latest, set) => (latest === null || set.setNumber > latest.setNumber ? set : latest),
+        null
+    );
+
+    return last?.actualWeight ?? null;
+};
+
+/** Equipamentos em que a carga vai em anilhas dos dois lados. */
+const PLATE_LOADED_EQUIPMENT = new Set(["BARBELL", "SMITH", "EZ_BAR"]);
+
+export const isPlateLoaded = (equipment: string | null | undefined): boolean =>
+    equipment !== null && equipment !== undefined && PLATE_LOADED_EQUIPMENT.has(equipment);
+
+/**
+ * O que mexer na barra para ir da carga de quem acabou de usar para a sua. Por lado, porque é
+ * assim que se carrega. Null quando não há o que trocar.
+ */
+export const jamPlateSwap = (fromKg: number, toKg: number): { action: "ADD" | "REMOVE"; perSideKg: number } | null => {
+    // Arredonda a meio grama para fugir de 0.30000000000000004.
+    const perSideKg = Math.round((Math.abs(toKg - fromKg) / 2) * 1000) / 1000;
+
+    if (perSideKg === 0) return null;
+
+    return { action: toKg > fromKg ? "ADD" : "REMOVE", perSideKg };
+};

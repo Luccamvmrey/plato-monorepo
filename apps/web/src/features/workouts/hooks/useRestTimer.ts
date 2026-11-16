@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
+import { formatClock } from "@/core/utils/formatters";
 
 const TICK_MS = 250;
 const FINISHED_MESSAGE_MS = 4000;
 // Voltar ao app muito depois do fim não é "acabou agora": nada de vibrar.
 const VIBRATE_WINDOW_MS = 2000;
-
-const formatClock = (seconds: number) =>
-    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
 export const useRestTimer = () => {
     const restEndsAt = useActiveWorkoutStore((s) => s.restEndsAt);

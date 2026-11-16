@@ -9,6 +9,11 @@ export interface PushMessage {
     tag?: string;
     /** Instante no relógio do aparelho contra o qual o handler mede o atraso de entrega. */
     measureFrom?: number;
+    /**
+     * Aviso que a tela aberta já deu (a vez na jam). O handler ainda exibe, porque o iOS
+     * cancela a inscrição de quem recebe push sem mostrar nada, mas sem som e fechando na hora.
+     */
+    quietWhenVisible?: boolean;
 }
 
 export interface PushDelivery {

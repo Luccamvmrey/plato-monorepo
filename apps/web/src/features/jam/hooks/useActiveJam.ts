@@ -14,6 +14,7 @@ import type { EnrichedExerciseRecord, WorkoutSession } from "@/features/workouts
 import { JamService } from "@/features/jam/jam.service.ts";
 import { consumeJamEntry } from "@/features/jam/utils/jam-entry.ts";
 import { jamQueryKey, useJam } from "./useJam.ts";
+import { useJamTurn } from "./useJamTurn.ts";
 
 /** Espera a tela assentar antes de avisar o grupo: reordenar ou confirmar série mexe no exercício atual. */
 const PRESENCE_DEBOUNCE_MS = 500;
@@ -105,6 +106,8 @@ export const useActiveJam = (session: WorkoutSession | undefined, exerciseStack:
         ? jamExerciseMode(jam.exerciseModes, activeExerciseId)
         : null;
 
+    const turn = useJamTurn(isActive ? jam : undefined, activeExercise, currentMode, currentUserId);
+
     return {
         isActive,
         jam,
@@ -118,6 +121,8 @@ export const useActiveJam = (session: WorkoutSession | undefined, exerciseStack:
             modeMutation.mutate({ jamId, exerciseId: activeExerciseId, mode });
         },
         isChangingMode: modeMutation.isPending,
+        myTurn: turn.myTurn,
+        partnerTurn: turn.partnerTurn,
         leave: () => jamId !== null && leaveMutation.mutate(jamId),
         isLeaving: leaveMutation.isPending,
         isSheetOpen,

@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { path } from "@/core/constants/path.ts";
 import { useAuthStore } from "@/features/auth/auth.store.ts";
 import { JamService } from "@/features/jam/jam.service.ts";
+import { getPushSupport } from "@/features/notifications/utils/push-support.ts";
 
 export const statusOf = (error: unknown) => (isAxiosError(error) ? error.response?.status : undefined);
 
@@ -30,6 +31,8 @@ export const useJamJoinPage = (token: string) => {
         hasLoadError: previewQuery.isError && statusOf(previewQuery.error) !== 404,
         retry: () => void previewQuery.refetch(),
         isAuthenticated,
+        // No iPhone, o "sua vez" com a tela apagada só chega com o app na tela de início.
+        needsInstallForPush: getPushSupport() === "needs-install",
         handleSignup: () => sendToAuth(path.SIGNUP),
         handleLogin: () => sendToAuth(path.LOGIN),
         goHome: () => navigate(isAuthenticated ? path.WORKOUTS : path.LOGIN),

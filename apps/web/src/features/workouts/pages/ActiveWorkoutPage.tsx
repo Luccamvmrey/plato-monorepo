@@ -15,6 +15,8 @@ import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
 import { cn } from "@/lib/utils.ts";
 import { JamStrip } from "@/features/jam/components/JamStrip.tsx";
 import { JamSheet } from "@/features/jam/components/JamSheet.tsx";
+import { JamMyTurnBanner } from "@/features/jam/components/JamMyTurnBanner.tsx";
+import { JamPartnerTurnPanel } from "@/features/jam/components/JamPartnerTurnPanel.tsx";
 
 const enterAnimation: Variants = {
     hidden: { opacity: 0, y: 10 },
@@ -97,6 +99,7 @@ const ActiveWorkoutPage = () => {
                         onOpen={activeJam.openSheet}
                     />
                     <JamSheet activeJam={activeJam} />
+                    {activeJam.myTurn && <JamMyTurnBanner myTurn={activeJam.myTurn} />}
                 </>
             )}
 
@@ -116,6 +119,9 @@ const ActiveWorkoutPage = () => {
                 isFinishPending={false}
                 isCancelPending={isCancelPending}
                 isAllCompleted={isAllCompleted}
+                overridePanel={activeJam.isActive && activeJam.partnerTurn
+                    ? <JamPartnerTurnPanel key={activeJam.partnerTurn.userId} turn={activeJam.partnerTurn} />
+                    : undefined}
             />
 
             {cancelError && (

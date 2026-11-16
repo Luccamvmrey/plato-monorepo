@@ -3,6 +3,7 @@ import prisma, { Prisma } from "@plato/database";
 import { JAM_MAX_MEMBERS, isShareToken, pickJamEntryExercise } from "@plato/shared";
 import { AppError } from "../../shared/error/AppError";
 import { ensureOwnership } from "../../shared/utils/auth";
+import { sendPushToUser } from "../../shared/push/push";
 import { toSnapshotWorkout } from "../share/share.service";
 import { toWorkoutExerciseRows } from "../workout/workout.service";
 import * as workoutSessionService from "../workout-session/workout-session.service";
@@ -298,7 +299,31 @@ const join = async (userId: number, token: string, { workoutId }: JoinJamInput) 
 
     publishJam(jam.id);
 
+    notifyHostOfJoin(jam.id, jam.hostUserId, userId)
+        .catch((error: unknown) => console.error(`Failed to notify jam ${jam.id} host`, error));
+
     return { jamId: jam.id, sessionId: newSession.id, workoutId: sessionWorkoutId, entryExerciseId };
+};
+
+/** Avisa o host que alguém entrou, com o link de volta para o treino dele. Nunca lança. */
+const notifyHostOfJoin = async (jamId: number, hostUserId: number, joinerId: number) => {
+    const [joiner, hostSession] = await Promise.all([
+        prisma.user.findUnique({ where: { id: joinerId }, select: { name: true } }),
+        prisma.workoutSession.findFirst({
+            where: { jamId, userId: hostUserId, completedAt: null },
+            select: { workoutId: true },
+        }),
+    ]);
+
+    if (!joiner || !hostSession) return;
+
+    await sendPushToUser(hostUserId, {
+        title: "Jam",
+        body: `${firstName(joiner.name)} entrou na jam.`,
+        url: `/active-workout/${hostSession.workoutId}`,
+        tag: `jam-join-${jamId}`,
+        quietWhenVisible: true,
+    });
 };
 
 const getState = async (userId: number, jamId: number) => {

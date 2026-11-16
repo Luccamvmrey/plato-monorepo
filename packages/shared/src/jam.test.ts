@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { jamExerciseMode, jamMemberProgress, pickJamEntryExercise, resolveJamTurn, type JamMemberState, type JamTurnCandidate } from "./jam";
+import {
+    isPlateLoaded,
+    jamExerciseMode,
+    jamLastWeight,
+    jamMemberProgress,
+    jamPlateSwap,
+    jamTurnForExercise,
+    pickJamEntryExercise,
+    resolveJamTurn,
+    type JamMemberState,
+    type JamTurnCandidate,
+} from "./jam";
 
 const member = (userId: number, setsDone: number, overrides: Partial<JamTurnCandidate> = {}): JamTurnCandidate => ({
     userId,
@@ -155,5 +166,84 @@ describe("jamMemberProgress", () => {
         member.session!.sets = [set(10, 1), set(10, 2), set(20, 1), set(20, 2), set(20, 3)];
 
         expect(jamMemberProgress(member)).toEqual({ kind: "IDLE" });
+    });
+});
+
+describe("jamTurnForExercise", () => {
+    const person = (userId: number, joinedAt: string, sets: number, overrides: Partial<JamMemberState> = {}): JamMemberState => ({
+        userId,
+        name: `P${userId}`,
+        joinedAt,
+        leftAt: null,
+        presence: { exerciseId: 10, restEndsAt: null },
+        session: {
+            id: userId,
+            completedAt: null,
+            exercises: [{ exerciseId: 10, name: "Supino", targetSets: 4, skipped: false }],
+            sets: Array.from({ length: sets }, (_, index) => ({ exerciseId: 10, setNumber: index + 1, actualReps: 10, actualWeight: 60 })),
+        },
+        ...overrides,
+    });
+
+    it("é de quem fez menos séries", () => {
+        const members = [person(1, "2026-11-16T10:00:00Z", 2), person(2, "2026-11-16T10:05:00Z", 1)];
+
+        expect(jamTurnForExercise({ members }, 10)).toBe(2);
+    });
+
+    it("empate fica com quem entrou antes", () => {
+        const members = [person(2, "2026-11-16T10:05:00Z", 1), person(1, "2026-11-16T10:00:00Z", 1)];
+
+        expect(jamTurnForExercise({ members }, 10)).toBe(1);
+    });
+
+    it("quem saiu, concluiu ou está noutro exercício não entra no rodízio", () => {
+        const members = [
+            person(1, "2026-11-16T10:00:00Z", 1),
+            person(2, "2026-11-16T10:01:00Z", 0, { leftAt: "2026-11-16T10:30:00Z" }),
+            person(3, "2026-11-16T10:02:00Z", 0, { presence: { exerciseId: 20, restEndsAt: null } }),
+        ];
+        members[2].session!.exercises.push({ exerciseId: 20, name: "Remada", targetSets: 3, skipped: false });
+
+        expect(jamTurnForExercise({ members }, 10)).toBeNull();
+    });
+});
+
+describe("jamLastWeight", () => {
+    it("pega a carga da série de maior número", () => {
+        const member: JamMemberState = {
+            userId: 1, name: "Ana", joinedAt: "2026-11-16T10:00:00Z", leftAt: null, presence: null,
+            session: {
+                id: 1, completedAt: null, exercises: [],
+                sets: [
+                    { exerciseId: 10, setNumber: 2, actualReps: 8, actualWeight: 80 },
+                    { exerciseId: 10, setNumber: 1, actualReps: 10, actualWeight: 70 },
+                    { exerciseId: 20, setNumber: 3, actualReps: 10, actualWeight: 20 },
+                ],
+            },
+        };
+
+        expect(jamLastWeight(member, 10)).toBe(80);
+        expect(jamLastWeight(member, 30)).toBeNull();
+    });
+});
+
+describe("jamPlateSwap", () => {
+    it("tira metade da diferença de cada lado", () => {
+        expect(jamPlateSwap(80, 60)).toEqual({ action: "REMOVE", perSideKg: 10 });
+    });
+
+    it("coloca quando a sua é maior", () => {
+        expect(jamPlateSwap(60, 65)).toEqual({ action: "ADD", perSideKg: 2.5 });
+    });
+
+    it("sem diferença não há troca", () => {
+        expect(jamPlateSwap(60, 60)).toBeNull();
+    });
+
+    it("anilha só em barra", () => {
+        expect(isPlateLoaded("BARBELL")).toBe(true);
+        expect(isPlateLoaded("MACHINE")).toBe(false);
+        expect(isPlateLoaded(null)).toBe(false);
     });
 });

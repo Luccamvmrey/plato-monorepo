@@ -14,20 +14,37 @@ const parseMessage = (event) => {
 const withDelay = (body, measureFrom) =>
     measureFrom ? `${body} (atraso de ${((Date.now() - measureFrom) / 1000).toFixed(1)}s)` : body;
 
-self.addEventListener("push", (event) => {
-    const { title, body, url, tag, measureFrom } = parseMessage(event);
+const hasVisibleWindow = async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    return windows.some((client) => client.visibilityState === "visible");
+};
+
+const show = async ({ title, body, url, tag, measureFrom, quietWhenVisible }) => {
+    // Quem está com a tela aberta já viu o aviso no app (a vez na jam): repetir seria ruído.
+    const isQuiet = quietWhenVisible === true && (await hasVisibleWindow());
 
     // Sempre mostra algo: o iOS cancela a inscrição de quem recebe push sem exibir nada.
-    event.waitUntil(
-        self.registration.showNotification(title, {
-            body: withDelay(body, measureFrom),
-            icon: "/pwa-192x192.png",
-            badge: "/pwa-64x64.png",
-            data: { url },
+    // Quieta, a notificação sai sem som e fecha logo em seguida.
+    await self.registration.showNotification(title, {
+        body: withDelay(body, measureFrom),
+        icon: "/pwa-192x192.png",
+        badge: "/pwa-64x64.png",
+        data: { url },
+        ...(isQuiet
+            ? { tag, silent: true }
             // `renotify` faz a notificação que substitui outra alertar de novo, em vez de vir muda.
-            ...(tag ? { tag, renotify: true, vibrate: [200, 100, 200] } : {}),
-        })
-    );
+            : tag ? { tag, renotify: true, vibrate: [200, 100, 200] } : {}),
+    });
+
+    // Sem etiqueta não há como achar só esta: melhor deixar aberta do que fechar as outras.
+    if (!isQuiet || !tag) return;
+
+    const shown = await self.registration.getNotifications({ tag });
+    for (const notification of shown) notification.close();
+};
+
+self.addEventListener("push", (event) => {
+    event.waitUntil(show(parseMessage(event)));
 });
 
 self.addEventListener("notificationclick", (event) => {

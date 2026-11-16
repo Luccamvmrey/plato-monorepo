@@ -7,6 +7,10 @@ import { UNITS } from "@/core/constants/units";
  * @param weight Weight in kg
  * @returns Formatted string (e.g., "1.250,5 kg")
  */
+/** "1:05": cronômetros de descanso e de vez na jam. */
+export const formatClock = (seconds: number) =>
+    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+
 export const formatWeight = (weight: number): string => {
     return `${weight.toLocaleString("pt-BR")} ${UNITS.WEIGHT}`;
 };

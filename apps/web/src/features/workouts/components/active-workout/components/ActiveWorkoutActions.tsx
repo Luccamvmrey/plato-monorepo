@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
 import { cn } from "@/lib/utils.ts";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
@@ -8,6 +9,8 @@ interface ActiveWorkoutActionsProps {
     isFinishPending: boolean;
     isCancelPending: boolean;
     isAllCompleted: boolean;
+    /** Ocupa o lugar do descanso e do Finalizar: a vez do parceiro na jam. */
+    overridePanel?: ReactNode;
 }
 
 export const ActiveWorkoutActions = ({
@@ -15,6 +18,7 @@ export const ActiveWorkoutActions = ({
     isFinishPending,
     isCancelPending,
     isAllCompleted,
+    overridePanel,
 }: ActiveWorkoutActionsProps) => {
     const isKeyboardOpen = useKeyboardOpen();
     const isResting = useActiveWorkoutStore((s) => s.restEndsAt !== null);
@@ -36,7 +40,7 @@ export const ActiveWorkoutActions = ({
         >
             {/* Uma linha só: o descanso ocupa o lugar do Finalizar enquanto corre.
                 Empilhados, os dois cobriam o botão de confirmar a próxima série. */}
-            {showRest ? (
+            {overridePanel ?? (showRest ? (
                 <RestTimerBar />
             ) : (
                 <button
@@ -51,7 +55,7 @@ export const ActiveWorkoutActions = ({
                 >
                     {isFinishPending ? "Finalizando..." : "Finalizar Treino"}
                 </button>
-            )}
+            ))}
         </div>
     );
 };

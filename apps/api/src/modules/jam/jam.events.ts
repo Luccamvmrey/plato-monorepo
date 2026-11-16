@@ -1,5 +1,7 @@
 import type { Response } from "express";
 import prisma from "@plato/database";
+import { jamExerciseMode, jamTurnForExercise, type JamState } from "@plato/shared";
+import { sendPushToUser } from "../../shared/push/push";
 import { loadJamState } from "./jam.state";
 
 /**
@@ -9,11 +11,15 @@ import { loadJamState } from "./jam.state";
  */
 const streams = new Map<number, Set<Response>>();
 const pending = new Map<number, NodeJS.Timeout>();
+/** Última vez vista por exercício em revezamento, para saber quando ela muda de mãos. */
+const lastTurns = new Map<number, Map<number, number | null>>();
 
 /** Várias mudanças em sequência (série + presença) viram um evento só. */
 const PUBLISH_DEBOUNCE_MS = 120;
 /** A Cloudflare derruba conexão ociosa em 100 s. */
 const HEARTBEAT_MS = 25_000;
+/** "Sua vez" de dois minutos atrás já passou: o serviço de push pode descartar. */
+const TURN_PUSH_TTL_SECONDS = 120;
 
 const write = (res: Response, chunk: string) => {
     try {
@@ -43,10 +49,71 @@ export const subscribeJam = (jamId: number, res: Response) => {
 
 export const sendJamState = (res: Response, state: unknown) => write(res, `data: ${JSON.stringify(state)}\n\n`);
 
-/** Manda o estado novo a todos que estão olhando esta jam. Nunca lança. */
-export const publishJam = (jamId: number) => {
-    if (!streams.has(jamId)) return;
+/** Push para quem acabou de ganhar a vez. Sem rede ou sem chaves VAPID, só registra. */
+const sendTurnPush = async (state: JamState, userId: number, exerciseId: number, previousUserId: number | null) => {
+    const member = state.members.find((candidate) => candidate.userId === userId);
+    const previous = state.members.find((candidate) => candidate.userId === previousUserId);
 
+    if (!member?.session) return;
+
+    const session = await prisma.workoutSession.findUnique({
+        where: { id: member.session.id },
+        select: { workoutId: true },
+    });
+
+    if (!session) return;
+
+    const exerciseName = member.session.exercises.find((exercise) => exercise.exerciseId === exerciseId)?.name ?? "Revezamento";
+
+    await sendPushToUser(
+        userId,
+        {
+            title: "Sua vez",
+            body: previous ? `${exerciseName}: ${previous.name} terminou a série.` : `${exerciseName}: o aparelho é seu.`,
+            url: `/active-workout/${session.workoutId}`,
+            tag: `jam-turn-${state.id}`,
+            quietWhenVisible: true,
+        },
+        { ttlSeconds: TURN_PUSH_TTL_SECONDS, urgency: "high" }
+    );
+};
+
+/**
+ * Compara a vez de cada exercício em revezamento com a última vista e avisa quem ganhou a
+ * vez. A primeira leitura depois de o servidor subir só registra: sem a anterior, não dá
+ * para saber se a vez mudou agora.
+ */
+const notifyTurnChanges = (state: JamState) => {
+    if (state.endedAt) {
+        lastTurns.delete(state.id);
+        return;
+    }
+
+    const known = lastTurns.get(state.id) ?? new Map<number, number | null>();
+    lastTurns.set(state.id, known);
+
+    for (const key of Object.keys(state.exerciseModes)) {
+        const exerciseId = Number(key);
+        if (jamExerciseMode(state.exerciseModes, exerciseId) !== "ALTERNATE") continue;
+
+        const turn = jamTurnForExercise(state, exerciseId);
+        const hadPrevious = known.has(exerciseId);
+        const previous = known.get(exerciseId) ?? null;
+        known.set(exerciseId, turn);
+
+        if (!hadPrevious || turn === null || turn === previous) continue;
+
+        sendTurnPush(state, turn, exerciseId, previous)
+            .catch((error: unknown) => console.error(`Failed to send jam ${state.id} turn push`, error));
+    }
+};
+
+/**
+ * Manda o estado novo a todos que estão olhando esta jam e avisa por push quem ganhou a vez.
+ * Roda mesmo sem ninguém conectado: com a tela apagada o stream cai, e é aí que o push
+ * importa. Nunca lança.
+ */
+export const publishJam = (jamId: number) => {
     clearTimeout(pending.get(jamId));
 
     pending.set(jamId, setTimeout(async () => {
@@ -54,11 +121,11 @@ export const publishJam = (jamId: number) => {
 
         try {
             const state = await loadJamState(jamId);
-            const connections = streams.get(jamId);
+            if (!state) return;
 
-            if (!state || !connections) return;
+            for (const res of streams.get(jamId) ?? []) sendJamState(res, state);
 
-            for (const res of connections) sendJamState(res, state);
+            notifyTurnChanges(state);
         } catch (error) {
             console.error(`Failed to publish jam ${jamId}`, error);
         }
