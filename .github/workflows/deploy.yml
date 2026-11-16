@@ -16,6 +16,12 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Para no primeiro erro: sem isso, um build que falha deixava o PM2 reiniciar com o
+            # dist antigo da API enquanto a web já ia nova (aconteceu no PR #30).
+            set -e
+            # A VPS tem 1 GB de RAM e o Node limita o heap a ~490 MB: o tsc da API estourou.
+            # O swap de 2,4 GB cobre o excedente.
+            export NODE_OPTIONS=--max-old-space-size=1280
             cd /var/www/plato
             git pull
             npm install
