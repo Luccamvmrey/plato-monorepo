@@ -1,5 +1,5 @@
 import { motion, type Variants } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Share } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { WorkoutSummarySkeleton } from "../components/workout-summary/WorkoutSummarySkeleton";
 import { path } from "@/core/constants/path.ts";
@@ -7,8 +7,8 @@ import { NotificationPromptCard } from "@/features/notifications/components/Noti
 import { useWorkoutSummaryLogic } from "@/features/workouts/hooks/useWorkoutSummaryLogic.ts";
 import { useStreakData } from "@/features/user/hooks/useStreakData";
 import { formatDateShort } from "@/core/utils/formatters";
-import { formatDurationExtensive } from "@/core/utils/time";
-import { UNITS } from "@/core/constants/units";
+import { buildSummaryLead, buildSummaryMetrics } from "@/features/workouts/utils/summary-headline";
+import { useShareSessionResult } from "@/features/workouts/hooks/useShareSessionResult";
 import SummaryPRBanner from "../components/workout-summary/SummaryPRBanner";
 import StreakBanner from "../components/workout-summary/StreakBanner";
 import SummaryMetricsGrid from "../components/workout-summary/SummaryMetricsGrid";
@@ -29,6 +29,7 @@ const WorkoutSummaryPage = () => {
     const { navigate, workoutSession, workout, stats, handleFinish, isLoading } =
         useWorkoutSummaryLogic();
     const { data: streakData } = useStreakData();
+    const share = useShareSessionResult({ workoutSession, workout, stats, streak: streakData });
 
     if (isLoading) return <WorkoutSummarySkeleton />;
 
@@ -41,23 +42,8 @@ const WorkoutSummaryPage = () => {
         );
     }
 
-    // No modo simplificado as reps são presumidas, e sem peso nenhum informado não há
-    // volume a mostrar. "0 kg" diria que a pessoa não levantou nada.
-    const isSimple = workoutSession.trackingMode === "SIMPLE";
-
-    const lead = stats.totalVolume > 0
-        ? {
-            label: isSimple ? "Volume estimado" : "Volume total",
-            value: `${Math.round(stats.totalVolume).toLocaleString("pt-BR")} ${UNITS.WEIGHT}`,
-            deltaPercent: isSimple ? null : stats.volumeDeltaPercent,
-        }
-        : undefined;
-
-    const metrics = [
-        { label: "Duração", value: formatDurationExtensive(stats.duration) },
-        { label: "Sets", value: String(stats.totalSets) },
-        { label: "Exercícios", value: String(stats.completedExercises.length) },
-    ];
+    const lead = buildSummaryLead(stats, workoutSession.trackingMode);
+    const metrics = buildSummaryMetrics(stats);
 
     return (
         <motion.div
@@ -92,10 +78,19 @@ const WorkoutSummaryPage = () => {
                 `bottom-[92px]` cru: a NavBar mede 92px + safe-area-inset, então o
                 valor fixo deixava o botão parcialmente sob a barra em aparelho
                 com notch. */}
-            <div className="fixed bottom-navbar inset-x-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
+            <div className="fixed bottom-navbar inset-x-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t border-border flex gap-2">
+                <Button
+                    variant="outline"
+                    onClick={share.handleShare}
+                    disabled={!share.isReady}
+                    className="h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] px-4"
+                >
+                    <Share className="size-4" aria-hidden />
+                    Compartilhar
+                </Button>
                 <Button
                     onClick={handleFinish}
-                    className="w-full h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] bg-primary text-primary-foreground"
+                    className="flex-1 h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] bg-primary text-primary-foreground"
                 >
                     Concluir
                 </Button>
