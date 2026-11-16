@@ -65,6 +65,8 @@ export {
     shouldSendDraft,
 } from "./session-closing";
 export type { OpenSessionAction } from "./session-closing";
+export { restoreDraftSets } from "./session-draft";
+export type { DraftSet } from "./session-draft";
 export { buildAdminMetrics, filterAdminUsers } from "./admin-metrics";
 export type {
     AdminFeature,
