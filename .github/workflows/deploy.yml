@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/plato
+            git pull
+            npm install
+            npm run db:sync -w packages/database
+            npm run build -w packages/shared
+            cp -r packages/database/generated packages/database/dist/
+            npm run build -w apps/api
+            npm run build -w apps/web
+            npm run build -w apps/mcp
+            pm2 restart plato-api
+            pm2 restart plato-mcp
