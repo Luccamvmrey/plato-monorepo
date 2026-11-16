@@ -171,7 +171,8 @@ const create = async (userId: number, { kind, sourceId }: CreateShareInput) => {
 
 const getOwnLinks = async (userId: number) => {
     const links = await prisma.sharedPlan.findMany({
-        where: { userId, revokedAt: null },
+        // A foto do treino de uma jam é um SharedPlan por baixo, mas não é um link da pessoa.
+        where: { userId, revokedAt: null, jam: { is: null } },
         orderBy: { createdAt: "desc" },
         select: OWN_LINK_SELECT,
     });
@@ -343,4 +344,4 @@ const findPlanIdForSignup = async (token: unknown): Promise<number | null> => {
     return plan?.id ?? null;
 };
 
-export { create, getOwnLinks, revoke, getPublic, getFeatured, addToLibrary, getPageSummary, findPlanIdForSignup };
+export { toSnapshotWorkout, create, getOwnLinks, revoke, getPublic, getFeatured, addToLibrary, getPageSummary, findPlanIdForSignup };

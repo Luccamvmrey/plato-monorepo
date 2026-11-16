@@ -1,0 +1,121 @@
+/** Mais que isso é aula em grupo, outro produto. */
+export const JAM_MAX_MEMBERS = 4;
+
+export type JamExerciseModeValue = "PARALLEL" | "ALTERNATE";
+
+/** O que o aparelho informa: em que exercício a pessoa está e até quando descansa. */
+export interface JamPresence {
+    exerciseId: number | null;
+    /** Epoch em ms. Null fora do descanso. */
+    restEndsAt: number | null;
+}
+
+/** Uma pessoa vista de um exercício específico. */
+export interface JamTurnCandidate {
+    userId: number;
+    /** Epoch em ms. Desempata a vez. */
+    joinedAt: number;
+    /** A pessoa está neste exercício agora (pela presença). */
+    isHere: boolean;
+    setsDone: number;
+    targetSets: number;
+}
+
+/**
+ * De quem é a vez num exercício em revezamento. Entre quem está nele e ainda tem série a
+ * fazer, é de quem fez menos; empate, de quem entrou antes na jam.
+ *
+ * Derivado das séries, nunca guardado: reconexão, rede que caiu e app reaberto se resolvem
+ * lendo as séries de novo. Com menos de duas pessoas no rodízio não há vez (null): revezar
+ * sozinho é treinar normalmente.
+ */
+export const resolveJamTurn = (candidates: readonly JamTurnCandidate[]): number | null => {
+    const rotation = candidates.filter((candidate) => candidate.isHere && candidate.setsDone < candidate.targetSets);
+
+    if (rotation.length < 2) return null;
+
+    const [next] = [...rotation].sort((a, b) => a.setsDone - b.setsDone || a.joinedAt - b.joinedAt);
+
+    return next.userId;
+};
+
+/**
+ * Exercício em que quem entra no meio começa: o mais comum entre quem já está treinando;
+ * empate, o do host. Só vale exercício que a pessoa tem no treino dela. Null = começa do
+ * início, como num treino normal.
+ */
+export const pickJamEntryExercise = (
+    others: readonly { exerciseId: number | null; isHost: boolean }[],
+    availableExerciseIds: readonly number[]
+): number | null => {
+    const available = new Set(availableExerciseIds);
+    const counts = new Map<number, { count: number; hasHost: boolean }>();
+
+    for (const { exerciseId, isHost } of others) {
+        if (exerciseId === null || !available.has(exerciseId)) continue;
+
+        const current = counts.get(exerciseId) ?? { count: 0, hasHost: false };
+        counts.set(exerciseId, { count: current.count + 1, hasHost: current.hasHost || isHost });
+    }
+
+    let best: { exerciseId: number; count: number; hasHost: boolean } | null = null;
+
+    for (const [exerciseId, entry] of counts) {
+        if (
+            best === null ||
+            entry.count > best.count ||
+            (entry.count === best.count && entry.hasHost && !best.hasHost)
+        ) {
+            best = { exerciseId, ...entry };
+        }
+    }
+
+    return best?.exerciseId ?? null;
+};
+
+/** Modo de um exercício. Ausente no mapa (ou valor estranho no JSON) é PARALLEL. */
+export const jamExerciseMode = (modes: unknown, exerciseId: number): JamExerciseModeValue => {
+    if (typeof modes !== "object" || modes === null) return "PARALLEL";
+
+    return (modes as Record<string, unknown>)[String(exerciseId)] === "ALTERNATE" ? "ALTERNATE" : "PARALLEL";
+};
+
+/**
+ * Estado completo da jam, como a API entrega (`GET /jams/:id` e cada evento do stream).
+ * Inteiro, não diferenças: com até 4 pessoas cabe em poucos KB, e quem perdeu um evento se
+ * corrige no seguinte.
+ */
+export interface JamState {
+    id: number;
+    token: string;
+    hostUserId: number;
+    createdAt: string;
+    endedAt: string | null;
+    /** Por `exerciseId`. Ausente = PARALLEL. */
+    exerciseModes: Record<string, JamExerciseModeValue>;
+    /** O treino do host, na ordem dele. */
+    workout: {
+        name: string;
+        exercises: { exerciseId: number; name: string; targetSets: number; targetReps: number }[];
+    };
+    /** Por ordem de entrada. Inclui quem saiu (`leftAt`), para o resumo saber quem treinou junto. */
+    members: JamMemberState[];
+}
+
+export interface JamMemberState {
+    userId: number;
+    /** Só o primeiro nome. */
+    name: string;
+    joinedAt: string;
+    leftAt: string | null;
+    presence: JamPresence | null;
+    /** Null se a pessoa cancelou o treino. */
+    session: {
+        id: number;
+        completedAt: string | null;
+        /** A prescrição da sessão dela, que pode diferir da do host. */
+        exercises: { exerciseId: number; name: string; targetSets: number; skipped: boolean }[];
+        /** Do rascunho enquanto a sessão está aberta; das séries salvas depois de concluída. */
+        sets: { exerciseId: number; setNumber: number; actualReps: number; actualWeight: number | null }[];
+    } | null;
+}

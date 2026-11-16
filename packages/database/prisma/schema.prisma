@@ -131,6 +131,8 @@ model User {
   pushSubscription PushSubscription[]
   notificationPreference NotificationPreference?
   notificationLog NotificationLog[]
+  jamsHosted     Jam[]            @relation("JamHost")
+  jamMembers     JamMember[]
 }
 
 /// Pedido de redefinição de senha, de uso único. Guardado só o hash: quem lê o banco
@@ -281,6 +283,8 @@ model Workout {
   workoutExercise WorkoutExercise[]
   workoutSession  WorkoutSession[]
   programWorkout  ProgramWorkout[]
+  /// Jams que usaram este treino como base. Liga a cópia de quem entrou ao treino do host.
+  jamsAsBase      Jam[]             @relation("JamHostWorkout")
 
   @@index([sourcePlanId])
 }
@@ -322,6 +326,8 @@ model SharedPlan {
   signups         User[]              @relation("SignupPlan")
   copiedWorkouts  Workout[]
   copiedPrograms  Program[]
+  /// Preenchido quando o plano é a foto do treino de uma jam. Esses não aparecem em "Meus links".
+  jam             Jam?
 
   @@index([userId])
 }
@@ -467,6 +473,9 @@ model WorkoutSession {
   lastSetAt   DateTime?
   /// A pessoa esqueceu de concluir e o agendador fechou a sessão.
   autoCompleted Boolean      @default(false)
+  /// Sessão feita em jam. Nulável para sempre; SetNull para apagar a jam não levar o treino.
+  jamId       Int?
+  jam         Jam?         @relation(fields: [jamId], references: [id], onDelete: SetNull)
   workout     Workout      @relation(fields: [workoutId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   program     Program?     @relation(fields: [programId], references: [id], onDelete: SetNull)
@@ -474,6 +483,62 @@ model WorkoutSession {
   sessionExercise SessionExercise[]
 
   @@index([userId, programId, completedAt])
+  @@index([jamId])
+}
+
+enum JamExerciseMode {
+  /// Cada um na sua estação, no seu ritmo.
+  PARALLEL
+  /// Mesmo aparelho: terminou a série, a vez passa. A vez não é guardada, deriva das séries.
+  ALTERNATE
+}
+
+/// Treino em grupo, ao vivo. Cada participante tem a própria WorkoutSession; a jam só as
+/// amarra. A vez no revezamento não é guardada: deriva das séries (`resolveJamTurn`).
+model Jam {
+  id            Int       @id @default(autoincrement())
+  /// 128 bits aleatórios, como `SharedPlan.token`. É o que vai no QR.
+  token         String    @unique
+  /// Passa para quem entrou em seguida quando o host sai.
+  hostUserId    Int
+  /// Foto do treino no momento da criação. É dela que sai a cópia de quem não tem o treino.
+  sharedPlanId  Int       @unique
+  /// Treino do host. Liga as cópias de jams anteriores ao mesmo treino, para quem já entrou
+  /// numa jam dele usar a própria cópia na próxima.
+  hostWorkoutId Int?
+  createdAt     DateTime  @default(now())
+  endedAt       DateTime?
+  /// Modo de cada exercício, por `exerciseId` (não por posição: quem usa o próprio treino
+  /// pode ter outra ordem). Ausente = PARALLEL. JSON porque é pequeno, muda na hora e não
+  /// entra em histórico.
+  exerciseModes Json      @default("{}")
+
+  host        User             @relation("JamHost", fields: [hostUserId], references: [id], onDelete: Cascade)
+  sharedPlan  SharedPlan       @relation(fields: [sharedPlanId], references: [id], onDelete: Cascade)
+  hostWorkout Workout?         @relation("JamHostWorkout", fields: [hostWorkoutId], references: [id], onDelete: SetNull)
+  members     JamMember[]
+  sessions    WorkoutSession[]
+
+  @@index([hostWorkoutId])
+}
+
+model JamMember {
+  id       Int       @id @default(autoincrement())
+  jamId    Int
+  userId   Int
+  /// Ordem de entrada. Desempata a vez no revezamento e decide o próximo host.
+  joinedAt DateTime  @default(now())
+  /// Saiu da jam. A sessão continua: sair não é cancelar o treino.
+  leftAt   DateTime?
+  /// Exercício em que a pessoa está e até quando descansa. Efêmero, informado pelo
+  /// aparelho; pelo mesmo motivo de `draftSets`, não é histórico.
+  presence Json?
+
+  jam  Jam  @relation(fields: [jamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jamId, userId])
+  @@index([userId])
 }
 
 model SessionSet {

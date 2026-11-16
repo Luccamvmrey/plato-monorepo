@@ -15,7 +15,7 @@ const getMetrics = async () => {
                     select: {
                         program: { where: { isActive: true } },
                         pushSubscription: true,
-                        sharedPlan: true,
+                        sharedPlan: { where: { jam: { is: null } } },
                         bodyWeightLog: true,
                         oauthSession: true,
                     },

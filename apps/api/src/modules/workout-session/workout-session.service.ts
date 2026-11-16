@@ -5,6 +5,7 @@ import { ensureOwnership } from "../../shared/utils/auth";
 import { scanForRecords } from "./personal-record.service";
 import { findActiveProgramIdForWorkout } from "../program/program.service";
 import { sessionSetsSchema, type SaveDraftInput, type SessionSetsInput } from "./workout-session.schema";
+import { notifyJamSessionChanged } from "../jam/jam.events";
 
 /**
  * O snapshot entra em TODOS os caminhos de leitura de sessão, inclusive os que
@@ -34,7 +35,8 @@ const SESSION_WITH_WORKOUT_INCLUDE = {
     ...SESSION_INCLUDE
 } as const;
 
-const create = async (userId: number, data: any) => {
+/** `jamId` só chega pelo módulo da jam: o schema da rota de sessão não o aceita. */
+const create = async (userId: number, data: { workoutId: number; jamId?: number }) => {
     const workout = await prisma.workout.findFirst({
         where: { id: data.workoutId, userId }
     });
@@ -97,6 +99,7 @@ const create = async (userId: number, data: any) => {
             workout: { connect: { id: data.workoutId } },
             trackingMode: user.trackingMode,
             ...(programId !== null ? { program: { connect: { id: programId } } } : {}),
+            ...(data.jamId !== undefined ? { jam: { connect: { id: data.jamId } } } : {}),
             sessionExercise: {
                 // orderIndex derivado da POSIÇÃO, não copiado do plano: o do plano vem
                 // do cliente e um valor repetido violaria @@unique([workoutSessionId,
@@ -317,6 +320,8 @@ const finishSession = async (userId: number, workoutSessionId: number, body: {
         await completeSession(existing, sets, new Date(resolveCompletedAt(startedAt, lastSetAt, now)), false);
     }
 
+    notifyJamSessionChanged(existing.jamId);
+
     return prisma.workoutSession.findUniqueOrThrow({
         where: { id: workoutSessionId, userId },
         include: SESSION_INCLUDE,
@@ -347,6 +352,8 @@ const saveDraft = async (userId: number, workoutSessionId: number, { sets, lastS
             ...(normalized !== null ? { lastSetAt: new Date(normalized) } : {}),
         },
     });
+
+    notifyJamSessionChanged(existing.jamId);
 };
 
 /**
@@ -356,7 +363,7 @@ const saveDraft = async (userId: number, workoutSessionId: number, { sets, lastS
 const closeIdleSessions = async (now: Date) => {
     const sessions = await prisma.workoutSession.findMany({
         where: { completedAt: null, draftSets: { not: Prisma.DbNull } },
-        select: { id: true, userId: true, trackingMode: true, startedAt: true, lastSetAt: true, draftSets: true },
+        select: { id: true, userId: true, trackingMode: true, startedAt: true, lastSetAt: true, draftSets: true, jamId: true },
     });
 
     const closed: { userId: number; setCount: number }[] = [];
@@ -384,6 +391,8 @@ const closeIdleSessions = async (now: Date) => {
                     closed.push({ userId: session.userId, setCount: sets.length });
                 }
             }
+
+            notifyJamSessionChanged(session.jamId);
         } catch (error) {
             console.error(`Could not close session ${session.id}`, error);
         }
@@ -522,9 +531,9 @@ const getGlobalExerciseHistory = async (userId: number, exerciseIds: number[], l
  * escopo certo.
  *
  * O escopo por treino é decisão deliberada e continua valendo para o que foi
- * prescrito: o mesmo exercício em dois treinos progride de forma independente. O que
- * muda aqui é só o exercício que entrou fora do plano — para ele, o escopo por treino
- * não tem o que dizer, e o global é a única referência que existe.
+ * prescrito: o mesmo exercício em dois treinos progride de forma independente. O global
+ * só entra onde o escopo por treino não tem o que dizer: o exercício que entrou fora do
+ * plano e o de um treino que ainda não tem sessão (cópia de link ou de jam).
  */
 const getExerciseHistoryForSession = async (userId: number, workoutSessionId: number, limit = 4) => {
     const session = await prisma.workoutSession.findUnique({
@@ -533,7 +542,7 @@ const getExerciseHistoryForSession = async (userId: number, workoutSessionId: nu
             id: true,
             userId: true,
             workoutId: true,
-            sessionExercise: { select: { exerciseId: true, origin: true } },
+            sessionExercise: { select: { exerciseId: true } },
         }
     });
 
@@ -541,13 +550,16 @@ const getExerciseHistoryForSession = async (userId: number, workoutSessionId: nu
 
     const history = await getExerciseHistoryByWorkout(userId, session!.workoutId, limit);
 
-    const offPlan = session!.sessionExercise
-        .filter((entry) => entry.origin !== "PRESCRIBED" && !history[entry.exerciseId])
+    // Sem histórico no treino, vale o do exercício: o adicionado fora do plano e também o
+    // prescrito de um treino recém-copiado (link, jam), que ainda não tem sessão nenhuma.
+    // Sem isto, quem entra numa jam treinaria sem ver carga anterior alguma.
+    const withoutHistory = session!.sessionExercise
+        .filter((entry) => !history[entry.exerciseId])
         .map((entry) => entry.exerciseId);
 
-    if (offPlan.length === 0) return history;
+    if (withoutHistory.length === 0) return history;
 
-    return { ...history, ...(await getGlobalExerciseHistory(userId, offPlan, limit)) };
+    return { ...history, ...(await getGlobalExerciseHistory(userId, withoutHistory, limit)) };
 };
 
 const listByExerciseId = async (userId: number, exerciseId: number) => {
@@ -568,9 +580,14 @@ const listByExerciseId = async (userId: number, exerciseId: number) => {
 }
 
 const deleteSession = async (userId: number, workoutSessionId: number) => {
-    return prisma.workoutSession.delete({
+    const deleted = await prisma.workoutSession.delete({
         where: { id: workoutSessionId, userId }
     });
+
+    // Cancelar o treino numa jam: a pessoa continua na jam, só sem sessão.
+    notifyJamSessionChanged(deleted.jamId);
+
+    return deleted;
 }
 
 export { create, listByUserId, listByWorkoutId, listById, findActiveSession, finishSession, saveDraft, closeIdleSessions, listByExerciseId, getExerciseHistoryByWorkout, getExerciseHistoryForSession, deleteSession };
