@@ -113,9 +113,20 @@ export {
     jamExerciseMode,
     jamLastWeight,
     jamMemberProgress,
+    buildJamSummary,
     jamPlateSwap,
     jamTurnForExercise,
     pickJamEntryExercise,
     resolveJamTurn,
 } from "./jam";
-export type { JamExerciseModeValue, JamMemberProgress, JamMemberState, JamPresence, JamState, JamTurnCandidate } from "./jam";
+export type {
+    JamExerciseModeValue,
+    JamMemberProgress,
+    JamMemberState,
+    JamPresence,
+    JamState,
+    JamSummary,
+    JamSummaryRow,
+    JamSummaryStatus,
+    JamTurnCandidate,
+} from "./jam";

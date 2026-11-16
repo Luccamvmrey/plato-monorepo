@@ -14,6 +14,8 @@ import StreakBanner from "../components/workout-summary/StreakBanner";
 import SummaryMetricsGrid from "../components/workout-summary/SummaryMetricsGrid";
 import SummaryExerciseList from "../components/workout-summary/SummaryExerciseList";
 import SummaryVolumeChart from "../components/workout-summary/SummaryVolumeChart";
+import { useJamSessionSummary } from "@/features/jam/hooks/useJamSessionSummary";
+import { JamSummaryCard } from "@/features/jam/components/JamSummaryCard";
 
 const stagger: Variants = {
     hidden: {},
@@ -29,7 +31,8 @@ const WorkoutSummaryPage = () => {
     const { navigate, workoutSession, workout, stats, handleFinish, isLoading } =
         useWorkoutSummaryLogic();
     const { data: streakData } = useStreakData();
-    const share = useShareSessionResult({ workoutSession, workout, stats, streak: streakData });
+    const jamSummary = useJamSessionSummary(workoutSession?.jamId);
+    const share = useShareSessionResult({ workoutSession, workout, stats, streak: streakData, jam: jamSummary });
 
     if (isLoading) return <WorkoutSummarySkeleton />;
 
@@ -68,6 +71,11 @@ const WorkoutSummaryPage = () => {
 
             <SummaryPRBanner newPRs={stats.newPRs} />
             <SummaryMetricsGrid lead={lead} metrics={metrics} />
+            {jamSummary && (
+                <motion.div variants={staggerItem}>
+                    <JamSummaryCard summary={jamSummary} />
+                </motion.div>
+            )}
             <NotificationPromptCard completedAt={workoutSession.completedAt} />
             <SummaryExerciseList exercises={stats.completedExercises} unexecuted={stats.unexecuted} />
             <SummaryVolumeChart volumeByGroup={stats.volumeByGroup} />

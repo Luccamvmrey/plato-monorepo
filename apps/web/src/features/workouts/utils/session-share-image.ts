@@ -2,6 +2,8 @@ import type { SummaryStats } from "@/features/workouts/hooks/useWorkoutSummarySt
 import type { SummaryLead, SummaryMetric } from "@/features/workouts/utils/summary-headline";
 import { formatWeightPtBr } from "@/features/workouts/utils/progression";
 import { UNITS } from "@/core/constants/units";
+import type { JamSummary } from "@plato/shared";
+import { describeJamSummaryRow } from "@/features/jam/utils/jam-summary";
 
 /** O que vai na imagem, já formatado. Montado a partir do resumo, sem nada calculado aqui. */
 export type SessionShareData = {
@@ -12,6 +14,7 @@ export type SessionShareData = {
     prs: { name: string; value: string }[];
     /** Só quando a sessão é de hoje: a sequência é a de agora, não a do dia do treino. */
     streakDays: number | null;
+    jam: { title: string; rows: { name: string; value: string; isHighlight: boolean }[] } | null;
 };
 
 export const buildSessionShareData = (input: {
@@ -21,6 +24,7 @@ export const buildSessionShareData = (input: {
     metrics: SummaryMetric[];
     newPRs: SummaryStats["newPRs"];
     streakDays: number | null;
+    jam: JamSummary | null;
 }): SessionShareData => ({
     workoutName: input.workoutName,
     dateLabel: input.dateLabel,
@@ -31,6 +35,20 @@ export const buildSessionShareData = (input: {
         value: `${formatWeightPtBr(pr.newMax)} ${UNITS.WEIGHT}`,
     })),
     streakDays: input.streakDays && input.streakDays > 0 ? input.streakDays : null,
+    jam: input.jam
+        ? {
+            title: input.jam.title,
+            rows: input.jam.rows.map((row) => {
+                const { main, detail } = describeJamSummaryRow(row);
+
+                return {
+                    name: row.isMe ? `${row.name} (você)` : row.name,
+                    value: detail ? `${main} · ${detail}` : main,
+                    isHighlight: row.status === "DONE" && !!row.recordCount,
+                };
+            }),
+        }
+        : null,
 });
 
 // 9:16: o formato de Stories e de status do WhatsApp. Numa conversa também aparece inteiro.
@@ -285,6 +303,53 @@ const prBlock = (ctx: Ctx, prs: SessionShareData["prs"]): Block => {
     };
 };
 
+/**
+ * A jam: uma linha por pessoa. Entra no lugar do bloco de recordes, que não cabe junto no
+ * story; os recordes de cada um aparecem na própria linha.
+ */
+const jamBlock = (ctx: Ctx, jam: NonNullable<SessionShareData["jam"]>): Block => {
+    const rowHeight = 64;
+    const innerPadding = 52;
+    const titleHeight = 52;
+    const height = innerPadding * 2 + titleHeight + 24 + jam.rows.length * rowHeight - (rowHeight - 44);
+
+    return {
+        height,
+        gapBefore: 64,
+        draw: (y) => {
+            ctx.strokeStyle = COLOR.border;
+            ctx.lineWidth = 2;
+            roundedRect(ctx, PADDING_X, y, CONTENT_WIDTH, height, 40);
+            ctx.stroke();
+
+            const x = PADDING_X + innerPadding;
+            const innerWidth = CONTENT_WIDTH - innerPadding * 2;
+            let cursor = y + innerPadding;
+
+            ctx.font = font(600, 48);
+            ctx.fillStyle = COLOR.foreground;
+            setTracking(ctx, -1);
+            ctx.fillText(fitText(ctx, jam.title, innerWidth), x, cursor);
+            setTracking(ctx, 0);
+            cursor += titleHeight + 24;
+
+            jam.rows.forEach((row) => {
+                ctx.font = font(500, 42);
+                const valueWidth = ctx.measureText(row.value).width;
+                ctx.fillStyle = row.isHighlight ? COLOR.pr : COLOR.foreground;
+                ctx.textAlign = "right";
+                ctx.fillText(row.value, x + innerWidth, cursor);
+                ctx.textAlign = "left";
+
+                ctx.font = font(400, 42);
+                ctx.fillStyle = COLOR.muted;
+                ctx.fillText(fitText(ctx, row.name, innerWidth - valueWidth - 40), x, cursor);
+                cursor += rowHeight;
+            });
+        },
+    };
+};
+
 const drawBrand = (ctx: Ctx) => {
     const logoSize = 72;
     ctx.font = font(600, 48);
@@ -339,7 +404,9 @@ export const renderSessionShareImage = async (data: SessionShareData): Promise<B
         ...headerBlocks(ctx, data),
         ...(data.lead ? [leadBlock(ctx, data.lead)] : []),
         metricsBlock(ctx, data.metrics, data.lead ? 56 : 120),
-        ...(data.prs.length > 0 ? [prBlock(ctx, data.prs)] : []),
+        ...(data.jam
+            ? [jamBlock(ctx, data.jam)]
+            : data.prs.length > 0 ? [prBlock(ctx, data.prs)] : []),
     ];
 
     // Centralizado na faixa segura: com ou sem recordes, o treino fica no meio do story.

@@ -3,6 +3,7 @@ import { isToday } from "date-fns";
 import type { Workout, WorkoutSession } from "@/features/workouts/workout.types.ts";
 import type { SummaryStats } from "@/features/workouts/hooks/useWorkoutSummaryStats";
 import type { StreakData } from "@/features/user/hooks/useStreakData";
+import type { JamSummary } from "@plato/shared";
 import { buildSummaryLead, buildSummaryMetrics } from "@/features/workouts/utils/summary-headline";
 import {
     buildSessionShareData,
@@ -16,6 +17,7 @@ type Input = {
     workout: Workout | undefined;
     stats: SummaryStats | null;
     streak: StreakData | undefined;
+    jam: JamSummary | null;
 };
 
 const downloadFile = (file: File) => {
@@ -35,7 +37,7 @@ const downloadFile = (file: File) => {
  * de um gesto, e o gesto expira se houver espera no meio: gerando no toque, a folha não
  * abriria. Pelo mesmo motivo de `useShareLink`.
  */
-export const useShareSessionResult = ({ workoutSession, workout, stats, streak }: Input) => {
+export const useShareSessionResult = ({ workoutSession, workout, stats, streak, jam }: Input) => {
     const data = useMemo<SessionShareData | null>(() => {
         if (!workoutSession?.completedAt || !workout || !stats) return null;
 
@@ -46,8 +48,9 @@ export const useShareSessionResult = ({ workoutSession, workout, stats, streak }
             metrics: buildSummaryMetrics(stats),
             newPRs: stats.newPRs,
             streakDays: isToday(new Date(workoutSession.completedAt)) ? (streak?.currentStreak ?? null) : null,
+            jam,
         });
-    }, [workoutSession, workout, stats, streak]);
+    }, [workoutSession, workout, stats, streak, jam]);
 
     // Guardado junto com o `data` que o gerou: um arquivo de dados antigos não serve.
     const [rendered, setRendered] = useState<{ source: SessionShareData; file: File } | null>(null);

@@ -1,5 +1,5 @@
 import prisma from "@plato/database";
-import type { JamExerciseModeValue, JamPresence, JamState } from "@plato/shared";
+import { calculateTotalVolume, type JamExerciseModeValue, type JamPresence, type JamState } from "@plato/shared";
 import { sessionSetsSchema } from "../workout-session/workout-session.schema";
 
 const firstName = (name: string | null) => name?.trim().split(/\s+/)[0] || "Alguém";
@@ -27,6 +27,14 @@ export const parseModes = (value: unknown): Record<string, JamExerciseModeValue>
 };
 
 /** Rascunho ilegível não derruba a jam: a pessoa só aparece sem séries até o próximo envio. */
+type RawSet = {
+    exerciseId: number;
+    setNumber: number;
+    actualReps: number;
+    actualWeight: number | null;
+    equipmentWeight: number | null;
+};
+
 const parseDraftSets = (draft: unknown) => {
     const parsed = sessionSetsSchema.safeParse(draft ?? []);
 
@@ -77,7 +85,7 @@ export const loadJamState = async (jamId: number): Promise<JamState | null> => {
                     draftSets: true,
                     sessionSet: {
                         orderBy: [{ exerciseId: "asc" }, { setNumber: "asc" }],
-                        select: { exerciseId: true, setNumber: true, actualReps: true, actualWeight: true },
+                        select: { exerciseId: true, setNumber: true, actualReps: true, actualWeight: true, equipmentWeight: true },
                     },
                     sessionExercise: {
                         orderBy: { orderIndex: "asc" },
@@ -89,6 +97,19 @@ export const loadJamState = async (jamId: number): Promise<JamState | null> => {
     });
 
     if (!jam) return null;
+
+    // O recorde guarda a data da sessão em que foi batido (a conclusão): é assim que se acha
+    // quais são desta jam. Um recorde batido de novo depois muda de data e sai da conta.
+    const completed = jam.sessions.filter((session) => session.completedAt !== null);
+    const records = completed.length === 0 ? [] : await prisma.personalRecord.findMany({
+        where: {
+            type: "WEIGHT",
+            OR: completed.map((session) => ({ userId: session.userId, date: session.completedAt! })),
+        },
+        select: { userId: true, date: true },
+    });
+    const recordCountOf = (userId: number, completedAt: Date) =>
+        records.filter((record) => record.userId === userId && record.date.getTime() === completedAt.getTime()).length;
 
     const planExercises = jam.sharedPlan.workouts[0]?.exercises ?? [];
 
@@ -111,16 +132,23 @@ export const loadJamState = async (jamId: number): Promise<JamState | null> => {
         members: jam.members.map((member) => {
             // Mais recente primeiro: quem saiu, cancelou e entrou de novo tem mais de uma.
             const session = jam.sessions.find((candidate) => candidate.userId === member.userId);
-            const sets = !session
+            const rawSets: RawSet[] = !session
                 ? []
                 : session.completedAt
                     ? session.sessionSet
-                    : parseDraftSets(session.draftSets).map(({ exerciseId, setNumber, actualReps, actualWeight }) => ({
-                        exerciseId,
-                        setNumber,
-                        actualReps,
-                        actualWeight,
+                    : parseDraftSets(session.draftSets).map((set) => ({
+                        exerciseId: set.exerciseId,
+                        setNumber: set.setNumber,
+                        actualReps: set.actualReps,
+                        actualWeight: set.actualWeight ?? null,
+                        equipmentWeight: set.equipmentWeight ?? null,
                     }));
+            const sets = rawSets.map(({ exerciseId, setNumber, actualReps, actualWeight }) => ({
+                exerciseId,
+                setNumber,
+                actualReps,
+                actualWeight,
+            }));
 
             return {
                 userId: member.userId,
@@ -139,6 +167,8 @@ export const loadJamState = async (jamId: number): Promise<JamState | null> => {
                             skipped: exercise.skipped,
                         })),
                         sets,
+                        volume: calculateTotalVolume(rawSets),
+                        recordCount: session.completedAt ? recordCountOf(member.userId, session.completedAt) : null,
                     }
                     : null,
             };

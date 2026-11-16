@@ -235,10 +235,12 @@ const writeSets = async (tx: Prisma.TransactionClient, session: SessionForClosin
     });
 };
 
+/** Depois dos recordes, a jam da sessão (se houver) republica: o card do resumo conta os PRs. */
 const scanInBackground = (userId: number, workoutSessionId: number) => {
-    scanForRecords(userId, workoutSessionId).catch((err) =>
-        console.error("PR Scanning background error:", err)
-    );
+    scanForRecords(userId, workoutSessionId)
+        .then(() => prisma.workoutSession.findUnique({ where: { id: workoutSessionId }, select: { jamId: true } }))
+        .then((session) => notifyJamSessionChanged(session?.jamId))
+        .catch((err) => console.error("PR Scanning background error:", err));
 };
 
 /**

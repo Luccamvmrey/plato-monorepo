@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    buildJamSummary,
     isPlateLoaded,
     jamExerciseMode,
     jamLastWeight,
@@ -181,6 +182,8 @@ describe("jamTurnForExercise", () => {
             completedAt: null,
             exercises: [{ exerciseId: 10, name: "Supino", targetSets: 4, skipped: false }],
             sets: Array.from({ length: sets }, (_, index) => ({ exerciseId: 10, setNumber: index + 1, actualReps: 10, actualWeight: 60 })),
+            volume: 0,
+            recordCount: null,
         },
         ...overrides,
     });
@@ -220,6 +223,8 @@ describe("jamLastWeight", () => {
                     { exerciseId: 10, setNumber: 1, actualReps: 10, actualWeight: 70 },
                     { exerciseId: 20, setNumber: 3, actualReps: 10, actualWeight: 20 },
                 ],
+                volume: 0,
+                recordCount: null,
             },
         };
 
@@ -245,5 +250,62 @@ describe("jamPlateSwap", () => {
         expect(isPlateLoaded("BARBELL")).toBe(true);
         expect(isPlateLoaded("MACHINE")).toBe(false);
         expect(isPlateLoaded(null)).toBe(false);
+    });
+});
+
+describe("buildJamSummary", () => {
+    const person = (userId: number, name: string, overrides: Partial<JamMemberState> = {}, sets = 3): JamMemberState => ({
+        userId,
+        name,
+        joinedAt: "2026-11-16T10:00:00Z",
+        leftAt: null,
+        presence: null,
+        session: {
+            id: userId,
+            completedAt: "2026-11-16T11:00:00Z",
+            exercises: [],
+            sets: Array.from({ length: sets }, (_, index) => ({ exerciseId: 10, setNumber: index + 1, actualReps: 10, actualWeight: 60 })),
+            volume: sets * 600,
+            recordCount: 1,
+        },
+        ...overrides,
+    });
+
+    it("você primeiro, depois os outros na ordem de entrada, e o título com os nomes", () => {
+        const summary = buildJamSummary({ members: [person(1, "Ana"), person(2, "Bia"), person(3, "Caio")] }, 2);
+
+        expect(summary?.title).toBe("Jam com Ana e Caio");
+        expect(summary?.rows.map((row) => row.name)).toEqual(["Bia", "Ana", "Caio"]);
+        expect(summary?.rows[0]).toMatchObject({ isMe: true, status: "DONE", sets: 3, volume: 1800, recordCount: 1 });
+    });
+
+    it("três parceiros viram lista com vírgula", () => {
+        const members = [person(1, "Ana"), person(2, "Bia"), person(3, "Caio"), person(4, "Duda")];
+
+        expect(buildJamSummary({ members }, 1)?.title).toBe("Jam com Bia, Caio e Duda");
+    });
+
+    it("quem cancelou fica de fora; quem ainda treina e quem saiu aparecem com o que fizeram", () => {
+        const members = [
+            person(1, "Ana"),
+            person(2, "Bia", { session: null }),
+            person(3, "Caio", { session: { ...person(3, "Caio").session!, completedAt: null, recordCount: null } }),
+            person(4, "Duda", { leftAt: "2026-11-16T10:30:00Z", session: { ...person(4, "Duda").session!, completedAt: null } }),
+        ];
+
+        const summary = buildJamSummary({ members }, 1);
+
+        expect(summary?.title).toBe("Jam com Caio e Duda");
+        expect(summary?.rows.map((row) => [row.name, row.status])).toEqual([["Ana", "DONE"], ["Caio", "TRAINING"], ["Duda", "LEFT"]]);
+    });
+
+    it("quem saiu sem fazer série fica de fora", () => {
+        const members = [person(1, "Ana"), person(2, "Bia"), person(3, "Caio", { leftAt: "2026-11-16T10:30:00Z", session: { ...person(3, "Caio").session!, completedAt: null, sets: [] } })];
+
+        expect(buildJamSummary({ members }, 1)?.title).toBe("Jam com Bia");
+    });
+
+    it("sem parceiro com treino, não há card", () => {
+        expect(buildJamSummary({ members: [person(1, "Ana"), person(2, "Bia", { session: null })] }, 1)).toBeNull();
     });
 });

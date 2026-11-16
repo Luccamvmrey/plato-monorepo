@@ -117,6 +117,10 @@ export interface JamMemberState {
         exercises: { exerciseId: number; name: string; targetSets: number; skipped: boolean }[];
         /** Do rascunho enquanto a sessão está aberta; das séries salvas depois de concluída. */
         sets: { exerciseId: number; setNumber: number; actualReps: number; actualWeight: number | null }[];
+        /** Tonelagem, com a mesma regra do resumo da sessão (carga + peso do equipamento). */
+        volume: number;
+        /** Recordes de carga batidos nesta sessão. Null enquanto ela está aberta. */
+        recordCount: number | null;
     } | null;
 }
 
@@ -206,4 +210,58 @@ export const jamPlateSwap = (fromKg: number, toKg: number): { action: "ADD" | "R
     if (perSideKg === 0) return null;
 
     return { action: toKg > fromKg ? "ADD" : "REMOVE", perSideKg };
+};
+
+export type JamSummaryStatus = "DONE" | "TRAINING" | "LEFT";
+
+export interface JamSummaryRow {
+    userId: number;
+    name: string;
+    isMe: boolean;
+    status: JamSummaryStatus;
+    sets: number;
+    volume: number;
+    /** Null enquanto a sessão da pessoa não fechou: o recorde só é apurado na conclusão. */
+    recordCount: number | null;
+}
+
+export interface JamSummary {
+    /** "Jam com Ana e Pedro". */
+    title: string;
+    rows: JamSummaryRow[];
+}
+
+const joinNamesPtBr = (names: string[]) =>
+    names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} e ${names[names.length - 1]}`;
+
+/**
+ * O card da jam no resumo da sessão: você primeiro, depois os parceiros na ordem em que
+ * entraram. Fica de fora quem cancelou o treino ou saiu sem fazer série; quem saiu depois de
+ * treinar aparece com o que fez até sair. Sem nenhum parceiro com treino, não há card.
+ */
+export const buildJamSummary = (state: Pick<JamState, "members">, currentUserId: number): JamSummary | null => {
+    const rows = state.members
+        // Quem saiu sem fazer série não treinou com ninguém.
+        .filter((member) => member.session !== null && !(member.leftAt && member.session.sets.length === 0 && !member.session.completedAt))
+        .map((member): JamSummaryRow => {
+            const session = member.session!;
+
+            return {
+                userId: member.userId,
+                name: member.name,
+                isMe: member.userId === currentUserId,
+                status: session.completedAt ? "DONE" : member.leftAt ? "LEFT" : "TRAINING",
+                sets: session.sets.length,
+                volume: session.volume,
+                recordCount: session.completedAt ? session.recordCount : null,
+            };
+        });
+
+    const partners = rows.filter((row) => !row.isMe);
+    if (partners.length === 0) return null;
+
+    return {
+        title: `Jam com ${joinNamesPtBr(partners.map((row) => row.name))}`,
+        rows: [...rows.filter((row) => row.isMe), ...partners],
+    };
 };
