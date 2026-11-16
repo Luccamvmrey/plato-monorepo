@@ -43,6 +43,14 @@ const trackingPreference = async (req: Request, res: Response) => {
     res.json(data);
 }
 
+const beta = async (req: Request, res: Response) => {
+    res.json(await userService.getBeta(getUserId(req)));
+}
+
+const updateBeta = async (req: Request, res: Response) => {
+    res.json(await userService.setBeta(getUserId(req), req.body));
+}
+
 const stats = async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const data = await userService.getStats(userId);
@@ -73,4 +81,4 @@ const streak = async (req: Request, res: Response) => {
     res.json(data);
 }
 
-export { getById, update, trackingPreference, profile, stats, exportData, deleteAccount, streak }
+export { getById, update, trackingPreference, beta, updateBeta, profile, stats, exportData, deleteAccount, streak }

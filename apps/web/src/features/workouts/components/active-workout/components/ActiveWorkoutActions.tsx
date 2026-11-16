@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
 import { cn } from "@/lib/utils.ts";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
@@ -8,6 +9,8 @@ interface ActiveWorkoutActionsProps {
     isFinishPending: boolean;
     isCancelPending: boolean;
     isAllCompleted: boolean;
+    /** Ocupa o lugar do descanso e do Finalizar: a vez do parceiro na jam. */
+    overridePanel?: ReactNode;
 }
 
 export const ActiveWorkoutActions = ({
@@ -15,12 +18,29 @@ export const ActiveWorkoutActions = ({
     isFinishPending,
     isCancelPending,
     isAllCompleted,
+    overridePanel,
 }: ActiveWorkoutActionsProps) => {
     const isKeyboardOpen = useKeyboardOpen();
     const isResting = useActiveWorkoutStore((s) => s.restEndsAt !== null);
 
     // Sem série pela frente não há o que descansar.
     const showRest = isResting && !isAllCompleted;
+
+    const finishButton = (className: string) => (
+        <button
+            onClick={onFinishClick}
+            disabled={isFinishPending || isCancelPending}
+            className={cn(
+                "h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] transition-all",
+                isAllCompleted
+                    ? "bg-success text-success-foreground"
+                    : "bg-muted text-muted-foreground",
+                className
+            )}
+        >
+            {isFinishPending ? "Finalizando..." : overridePanel ? "Finalizar" : "Finalizar Treino"}
+        </button>
+    );
 
     return (
         <div
@@ -36,21 +56,17 @@ export const ActiveWorkoutActions = ({
         >
             {/* Uma linha só: o descanso ocupa o lugar do Finalizar enquanto corre.
                 Empilhados, os dois cobriam o botão de confirmar a próxima série. */}
-            {showRest ? (
+            {/* A vez do parceiro pode durar o quanto ele quiser: o Finalizar encolhe ao
+                lado, em vez de sumir como no descanso. */}
+            {overridePanel ? (
+                <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">{overridePanel}</div>
+                    {finishButton("shrink-0 px-4")}
+                </div>
+            ) : showRest ? (
                 <RestTimerBar />
             ) : (
-                <button
-                    onClick={onFinishClick}
-                    disabled={isFinishPending || isCancelPending}
-                    className={cn(
-                        "w-full h-12 rounded-lg font-medium text-[15px] tracking-[-0.01em] transition-all",
-                        isAllCompleted
-                            ? "bg-success text-success-foreground"
-                            : "bg-muted text-muted-foreground"
-                    )}
-                >
-                    {isFinishPending ? "Finalizando..." : "Finalizar Treino"}
-                </button>
+                finishButton("w-full")
             )}
         </div>
     );

@@ -3,6 +3,7 @@ import { authenticate } from "../../shared/middleware/authMiddleware";
 import * as userController from "./user.controller";
 import { validateBody } from "../../shared/middleware/validationMiddleware";
 import { updateUserSchema } from "../auth/auth.schema";
+import { updateBetaSchema } from "./user.schema";
 import * as bodyWeightController from "./body-weight/body-weight.controller";
 import { createBodyWeightSchema } from "./body-weight/body-weight.schema";
 
@@ -12,6 +13,8 @@ router.use(authenticate);
 
 router.get('/profile', userController.profile);
 router.get('/tracking-mode', userController.trackingPreference);
+router.get('/beta', userController.beta);
+router.put('/beta', validateBody(updateBetaSchema), userController.updateBeta);
 router.get('/stats', userController.stats);
 router.get('/streak', userController.streak);
 router.get('/export', userController.exportData);

@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/spinner.tsx";
 import { muscleGroupTranslation } from "@/core/utils/translations";
 import SharedWorkoutCard from "@/features/sharing/components/SharedWorkoutCard.tsx";
 import { useSharedPlanPage } from "@/features/sharing/hooks/useSharedPlanPage.ts";
+import { PublicMessage, PublicShell } from "@/core/components/PublicPage.tsx";
 
 const MAX_MUSCLES_SHOWN = 5;
 
@@ -27,40 +28,6 @@ const staggerItem: Variants = {
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
-const Shell = ({ children }: { children: React.ReactNode }) => (
-    <main className="min-h-dvh w-screen bg-background overflow-y-auto px-4 pt-4">
-        <div className="mx-auto max-w-lg flex flex-col gap-5">
-            {/* Quem chega por um link pode nunca ter ouvido falar do app. */}
-            <div className="flex items-center gap-2 text-[13px] text-muted-foreground min-h-6">
-                <img src="/icon.svg" alt="" className="size-5 shrink-0" />
-                <span className="font-semibold text-foreground">Plato</span>
-                <span className="truncate">Registre treinos e acompanhe sua carga</span>
-            </div>
-            {children}
-        </div>
-    </main>
-);
-
-const CenteredMessage = ({ title, description, action, onAction }: {
-    title: string;
-    description: string;
-    action: string;
-    onAction: () => void;
-}) => (
-    <Shell>
-        <div className="flex flex-col items-center text-center gap-4 pt-24">
-            <div className="size-12 rounded-2xl bg-muted flex items-center justify-center">
-                <Link2Off className="size-5 text-muted-foreground" aria-hidden />
-            </div>
-            <div className="flex flex-col gap-1.5">
-                <h1 className="text-[22px] font-semibold tracking-[-0.03em]">{title}</h1>
-                <p className="text-[14px] text-muted-foreground">{description}</p>
-            </div>
-            <Button onClick={onAction} className="h-11 px-5 font-medium mt-2">{action}</Button>
-        </div>
-    </Shell>
-);
-
 const SharedPlanPage = () => {
     const { token = "" } = useParams<{ token: string }>();
     const {
@@ -79,17 +46,18 @@ const SharedPlanPage = () => {
 
     if (isLoading) {
         return (
-            <Shell>
+            <PublicShell>
                 <Skeleton className="h-8 w-2/3" />
                 <Skeleton className="h-24 w-full rounded-xl" />
                 <Skeleton className="h-64 w-full rounded-xl" />
-            </Shell>
+            </PublicShell>
         );
     }
 
     if (isUnavailable) {
         return (
-            <CenteredMessage
+            <PublicMessage
+                icon={Link2Off}
                 title="Este link não está disponível"
                 description="Quem compartilhou pode ter desativado o link."
                 action="Ir para o Plato"
@@ -100,7 +68,8 @@ const SharedPlanPage = () => {
 
     if (hasLoadError || !plan || !summary) {
         return (
-            <CenteredMessage
+            <PublicMessage
+                icon={Link2Off}
                 title="Não foi possível abrir o link"
                 description="Confira sua conexão e tente de novo."
                 action="Tentar de novo"
@@ -121,7 +90,7 @@ const SharedPlanPage = () => {
     ].filter(Boolean).join(" · ");
 
     return (
-        <Shell>
+        <PublicShell>
             <header className="flex flex-col gap-1">
                 <p className="text-[13px] font-medium text-muted-foreground">
                     {plan.isCurated
@@ -185,7 +154,7 @@ const SharedPlanPage = () => {
                     )}
                 </div>
             </div>
-        </Shell>
+        </PublicShell>
     );
 };
 

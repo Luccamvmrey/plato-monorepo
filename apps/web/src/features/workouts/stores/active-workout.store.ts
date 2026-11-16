@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { restoreDraftSets } from "@plato/shared";
 import type { WorkoutSession, SessionSetPayload, FinishSessionPayload } from "../workout.types";
 
 type ActiveSession = WorkoutSession & {
@@ -62,20 +63,31 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState & ActiveWorkoutAc
             restDuration: DEFAULT_REST_SECONDS,
             lastSetAt: null,
 
+            // Mesma sessão: o aparelho é a fonte mais recente das séries. Sessão nova para este
+            // aparelho (outro celular, navegador limpo): começa do rascunho do servidor, senão o
+            // próximo envio de rascunho, vazio, apagaria as séries de lá.
             setActiveSession: (session, lastSession = null) =>
-                set((state) => ({
-                    activeSession: session
-                        ? {
-                            ...session,
-                            pendingSets: state.activeSession?.pendingSets ?? [],
-                            exerciseNotes: state.activeSession?.exerciseNotes ?? {},
-                            exerciseExtraSets: state.activeSession?.exerciseExtraSets ?? {},
-                            sessionExerciseOrder: state.activeSession?.sessionExerciseOrder ?? null,
-                          }
-                        : null,
-                    lastSession,
-                    lastSetAt: session && session.id === state.activeSession?.id ? state.lastSetAt : null,
-                })),
+                set((state) => {
+                    const current = state.activeSession;
+                    const isSameSession = !!session && current?.id === session.id;
+                    const serverLastSetAt = session?.lastSetAt ? new Date(session.lastSetAt).getTime() : null;
+
+                    return {
+                        activeSession: session
+                            ? {
+                                ...session,
+                                pendingSets: isSameSession && current
+                                    ? current.pendingSets
+                                    : restoreDraftSets(session.draftSets, session.id),
+                                exerciseNotes: isSameSession && current ? current.exerciseNotes : {},
+                                exerciseExtraSets: isSameSession && current ? current.exerciseExtraSets : {},
+                                sessionExerciseOrder: isSameSession && current ? current.sessionExerciseOrder : null,
+                              }
+                            : null,
+                        lastSession,
+                        lastSetAt: isSameSession ? state.lastSetAt : serverLastSetAt,
+                    };
+                }),
 
             clearState: () => set({ activeSession: null, lastSession: null, restEndsAt: null, lastSetAt: null }),
 

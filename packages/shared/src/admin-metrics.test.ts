@@ -16,6 +16,7 @@ const user = (id: number, overrides: Partial<AdminMetricsInput["users"][number]>
     sharedLinks: 0,
     bodyWeightLogs: 0,
     mcpSessions: 0,
+    betaOptIn: false,
     ...overrides,
 });
 
@@ -102,13 +103,13 @@ describe("buildAdminMetrics: uso por pessoa", () => {
     it("marca o que cada pessoa usa e soma por recurso, do mais usado para o menos usado", () => {
         const { users, features } = build({
             users: [
-                user(1, { activePrograms: 1, pushDevices: 2, mcpSessions: 1 }),
+                user(1, { activePrograms: 1, pushDevices: 2, mcpSessions: 1, betaOptIn: true }),
                 user(2, { trackingMode: "SIMPLE", pushDevices: 1, sharedLinks: 3, bodyWeightLogs: 1 }),
             ],
             copiedPlanUserIds: [2],
         });
 
-        expect(users.find((u) => u.id === 1)?.features).toEqual(["PROGRAM", "PUSH", "MCP"]);
+        expect(users.find((u) => u.id === 1)?.features).toEqual(["PROGRAM", "PUSH", "MCP", "BETA"]);
         expect(users.find((u) => u.id === 2)?.features).toEqual([
             "SIMPLE_MODE",
             "PUSH",
@@ -117,7 +118,7 @@ describe("buildAdminMetrics: uso por pessoa", () => {
             "BODY_WEIGHT",
         ]);
         expect(features[0]).toEqual({ feature: "PUSH", users: 2 });
-        expect(features).toHaveLength(7);
+        expect(features).toHaveLength(8);
     });
 
     it("ordena por último treino; quem nunca treinou fica no fim, do cadastro mais novo", () => {

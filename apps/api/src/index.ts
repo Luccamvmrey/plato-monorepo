@@ -16,6 +16,7 @@ import personalRecordRoutes from "./modules/workout-session/personal-record.rout
 import shareRoutes from "./modules/share/share.routes";
 import notificationRoutes from "./modules/notification/notification.routes";
 import adminRoutes from "./modules/admin/admin.routes";
+import jamRoutes from "./modules/jam/jam.routes";
 import * as shareController from "./modules/share/share.controller";
 import { shareReadLimiter } from "./shared/middleware/rateLimitMiddleware";
 import { startNotificationScheduler } from "./jobs/notification-scheduler";
@@ -43,6 +44,7 @@ app.use("/api/personal-records", personalRecordRoutes);
 app.use("/api/shares", shareRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/jams", jamRoutes);
 
 // Fora de /api porque devolve HTML: o Nginx aponta `/s/` para cá. Ver `share.controller`.
 app.get("/share-page/:token", shareReadLimiter, shareController.getPage);

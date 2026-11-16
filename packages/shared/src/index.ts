@@ -65,6 +65,8 @@ export {
     shouldSendDraft,
 } from "./session-closing";
 export type { OpenSessionAction } from "./session-closing";
+export { restoreDraftSets } from "./session-draft";
+export type { DraftSet } from "./session-draft";
 export { buildAdminMetrics, filterAdminUsers } from "./admin-metrics";
 export type {
     AdminFeature,
@@ -103,3 +105,28 @@ export {
     calculateSessionDuration,
     calculateSessionSummary,
 } from "./session";
+export { BETA_FEATURES } from "./beta";
+export type { BetaFeature } from "./beta";
+export {
+    JAM_MAX_MEMBERS,
+    isPlateLoaded,
+    jamExerciseMode,
+    jamLastWeight,
+    jamMemberProgress,
+    buildJamSummary,
+    jamPlateSwap,
+    jamTurnForExercise,
+    pickJamEntryExercise,
+    resolveJamTurn,
+} from "./jam";
+export type {
+    JamExerciseModeValue,
+    JamMemberProgress,
+    JamMemberState,
+    JamPresence,
+    JamState,
+    JamSummary,
+    JamSummaryRow,
+    JamSummaryStatus,
+    JamTurnCandidate,
+} from "./jam";

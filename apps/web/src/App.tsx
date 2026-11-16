@@ -28,6 +28,8 @@ import SharedPlanPage from "@/features/sharing/pages/SharedPlanPage.tsx";
 import SuggestedProgramsPage from "@/features/sharing/pages/SuggestedProgramsPage.tsx";
 import EmailUnsubscribePage from "@/features/notifications/pages/EmailUnsubscribePage.tsx";
 import AdminDashboardPage from "@/features/admin/pages/AdminDashboardPage.tsx";
+import JamJoinPage from "@/features/jam/pages/JamJoinPage.tsx";
+import JamQrPage from "@/features/jam/pages/JamQrPage.tsx";
 
 export function App() {
     useCheckSession();
@@ -44,6 +46,10 @@ export function App() {
                     <Route path={path.PRIVACY}><LegalPage document={PRIVACY}/></Route>
                     <Route path={`${path.SHARED}/:token`}>
                         <ErrorBoundary><SharedPlanPage /></ErrorBoundary>
+                    </Route>
+                    {/* Pública: o QR é lido por quem pode ainda não ter conta. */}
+                    <Route path={`${path.JAM}/:token`}>
+                        <ErrorBoundary><JamJoinPage /></ErrorBoundary>
                     </Route>
                     <Route path={path.SUGGESTED}>
                         <ErrorBoundary><SuggestedProgramsPage /></ErrorBoundary>
@@ -81,6 +87,10 @@ export function App() {
                                 </Route>
                                 <Route path={`${path.ACTIVE_WORKOUT}/:id`}>
                                     <ErrorBoundary><ActiveWorkoutPage /></ErrorBoundary>
+                                </Route>
+
+                                <Route path={`${path.JAM}/:id/qr`}>
+                                    <ErrorBoundary><JamQrPage /></ErrorBoundary>
                                 </Route>
 
                                 <Route path={`${path.WORKOUT_SUMMARY}/:id`}>

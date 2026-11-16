@@ -19,4 +19,5 @@ export const path = {
     EXERCISE_ANALYTICS: "/exercise-analytics",
     USER_PROFILE: "/profile",
     ADMIN: "/admin",
+    JAM: "/jam",
 } as const

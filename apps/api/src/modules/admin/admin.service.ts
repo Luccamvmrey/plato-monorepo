@@ -10,11 +10,12 @@ const getMetrics = async () => {
                 name: true,
                 createdAt: true,
                 trackingMode: true,
+                betaOptInAt: true,
                 _count: {
                     select: {
                         program: { where: { isActive: true } },
                         pushSubscription: true,
-                        sharedPlan: true,
+                        sharedPlan: { where: { jam: { is: null } } },
                         bodyWeightLog: true,
                         oauthSession: true,
                     },
@@ -42,8 +43,9 @@ const getMetrics = async () => {
 
     return buildAdminMetrics(
         {
-            users: users.map(({ _count, ...user }) => ({
+            users: users.map(({ _count, betaOptInAt, ...user }) => ({
                 ...user,
+                betaOptIn: betaOptInAt !== null,
                 activePrograms: _count.program,
                 pushDevices: _count.pushSubscription,
                 sharedLinks: _count.sharedPlan,

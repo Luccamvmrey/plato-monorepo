@@ -8,6 +8,7 @@ const TOKEN = "[A-Za-z0-9_-]{22}";
 
 const TOKEN_PATTERN = new RegExp(`^${TOKEN}$`);
 const SHARED_PLAN_PATH_PATTERN = new RegExp(`^/s/(${TOKEN})(\\?add=1)?$`);
+const JAM_PATH_PATTERN = new RegExp(`^/jam/${TOKEN}$`);
 
 export const SUGGESTED_PROGRAMS_PATH = "/suggested";
 
@@ -23,7 +24,7 @@ export const isShareToken = (value: unknown): value is string =>
  */
 export const isSafeReturnPath = (value: unknown): value is string =>
     typeof value === "string" &&
-    (value === SUGGESTED_PROGRAMS_PATH || SHARED_PLAN_PATH_PATTERN.test(value));
+    (value === SUGGESTED_PROGRAMS_PATH || SHARED_PLAN_PATH_PATTERN.test(value) || JAM_PATH_PATTERN.test(value));
 
 /** O token do link de um caminho de retorno, para atribuir o cadastro a ele. */
 export const shareTokenFromReturnPath = (value: unknown): string | null => {

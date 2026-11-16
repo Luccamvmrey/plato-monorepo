@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Settings, Sun, Moon, Download, LogOut, Trash2, Check } from "lucide-react";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { TrackingModeSetting } from "./TrackingModeSetting";
+import { BetaProgramSetting } from "./BetaProgramSetting";
 import { NotificationSetting } from "@/features/notifications/components/NotificationSetting.tsx";
 import { SharedLinksSetting } from "@/features/sharing/components/SharedLinksSetting.tsx";
 import { AdminDashboardLink } from "@/features/admin/components/AdminDashboardLink.tsx";
@@ -56,6 +57,8 @@ export const GovernanceSettings = () => {
                 <NotificationSetting />
 
                 <SharedLinksSetting />
+
+                <BetaProgramSetting />
 
                 <AdminDashboardLink />
 

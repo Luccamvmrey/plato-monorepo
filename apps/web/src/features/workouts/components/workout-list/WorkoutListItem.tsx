@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, ChevronDown, Play, Share2, SquarePen, Undo2 } from "lucide-react";
+import { Archive, ChevronDown, Play, Share2, SquarePen, Undo2, Users } from "lucide-react";
 import type { Workout } from "@/features/workouts/workout.types.ts";
 import type { ProgramCycleEntry } from "@/features/workouts/program.types.ts";
 import { Button } from "@/components/ui/button.tsx";
@@ -42,6 +42,9 @@ const WorkoutListItem = ({ workout, isLastDone, cycleEntry, cycleTotal, isFeatur
     const {
         handleEdit,
         handleQuickStart,
+        handleStartJam,
+        canStartJam,
+        isStartingJam,
         handleToggleStatus,
         isLoading,
         isResumingSession,
@@ -79,6 +82,18 @@ const WorkoutListItem = ({ workout, isLastDone, cycleEntry, cycleTotal, isFeatur
                     </li>
                 ))}
             </ul>
+
+            {canStartJam && (
+                <Button
+                    variant="outline"
+                    onClick={handleStartJam}
+                    disabled={isLoading || isPending}
+                    className="h-11 gap-2 font-medium"
+                >
+                    {isStartingJam ? <Spinner data-icon="inline-start" /> : <Users data-icon="inline-start" />}
+                    Treinar em jam
+                </Button>
+            )}
 
             <div className="flex items-center gap-2 -ml-2">
                 <Button variant="ghost" className="h-10 px-2 gap-2 text-muted-foreground font-normal" onClick={handleEdit}>
