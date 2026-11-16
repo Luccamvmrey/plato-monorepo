@@ -119,3 +119,37 @@ export interface JamMemberState {
         sets: { exerciseId: number; setNumber: number; actualReps: number; actualWeight: number | null }[];
     } | null;
 }
+
+/** Onde a pessoa está na jam, para a faixa e a lista de participantes. */
+export type JamMemberProgress =
+    | { kind: "TRAINING"; exerciseId: number; exerciseName: string; setsDone: number; targetSets: number }
+    | { kind: "DONE" }
+    | { kind: "IDLE" };
+
+/**
+ * A presença diz onde a pessoa está; sem ela (app fechado, presença ainda não enviada), o
+ * primeiro exercício com série a fazer é o palpite mais provável. Sessão cancelada ou sem
+ * nada a fazer vira IDLE; sessão concluída vira DONE.
+ */
+export const jamMemberProgress = (member: JamMemberState): JamMemberProgress => {
+    const session = member.session;
+
+    if (!session) return { kind: "IDLE" };
+    if (session.completedAt) return { kind: "DONE" };
+
+    const setsDoneOf = (exerciseId: number) => session.sets.filter((set) => set.exerciseId === exerciseId).length;
+    const presentId = member.presence?.exerciseId ?? null;
+
+    const current = (presentId !== null ? session.exercises.find((exercise) => exercise.exerciseId === presentId) : undefined)
+        ?? session.exercises.find((exercise) => !exercise.skipped && setsDoneOf(exercise.exerciseId) < exercise.targetSets);
+
+    if (!current) return { kind: "IDLE" };
+
+    return {
+        kind: "TRAINING",
+        exerciseId: current.exerciseId,
+        exerciseName: current.name,
+        setsDone: setsDoneOf(current.exerciseId),
+        targetSets: current.targetSets,
+    };
+};

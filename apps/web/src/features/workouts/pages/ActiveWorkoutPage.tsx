@@ -13,6 +13,8 @@ import { SessionProgress } from "@/features/workouts/components/active-workout/S
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
 import { useKeyboardOpen } from "@/core/hooks/useKeyboardOpen.ts";
 import { cn } from "@/lib/utils.ts";
+import { JamStrip } from "@/features/jam/components/JamStrip.tsx";
+import { JamSheet } from "@/features/jam/components/JamSheet.tsx";
 
 const enterAnimation: Variants = {
     hidden: { opacity: 0, y: 10 },
@@ -45,6 +47,7 @@ const ActiveWorkoutPage = () => {
         navigate,
         setExerciseOrder,
         addExtraSet,
+        activeJam,
     } = useActiveWorkoutLogic();
 
     const isKeyboardOpen = useKeyboardOpen();
@@ -85,6 +88,17 @@ const ActiveWorkoutPage = () => {
                 onCancelClick={() => setIsCancelOpen(true)}
                 isCancelPending={isCancelPending}
             />
+
+            {activeJam.isActive && (
+                <>
+                    <JamStrip
+                        others={activeJam.others}
+                        activeExerciseId={activeJam.activeExerciseId}
+                        onOpen={activeJam.openSheet}
+                    />
+                    <JamSheet activeJam={activeJam} />
+                </>
+            )}
 
             <SessionProgress exerciseStack={exerciseStack} />
 

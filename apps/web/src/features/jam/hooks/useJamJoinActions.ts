@@ -10,6 +10,7 @@ import type { TrackingModeValue } from "@/features/user/tracking-modes.ts";
 import { useActiveSession } from "@/features/workouts/hooks/useActiveSession.ts";
 import { JamService } from "@/features/jam/jam.service.ts";
 import type { JoinJamResult } from "@/features/jam/jam.types.ts";
+import { rememberJamEntry } from "@/features/jam/utils/jam-entry.ts";
 import { statusOf } from "./useJamJoinPage.ts";
 
 /** "Copiar" ou o id de um treino próprio. */
@@ -79,6 +80,7 @@ export const useJamJoinActions = (token: string) => {
         suppressDefaultError: true,
         onSuccess: (result: JoinJamResult | null) => {
             if (!result) return;
+            if (result.entryExerciseId !== null) rememberJamEntry(result.sessionId, result.entryExerciseId);
 
             void queryClient.invalidateQueries({ queryKey: ["activeSession"] });
             void queryClient.invalidateQueries({ queryKey: ["sessions"] });

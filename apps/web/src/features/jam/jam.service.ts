@@ -1,4 +1,5 @@
 import api from "@/core/api";
+import type { JamExerciseModeValue, JamPresence } from "@plato/shared";
 import type {
     CreateJamResult,
     JamPreview,
@@ -32,6 +33,14 @@ export const JamService = {
     getState: async (jamId: number) => {
         const { data } = await api.get<JamState>(`/jams/${jamId}`);
         return data;
+    },
+
+    updatePresence: async (jamId: number, presence: JamPresence) => {
+        await api.put(`/jams/${jamId}/presence`, presence);
+    },
+
+    setExerciseMode: async ({ jamId, exerciseId, mode }: { jamId: number; exerciseId: number; mode: JamExerciseModeValue }) => {
+        await api.put(`/jams/${jamId}/modes/${exerciseId}`, { mode });
     },
 
     leave: async (jamId: number) => {

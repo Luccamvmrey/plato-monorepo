@@ -105,5 +105,5 @@ export {
 } from "./session";
 export { BETA_FEATURES } from "./beta";
 export type { BetaFeature } from "./beta";
-export { JAM_MAX_MEMBERS, jamExerciseMode, pickJamEntryExercise, resolveJamTurn } from "./jam";
-export type { JamExerciseModeValue, JamMemberState, JamPresence, JamState, JamTurnCandidate } from "./jam";
+export { JAM_MAX_MEMBERS, jamExerciseMode, jamMemberProgress, pickJamEntryExercise, resolveJamTurn } from "./jam";
+export type { JamExerciseModeValue, JamMemberProgress, JamMemberState, JamPresence, JamState, JamTurnCandidate } from "./jam";

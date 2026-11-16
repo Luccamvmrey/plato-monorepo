@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { jamExerciseMode, pickJamEntryExercise, resolveJamTurn, type JamTurnCandidate } from "./jam";
+import { jamExerciseMode, jamMemberProgress, pickJamEntryExercise, resolveJamTurn, type JamMemberState, type JamTurnCandidate } from "./jam";
 
 const member = (userId: number, setsDone: number, overrides: Partial<JamTurnCandidate> = {}): JamTurnCandidate => ({
     userId,
@@ -94,5 +94,66 @@ describe("jamExerciseMode", () => {
         expect(jamExerciseMode(modes, 30)).toBe("PARALLEL");
         expect(jamExerciseMode(modes, 40)).toBe("PARALLEL");
         expect(jamExerciseMode(null, 10)).toBe("PARALLEL");
+    });
+});
+
+describe("jamMemberProgress", () => {
+    const base = (overrides: Partial<JamMemberState> = {}): JamMemberState => ({
+        userId: 1,
+        name: "Ana",
+        joinedAt: "2026-11-16T10:00:00.000Z",
+        leftAt: null,
+        presence: null,
+        session: {
+            id: 1,
+            completedAt: null,
+            exercises: [
+                { exerciseId: 10, name: "Supino", targetSets: 2, skipped: false },
+                { exerciseId: 20, name: "Crucifixo", targetSets: 3, skipped: false },
+            ],
+            sets: [],
+        },
+        ...overrides,
+    });
+
+    const set = (exerciseId: number, setNumber: number) => ({ exerciseId, setNumber, actualReps: 10, actualWeight: 50 });
+
+    it("usa o exercício da presença", () => {
+        expect(jamMemberProgress(base({ presence: { exerciseId: 20, restEndsAt: null } }))).toEqual({
+            kind: "TRAINING", exerciseId: 20, exerciseName: "Crucifixo", setsDone: 0, targetSets: 3,
+        });
+    });
+
+    it("sem presença, deduz o primeiro exercício com série a fazer", () => {
+        const member = base();
+        member.session!.sets = [set(10, 1), set(10, 2), set(20, 1)];
+
+        expect(jamMemberProgress(member)).toMatchObject({ exerciseId: 20, setsDone: 1 });
+    });
+
+    it("sem presença, pula o exercício pulado", () => {
+        const member = base();
+        member.session!.exercises[0].skipped = true;
+
+        expect(jamMemberProgress(member)).toMatchObject({ exerciseId: 20 });
+    });
+
+    it("presença num exercício que a sessão não tem cai no palpite", () => {
+        expect(jamMemberProgress(base({ presence: { exerciseId: 99, restEndsAt: null } }))).toMatchObject({ exerciseId: 10 });
+    });
+
+    it("sessão concluída é DONE e sessão cancelada é IDLE", () => {
+        const done = base();
+        done.session!.completedAt = "2026-11-16T11:00:00.000Z";
+
+        expect(jamMemberProgress(done)).toEqual({ kind: "DONE" });
+        expect(jamMemberProgress(base({ session: null }))).toEqual({ kind: "IDLE" });
+    });
+
+    it("tudo feito e sem presença é IDLE", () => {
+        const member = base();
+        member.session!.sets = [set(10, 1), set(10, 2), set(20, 1), set(20, 2), set(20, 3)];
+
+        expect(jamMemberProgress(member)).toEqual({ kind: "IDLE" });
     });
 });

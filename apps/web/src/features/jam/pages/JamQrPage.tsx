@@ -1,9 +1,9 @@
-import { ChevronLeft, Copy, Send } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useParams } from "wouter";
 import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner";
-import { JamQrCode } from "@/features/jam/components/JamQrCode.tsx";
+import { JamInvite } from "@/features/jam/components/JamInvite.tsx";
 import { JamMemberList } from "@/features/jam/components/JamMemberList.tsx";
 import { useJamQrPage } from "@/features/jam/hooks/useJamQrPage.ts";
 
@@ -11,14 +11,10 @@ const JamQrPage = () => {
     const { id = "" } = useParams<{ id: string }>();
     const {
         jam,
-        url,
         isLoading,
         isUnavailable,
         currentUserId,
         memberLabel,
-        canUseNativeShare,
-        handleCopy,
-        handleSend,
         handleStart,
     } = useJamQrPage(Number(id));
 
@@ -46,30 +42,15 @@ const JamQrPage = () => {
 
             {isUnavailable && <InlineErrorBanner message="Não foi possível abrir a jam." />}
 
-            {jam && url && (
+            {jam && (
                 <>
                     <header className="flex flex-col gap-1">
                         <p className="text-[13px] font-medium text-muted-foreground">Treino da jam</p>
                         <h2 className="text-[20px] font-semibold tracking-[-0.02em] leading-tight">{jam.workout.name}</h2>
                     </header>
 
-                    <section aria-label="Convite" className="flex flex-col items-center gap-3 rounded-xl bg-card border border-border p-4">
-                        <JamQrCode value={url} label={`QR para entrar na jam ${jam.workout.name}`} />
-                        <p className="text-[14px] text-muted-foreground text-center">
-                            Quem for treinar junto aponta a câmera do celular aqui.
-                        </p>
-                        <div className="flex gap-2 w-full">
-                            <Button variant="outline" onClick={handleCopy} className="flex-1 h-11 gap-2 font-medium">
-                                <Copy data-icon="inline-start" />
-                                Copiar link
-                            </Button>
-                            {canUseNativeShare && (
-                                <Button variant="outline" onClick={() => void handleSend()} className="flex-1 h-11 gap-2 font-medium">
-                                    <Send data-icon="inline-start" />
-                                    Enviar
-                                </Button>
-                            )}
-                        </div>
+                    <section aria-label="Convite" className="rounded-xl bg-card border border-border p-4">
+                        <JamInvite jam={jam} />
                     </section>
 
                     <section aria-label="Quem está na jam" className="flex flex-col gap-1 rounded-xl bg-card border border-border px-4 py-3">

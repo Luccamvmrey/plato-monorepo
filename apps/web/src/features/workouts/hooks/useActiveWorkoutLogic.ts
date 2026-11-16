@@ -6,6 +6,7 @@ import { useExerciseStack } from "./useExerciseStack";
 import { useExerciseHistory } from "./useExerciseHistory";
 import { useActiveWorkoutStore } from "@/features/workouts/stores/active-workout.store";
 import { useWakeLock } from "@/core/hooks/useWakeLock";
+import { useActiveJam } from "@/features/jam/hooks/useActiveJam";
 
 export const useActiveWorkoutLogic = () => {
     const navigate = useLocation()[1];
@@ -58,6 +59,9 @@ export const useActiveWorkoutLogic = () => {
         sessionExerciseOrder,
         exerciseExtraSets,
     );
+
+    // Sem jam, `activeJam.isActive` é falso e a tela fica como sempre foi.
+    const activeJam = useActiveJam(activeSession, exerciseStack);
 
     // "Não sobrou nada a fazer", e não "está tudo COMPLETED": um exercício trocado ou
     // pulado está RESOLVIDO — o usuário decidiu sobre ele. Exigir COMPLETED de todos
@@ -115,5 +119,6 @@ export const useActiveWorkoutLogic = () => {
         isAllCompleted,
         setExerciseOrder,
         addExtraSet,
+        activeJam,
     };
 };
