@@ -103,3 +103,5 @@ export {
     calculateSessionDuration,
     calculateSessionSummary,
 } from "./session";
+export { BETA_FEATURES } from "./beta";
+export type { BetaFeature } from "./beta";

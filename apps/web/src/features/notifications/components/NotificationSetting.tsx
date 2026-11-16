@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
 import { InlineErrorBanner } from "@/core/components/InlineErrorBanner.tsx";
-import { cn } from "@/lib/utils.ts";
+import { SwitchRow } from "@/core/components/SwitchRow.tsx";
 import { useNotificationSettings } from "../hooks/useNotificationSettings.ts";
 import { usePushDevice } from "../hooks/usePushDevice.ts";
 import { InstallSteps } from "./InstallInstructionsSheet.tsx";
@@ -13,42 +13,6 @@ import { InstallSteps } from "./InstallInstructionsSheet.tsx";
 const HOURS = Array.from(
     { length: MAX_REMINDER_HOUR - MIN_REMINDER_HOUR + 1 },
     (_, index) => MIN_REMINDER_HOUR + index
-);
-
-interface SwitchRowProps {
-    label: string;
-    description: string;
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-}
-
-const SwitchRow = ({ label, description, checked, onChange }: SwitchRowProps) => (
-    <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className="flex items-center gap-3 w-full min-h-11 py-1 text-left"
-    >
-        <span className="flex-1">
-            <span className="block text-[14px] font-medium">{label}</span>
-            <span className="block text-[13px] text-muted-foreground">{description}</span>
-        </span>
-        <span
-            aria-hidden
-            className={cn(
-                "flex h-6 w-10 flex-shrink-0 items-center rounded-full p-0.5 transition-colors",
-                checked ? "bg-primary" : "bg-muted"
-            )}
-        >
-            <span
-                className={cn(
-                    "size-5 rounded-full bg-background transition-transform",
-                    checked && "translate-x-4"
-                )}
-            />
-        </span>
-    </button>
 );
 
 /** Primeiro as opções que dependem do aparelho; o e-mail fica separado e vale em qualquer caso. */

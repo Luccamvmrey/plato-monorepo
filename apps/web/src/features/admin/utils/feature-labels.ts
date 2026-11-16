@@ -8,4 +8,5 @@ export const FEATURE_LABEL: Record<AdminFeature, string> = {
     COPIED_PLAN: "Copiou treino de link",
     BODY_WEIGHT: "Peso corporal",
     MCP: "Claude",
+    BETA: "Beta",
 };

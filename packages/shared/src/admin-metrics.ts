@@ -17,7 +17,8 @@ export type AdminFeature =
     | "SHARED_LINK"
     | "COPIED_PLAN"
     | "BODY_WEIGHT"
-    | "MCP";
+    | "MCP"
+    | "BETA";
 
 export interface AdminMetricsInput {
     users: readonly {
@@ -30,6 +31,7 @@ export interface AdminMetricsInput {
         sharedLinks: number;
         bodyWeightLogs: number;
         mcpSessions: number;
+        betaOptIn: boolean;
     }[];
     completedSessions: readonly { userId: number; startedAt: Date; completedAt: Date; autoCompleted?: boolean }[];
     /** Sessões sem `completedAt`. As séries delas só chegam ao banco quando a pessoa conclui. */
@@ -142,6 +144,7 @@ const FEATURE_ORDER: readonly AdminFeature[] = [
     "COPIED_PLAN",
     "BODY_WEIGHT",
     "MCP",
+    "BETA",
 ];
 
 const NOTIFICATION_KINDS: readonly NotificationKindValue[] = ["REMINDER", "WEEKLY_SUMMARY", "MONTHLY_SUMMARY"];
@@ -201,6 +204,7 @@ export const buildAdminMetrics = (
             COPIED_PLAN: copiedPlan.has(user.id),
             BODY_WEIGHT: user.bodyWeightLogs > 0,
             MCP: user.mcpSessions > 0,
+            BETA: user.betaOptIn,
         };
 
         return {

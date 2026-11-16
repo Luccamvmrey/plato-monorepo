@@ -115,6 +115,9 @@ model User {
   trackingModeChosenAt DateTime?
   /// Link pelo qual a pessoa chegou ao cadastro. Null em quem chegou de outra forma.
   signupPlanId   Int?
+  /// Quando a pessoa entrou no programa beta, que libera as features em teste. Null = fora.
+  /// Data, e não boolean, para o painel mostrar desde quando cada um testa.
+  betaOptInAt    DateTime?
   signupPlan     SharedPlan?      @relation("SignupPlan", fields: [signupPlanId], references: [id], onDelete: SetNull)
   sharedPlan     SharedPlan[]     @relation("SharedPlanOwner")
   workouts       Workout[]

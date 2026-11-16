@@ -1,6 +1,7 @@
 import prisma from "@plato/database";
 import { addDaysToDateStr, calculateTotalVolume, mondayOfDateStr, setVolume, toLocalDateStr } from "@plato/shared";
 import { UpdateUserInput } from "../auth/auth.schema";
+import { UpdateBetaInput } from "./user.schema";
 
 const getById = async (id: number) => {
     return prisma.user.findUnique({
@@ -44,6 +45,30 @@ const getTrackingPreference = async (userId: number) => {
     const sessions = await prisma.workoutSession.count({ where: { userId } });
 
     return { trackingMode: user.trackingMode, needsChoice: sessions === 0 };
+};
+
+const toBeta = (betaOptInAt: Date | null) => ({ enabled: betaOptInAt !== null, optedInAt: betaOptInAt });
+
+/** Rota própria, como o modo de treino: o perfil soma o histórico inteiro e é pesado. */
+const getBeta = async (userId: number) => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { betaOptInAt: true } });
+
+    return toBeta(user.betaOptInAt);
+};
+
+/** Pedido repetido não reescreve a data: o painel mostra desde quando a pessoa testa. */
+const setBeta = async (userId: number, { enabled }: UpdateBetaInput) => {
+    const current = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { betaOptInAt: true } });
+
+    if (enabled === (current.betaOptInAt !== null)) return toBeta(current.betaOptInAt);
+
+    const user = await prisma.user.update({
+        where: { id: userId },
+        data: { betaOptInAt: enabled ? new Date() : null },
+        select: { betaOptInAt: true },
+    });
+
+    return toBeta(user.betaOptInAt);
 };
 
 const getProfile = async (userId: number) => {
@@ -241,4 +266,4 @@ const _getDaysBetweenStr = (startStr: string, endStr: string): string[] => {
     return days;
 };
 
-export { getById, update, getTrackingPreference, getProfile, getStats, getExportData, deleteAccount, getStreak }
+export { getById, update, getTrackingPreference, getBeta, setBeta, getProfile, getStats, getExportData, deleteAccount, getStreak }
