@@ -1,5 +1,5 @@
 import api from "@/core/api";
-import type { ExerciseHistoryMap, FinishSessionPayload, WorkoutSession } from "@/features/workouts/workout.types.ts";
+import type { ExerciseHistoryMap, FinishSessionPayload, WorkoutSession, WorkoutSessionWithWorkout } from "@/features/workouts/workout.types.ts";
 
 export interface WorkoutSessionPayload {
     workoutId: number;
@@ -11,7 +11,8 @@ export interface CreateWorkoutSessionResponse {
 }
 
 export interface FindActiveSessionResponse {
-    activeSession: WorkoutSession;
+    /** A API inclui o treino (`SESSION_WITH_WORKOUT_INCLUDE`). */
+    activeSession: WorkoutSessionWithWorkout;
     lastSession: WorkoutSession | null;
 }
 

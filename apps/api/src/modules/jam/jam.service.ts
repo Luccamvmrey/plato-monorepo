@@ -121,7 +121,7 @@ const create = async (userId: number, workoutId: number) => {
     try {
         const { newSession } = await workoutSessionService.create(userId, { workoutId, jamId: jam.id });
 
-        return { jamId: jam.id, token: jam.token, sessionId: newSession.id };
+        return { jamId: jam.id, token: jam.token, sessionId: newSession.id, workoutId };
     } catch (error) {
         // Sem a sessão do host a jam não serve para nada. Apagar o plano leva a jam junto.
         await prisma.sharedPlan.delete({ where: { id: jam.sharedPlanId } }).catch(() => undefined);
@@ -233,7 +233,7 @@ const join = async (userId: number, token: string, { workoutId }: JoinJamInput) 
     const membership = jam.members.find((member) => member.userId === userId);
     const openSession = await prisma.workoutSession.findFirst({
         where: { userId, completedAt: null },
-        select: { id: true, jamId: true },
+        select: { id: true, jamId: true, workoutId: true },
     });
 
     // Já está na jam com o treino aberto (toque duplo, QR lido de novo, voltou depois de
@@ -247,7 +247,7 @@ const join = async (userId: number, token: string, { workoutId }: JoinJamInput) 
             publishJam(jam.id);
         }
 
-        return { jamId: jam.id, sessionId: openSession.id, entryExerciseId: null };
+        return { jamId: jam.id, sessionId: openSession.id, workoutId: openSession.workoutId, entryExerciseId: null };
     }
 
     const activeMembers = jam.members.filter((member) => member.leftAt === null && member.userId !== userId);
@@ -298,7 +298,7 @@ const join = async (userId: number, token: string, { workoutId }: JoinJamInput) 
 
     publishJam(jam.id);
 
-    return { jamId: jam.id, sessionId: newSession.id, entryExerciseId };
+    return { jamId: jam.id, sessionId: newSession.id, workoutId: sessionWorkoutId, entryExerciseId };
 };
 
 const getState = async (userId: number, jamId: number) => {

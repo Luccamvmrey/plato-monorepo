@@ -46,6 +46,8 @@ export const useBetaProgram = () => {
         isLoaded: statusQuery.data !== undefined,
         isEnabled: statusQuery.data?.enabled ?? false,
         setEnabled: mutation.mutate,
+        /** Para quem precisa esperar o servidor confirmar antes de seguir (entrar numa jam). */
+        enable: () => mutation.mutateAsync(true),
         hasError: mutation.isError,
     };
 };

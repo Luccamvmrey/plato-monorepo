@@ -25,6 +25,7 @@ describe("isSafeReturnPath", () => {
         [`/s/${TOKEN}`],
         [`/s/${TOKEN}?add=1`],
         ["/suggested"],
+        [`/jam/${TOKEN}`],
     ])("aceita %s", (value) => {
         expect(isSafeReturnPath(value)).toBe(true);
     });
@@ -39,6 +40,9 @@ describe("isSafeReturnPath", () => {
         [`/s/${TOKEN}?add=1&next=//evil.com`],
         [`/s/${TOKEN}#//evil.com`],
         [`/suggested/../evil`],
+        ["/jam/curto"],
+        [`/jam/${TOKEN}?add=1`],
+        [`/jam/${TOKEN}/../../evil`],
         ["javascript:alert(1)"],
         [""],
         [null],
