@@ -17,10 +17,7 @@ export const JamSummaryCard = ({ summary }: { summary: JamSummary }) => (
                 return (
                     <li key={row.userId} className="flex items-center gap-3 py-2 border-t border-border first:border-t-0">
                         <JamAvatar name={row.name} className="size-8 text-[13px]" />
-                        <span className="flex-1 min-w-0 text-[14px] truncate">
-                            {row.name}
-                            {row.isMe && <span className="text-muted-foreground"> (você)</span>}
-                        </span>
+                        <span className="flex-1 min-w-0 text-[14px] truncate">{row.name}</span>
                         <span className="shrink-0 text-right tabular-nums">
                             <span className="block text-[14px] font-medium">{main}</span>
                             {detail && (

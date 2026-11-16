@@ -42,7 +42,7 @@ export const buildSessionShareData = (input: {
                 const { main, detail } = describeJamSummaryRow(row);
 
                 return {
-                    name: row.isMe ? `${row.name} (você)` : row.name,
+                    name: row.name,
                     value: detail ? `${main} · ${detail}` : main,
                     isHighlight: row.status === "DONE" && !!row.recordCount,
                 };
@@ -67,10 +67,10 @@ const MAX_PRS = 3;
 
 /**
  * Tokens do tema escuro, em hex: o canvas não lê variáveis CSS, e `oklch()` em `fillStyle`
- * ainda não é garantido em todo Safari. O fundo é o do ícone do app.
+ * ainda não é garantido em todo Safari. O fundo é o `--background` do tema escuro, o mesmo do app.
  */
 const COLOR = {
-    background: "#141418",
+    background: "#040406",
     foreground: "#f4f5f7",
     muted: "#8f939c",
     border: "rgba(255, 255, 255, 0.08)",
