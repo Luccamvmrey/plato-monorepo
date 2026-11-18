@@ -20,5 +20,5 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
 
 export default prisma;
 
-export { MuscleGroup, RecordType } from "./generated/prisma/enums";
+export { MuscleGroup, RecordType, LoadType, RepUnit, MovementPattern, Equipment } from "./generated/prisma/enums";
 export { Prisma } from "./generated/prisma/client";
