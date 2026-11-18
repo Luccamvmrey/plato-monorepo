@@ -9,6 +9,7 @@ import { registerRecordTools } from "./tools/records.js";
 import { registerBodyWeightTools } from "./tools/body-weight.js";
 import { registerAnalysisTools } from "./tools/analysis.js";
 import { registerExerciseResource } from "./resources/exercises.js";
+import { isAdminUser, registerCatalogAdminTools } from "./tools/catalog-admin.js";
 
 export function buildServer(userId: number): McpServer {
     const server = new McpServer({
@@ -29,6 +30,9 @@ export function buildServer(userId: number): McpServer {
     registerBodyWeightTools(server, requireAuth);
     registerAnalysisTools(server, requireAuth);
     registerExerciseResource(server);
+
+    // O catálogo é global: quem não é admin nem vê a ferramenta de escrita.
+    if (isAdminUser(userId)) registerCatalogAdminTools(server, requireAuth);
 
     return server;
 }
